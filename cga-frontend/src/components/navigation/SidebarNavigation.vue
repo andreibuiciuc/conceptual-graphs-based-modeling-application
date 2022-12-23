@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-layout>
-      <v-app-bar density="comfortable" flat elevation="1">
+      <v-app-bar elevation="1" height="88">
         <template #prepend>
           <RouterLink :to="navigationHeader.pathTo">
             <v-list-item class="navigation-item"

@@ -1,33 +1,31 @@
 <template>
   <div class="homeview-body">
-
     <section class="landing-section">
-      <div class="landing-section-content">
-        <div>
-          <span style="font-size: 60px;"> CGA</span>
-          <h2 style="font-size: 20px"><strong>Conceptual Graphs</strong> based-modeling <strong>Application</strong>: an interface for 
-            modeling Cassandra data structure and querying data, based on Conceptual Graphs</h2>
-        </div>
-      </div>
-      <div class="landing-terminal-wrapper">
-        <div class="landing-terminal">
-          <div class="command-line">
-            <pre>cqlsh >> DESCRIBE keyspaces;</pre>
-            <pre>cqlsh >> TODO: response</pre>
-            <pre>cqlsh >> USE daily_weather_measurements;</pre>
-            <pre>cqlsh >> SELECT m_date , city , station_code, min_temp , max_temp</pre>
-            <pre>      >> FROM daily_weather_measurements</pre>
-            <pre>      >> WHERE m_date ='2020-01-12'</pre>
-            <pre>      >> ORDER BY city ASC;</pre> 
-            <pre class="blip">|</pre>
+      <div class="landing-section-container">
+        <div class="landing-section-content">
+          <div class="landing-section-text">
+            <h1 style="font-size: 60px;">CGA</h1>
+            <h2 style="font-size: 20px">The interface for modeling Cassandra data structures and querying data, 
+              based on Conceptual Graphs. Start exploring databases and move from blipping consoles to a friendlier
+              Visual Query System.</h2>
           </div>
         </div>
-        <img src="/cassandra2.png" width="320" height="215"/>
+        <div class="landing-terminal-wrapper">
+          <div class="landing-terminal">
+            <div class="command-line">
+              <pre>cqlsh >> DESCRIBE keyspaces;</pre>
+              <pre>cqlsh >> TODO: response</pre>
+              <pre>cqlsh >> USE daily_weather_measurements;</pre>
+              <pre>cqlsh >> SELECT m_date , city , station_code, min_temp , max_temp</pre>
+              <pre>      >> FROM daily_weather_measurements</pre>
+              <pre>      >> WHERE m_date ='2020-01-12'</pre>
+              <pre>      >> ORDER BY city ASC<span style="font-family: monospace" class="blip">|</span></pre> 
+            </div>
+          </div>
+        </div>
       </div>
     </section>
-    
     <div class="delimiter-positive"></div>
-    
     <!-- TODO: Summary section -->
     <section class="summary-section">
       <div class="summary-container">
@@ -37,9 +35,7 @@
         </v-btn>
       </div>
     </section>
-
     <div class="delimiter-negative"></div>
-    
     <!-- TODO: Authentication section -->
     <section class="authentication-section">
       <div class="authentication-container">
@@ -49,7 +45,6 @@
         </v-btn>
       </div>
     </section>
-
   </div>
 </template>
 
@@ -84,7 +79,7 @@ export default {
 <style scoped>
 .homeview-body {
   margin: 0;
-  height: calc(100% - 56px);
+  margin-top: 88px;
 }
 
 section {
@@ -93,20 +88,30 @@ section {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 100px 10vw;
+  padding: 0 10vw; 
 }
 
 /* Style related to the landing section */
 .landing-section {
   flex-direction: row;
   justify-content: flex-start;
-  min-height: 50vh;
   background-color: var(--cassandra-white);
+  height: calc(80vh - 88px);
 }
 
-.landing-terminal-wrapper {
-  position: relative;
-  background-image: url('../assets/svg/triangle-lines.svg');
+.landing-section-container {
+  display: flex;
+  align-items: flex-start;
+}
+
+.landing-section-content .landing-section-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-section-content .landing-section-text h1 {
+  color: var(--cassandra-blue);
+  font-weight: bolder;
 }
 
 .landing-terminal {
