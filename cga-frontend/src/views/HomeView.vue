@@ -1,5 +1,5 @@
 <template>
-  <div class="homeview-body">
+  <div class="homepage">
     <section class="landing-section">
       <div class="landing-section-container">
         <div class="landing-section-content">
@@ -10,19 +10,7 @@
               Visual Query System.</h2>
           </div>
         </div>
-        <div class="landing-terminal-wrapper">
-          <div class="landing-terminal">
-            <div class="command-line">
-              <pre>cqlsh >> DESCRIBE keyspaces;</pre>
-              <pre>cqlsh >> TODO: response</pre>
-              <pre>cqlsh >> USE daily_weather_measurements;</pre>
-              <pre>cqlsh >> SELECT m_date , city , station_code, min_temp , max_temp</pre>
-              <pre>      >> FROM daily_weather_measurements</pre>
-              <pre>      >> WHERE m_date ='2020-01-12'</pre>
-              <pre>      >> ORDER BY city ASC<span style="font-family: monospace" class="blip">|</span></pre> 
-            </div>
-          </div>
-        </div>
+        <CassandraTerminal />
       </div>
     </section>
     <div class="delimiter-positive"></div>
@@ -49,155 +37,67 @@
 </template>
 
 <script>
+import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
+
 export default {
   name: "HomeView",
-  data: () => {
-    return {
-      sections: [
-        {
-          key: "landingSection",
-          title: "Home",
-          dotColor: "#bbe6fb",
-          icon: 'home'
-        },
-        {
-          key: "summarySection",
-          title: "Summary",
-          dotColor: "#1287b1"
-        },
-        {
-          key: "authSection",
-          title: "Authentication",
-          dotColor: "#373535"
-        }
-      ]
-    };
+  components: {
+    CassandraTerminal
   }
 }
 </script>
 
-<style scoped>
-.homeview-body {
-  margin: 0;
-  margin-top: 88px;
-}
+<style scoped lang="sass">
+@use "@/assets/styles/_variables.sass"
+@use "@/assets/styles/_containers.sass"
 
-section {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10vw; 
-}
+.homepage
+    margin: 0
+    margin-top: variables.$cga-topbar-height
 
-/* Style related to the landing section */
-.landing-section {
-  flex-direction: row;
-  justify-content: flex-start;
-  background-color: var(--cassandra-white);
-  height: calc(80vh - 88px);
-}
+.landing-section 
+  @include containers.flex-container($align-items: center)
+  background-color: variables.$cassandra-white
+  height: calc(80vh - variables.$cga-topbar-height)
 
-.landing-section-container {
-  display: flex;
-  align-items: flex-start;
-}
+  .landing-section-container 
+    @include containers.flex-container
 
-.landing-section-content .landing-section-text {
-  display: flex;
-  flex-direction: column;
-}
+    .landing-section-text 
+      @include containers.flex-container($flex-direction: column)
 
-.landing-section-content .landing-section-text h1 {
-  color: var(--cassandra-blue);
-  font-weight: bolder;
-}
+      h1 
+        color: variables.$cassandra-blue
+        font-weight: bolder
 
-.landing-terminal {
-  width: 600px;
-  height: 300px;
-  background-color: var(--cassandra-black);
-  border-radius: 10px;
-  padding: 1rem;
-}
+.summary-section 
+  color: variables.$cassandra-white
+  background-color: variables.$cassandra-blue
+  min-height: 100vh
+  
+  .summary-container 
+    @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+  
+.authentication-section 
+  min-height: 100vh
+  background-color: variables.$cassandra-white
 
-.command-line {
-  color: var(--cassandra-white);
-}
+  .authentication-container 
+    @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
-img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-}
 
-@keyframes blipping {
-  from {
-    color: var(--cassandra-white);
-  }
-  to {
-    color: var(--cassandra-black);
-  }
-}
+%delimiter 
+  aspect-ratio: 900/300
+  width: 100%
+  background-repeat: no-repeat
+  background-position: center
+  background-size: cover
 
-.blip {
-  animation-name: blipping;
-  animation-duration: 1s;
-  animation-iteration-count: infinite;
-}
+.delimiter-positive 
+  @extend %delimiter
+  background-image: url('../assets/svg/layered-waves.svg')
 
-.homeview-body > .landing-section > .landing-section-content h1 {
-  font-size: xx-large;
-  margin-top: 16px;
-}
-
-/* Styles related to the summary section */
-.summary-section {
-  min-height: 100vh;
-  color: var(--cassandra-white);
-  background-color: var(--cassandra-blue);
-}
-
-.homeview-body > .summary-section > h1 {
-  font-size: x-large;
-}
-
-.summary-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.summary-container * {
-  padding: 10px;
-}
-
-/* Styles related to the authentication section */
-.authentication-section {
-  min-height: 100vh;
-  background-color: var(--cassandra-white);
-}
-
-.authentication-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.delimiter-positive, .delimiter-negative {
-  aspect-ratio: 900/300;
-  width: 100%;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
-}
-
-.delimiter-positive {
-  background-image: url('../assets/svg/layered-waves.svg');
-}
-
-.delimiter-negative {
-  background-image: url('../assets/svg/layered-waves-negative.svg');
-}
+.delimiter-negative 
+  @extend %delimiter
+  background-image: url('../assets/svg/layered-waves-negative.svg')
 </style>

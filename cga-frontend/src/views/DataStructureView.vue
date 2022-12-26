@@ -4,11 +4,11 @@
   </div>
 </template>
 
-<style scoped>
-.flex {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+<style scoped lang="sass">
+@use "@/assets/styles/_containers.sass"
+
+.flex 
+  @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+  height: 100vh
+
 </style>
