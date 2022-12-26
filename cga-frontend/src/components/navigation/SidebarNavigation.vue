@@ -13,7 +13,7 @@
           </RouterLink>
         </template>
         <v-app-bar-title>
-          <v-list class="flex">
+          <v-list class="navigation-items-list">
             <RouterLink v-for="navigationItem in navigationItems" :key="navigationItem.key" :to="navigationItem.pathTo">
               <v-list-item  class="navigation-item"
                             :active="navigationItem.active"
@@ -21,7 +21,6 @@
                             :prepend-icon="navigationItem.icon"
                             :title="navigationItem.title"
                             :value="navigationItem.value"
-                            height="25"
                             @click="onNavigationItemClick(false, navigationItem.key)">
               </v-list-item>
             </RouterLink>
@@ -67,20 +66,21 @@ export default {
 };
 </script>
 
-<style scoped>
-.v-card {
-  z-index: 1;
-}
+<style scoped lang="sass">
+@use "@/assets/styles/_variables.sass"
+@use "@/assets/styles/_containers.sass"
 
-.flex {
-  display: flex;
-}
+.v-card 
+  z-index: 9999
 
-.navigation-item {
-  color: var(--cassandra-gray);
-}
+.navigation-items-list 
+  @include containers.flex-container($flex-direction: row)
 
-.navigation-item--active {
-  color: var(--cassandra-blue);
-}
+.navigation-item 
+  color: variables.$cassandra-gray
+
+
+.navigation-item--active 
+  color: variables.$cassandra-blue
+
 </style>

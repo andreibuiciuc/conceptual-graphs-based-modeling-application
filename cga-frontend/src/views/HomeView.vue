@@ -6,7 +6,7 @@
           <div class="landing-section-text">
             <h1 style="font-size: 60px;">CGA</h1>
             <h2 style="font-size: 20px">The interface for modeling Cassandra data structures and querying data, 
-              based on Conceptual Graphs. Start exploring databases and move from blipping consoles to a friendlier
+              based on Conceptual Graphs. Start exploring Cassandra databases and move from blipping consoles to a friendlier
               Visual Query System.</h2>
           </div>
         </div>
