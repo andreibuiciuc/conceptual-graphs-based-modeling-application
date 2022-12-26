@@ -1,0 +1,10 @@
+@mixin flex-container($flex-direction: row, $justify-content: flex-start, $align-items: flex-start)
+    display: flex
+    flex-direction: $flex-direction
+    justify-content: $justify-content
+    align-items: $align-items
+
+section
+    @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+    position: relative
+    padding: 0 10vw

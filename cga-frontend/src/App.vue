@@ -5,12 +5,12 @@
 
 <script>
 import { RouterView } from 'vue-router'
-import SidebarNavigation from './components/SidebarNavigation.vue'
+import SidebarNavigation from './components/navigation/SidebarNavigation.vue'
 
 export default {
   name: "App",
   components: {
     SidebarNavigation
-  }
+  },
 }
 </script>
