@@ -1,3 +1,5 @@
+@use '@/assets/styles/_variables.sass'
+
 @mixin flex-container($flex-direction: row, $justify-content: flex-start, $align-items: flex-start)
     display: flex
     flex-direction: $flex-direction
@@ -8,3 +10,16 @@ section
     @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
     position: relative
     padding: 0 10vw
+
+.v-overlay__content
+    @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+.action-button
+    border-color: variables.$cassandra-blue
+    background-color: variables.$cassandra-white
+    color: variables.$cassandra-blue
+
+    &:hover
+        border-color: variables.$cassandra-blue
+        background-color: variables.$cassandra-blue
+        color: variables.$cassandra-white

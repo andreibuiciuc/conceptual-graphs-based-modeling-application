@@ -25,24 +25,36 @@
     </section>
     <div class="delimiter-negative"></div>
     <!-- TODO: Authentication section -->
-    <section class="authentication-section">
+    <section class="authentication-section" id="auth">
       <div class="authentication-container">
-        <h1>Start exploring databases</h1>
-        <v-btn variant="outlined">
-          Start
-        </v-btn>
+        <h1>Want to start exploring databases? Create an account and you're ready to go.</h1>
+        <AuthRegister />
       </div>
     </section>
   </div>
 </template>
 
 <script>
+import { mapWritableState } from 'pinia';
+import useAuthModalStore from '@/stores/authModal';
+
 import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
+import AuthRegister from '@/components/authentication/AuthRegister.vue';
 
 export default {
   name: "HomeView",
   components: {
-    CassandraTerminal
+    CassandraTerminal,
+    AuthRegister
+  },
+  computed: {
+    ...mapWritableState(useAuthModalStore, ['isModalOpened']),
+  },
+  methods: {
+    toggleAuthModal: function () {
+      this.isModalOpened = !this.isModalOpened;
+      console.log(this.isModalOpened);
+    }
   }
 }
 </script>
@@ -52,8 +64,11 @@ export default {
 @use "@/assets/styles/_containers.sass"
 
 .homepage
+    overflow-y: auto
+    scroll-behavior: smooth
     margin: 0
     margin-top: variables.$cga-topbar-height
+    height: calc(100vh - variables.$cga-topbar-height)
 
 .landing-section 
   @include containers.flex-container($align-items: center)

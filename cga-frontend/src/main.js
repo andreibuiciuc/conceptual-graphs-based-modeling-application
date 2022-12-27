@@ -11,6 +11,9 @@ import * as directives from 'vuetify/lib/directives/index.mjs'
 // Router related imports
 import router from './router'
 
+// Validation related imports
+import VeeValidatePlugin from './includes/validation'
+
 // Root component
 import App from './App.vue'
 
@@ -31,5 +34,6 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(vuetify)
 app.use(router)
+app.use(VeeValidatePlugin)
 
 app.mount('#app')

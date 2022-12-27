@@ -26,6 +26,17 @@
             </RouterLink>
           </v-list>
         </v-app-bar-title>
+        <template #append>
+          <v-list>
+            <a href="#auth"> 
+              <v-list-item class="authentication-item" 
+                          value="logIn" 
+                          title="Log In"
+                          append-icon="mdi-account">
+              </v-list-item>
+            </a>
+          </v-list>
+        </template>
       </v-app-bar>
     </v-layout>
   </v-card>
@@ -35,7 +46,7 @@
 import navigationConstants from './navigationConstants.js';
 
 export default {
-    name: "SidebarNavigation",
+    name: "TopbarNavigation",
     data: () => {
       return {
         title: "CGA",
@@ -57,7 +68,7 @@ export default {
           this.navigationItems[index].active = true;
           this.currentNavigationIndex = index;
         }
-      }
+      },
     },
     created: function () {
       this.navigationHeader = navigationConstants.toolbar.navigationHeader;
@@ -76,9 +87,8 @@ export default {
 .navigation-items-list 
   @include containers.flex-container($flex-direction: row)
 
-.navigation-item 
+.navigation-item, .authentication-item 
   color: variables.$cassandra-gray
-
 
 .navigation-item--active 
   color: variables.$cassandra-blue
