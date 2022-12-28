@@ -28,7 +28,7 @@
     <section class="authentication-section" id="auth">
       <div class="authentication-container">
         <h1>Want to start exploring databases? Create an account and you're ready to go.</h1>
-        <AuthRegister />
+        <AuthenticationModal />
       </div>
     </section>
   </div>
@@ -39,13 +39,13 @@ import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 
 import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
-import AuthRegister from '@/components/authentication/AuthRegister.vue';
+import AuthenticationModal from '@/components/authentication/AuthenticationModal.vue';
 
 export default {
   name: "HomeView",
   components: {
     CassandraTerminal,
-    AuthRegister
+    AuthenticationModal
   },
   computed: {
     ...mapWritableState(useAuthModalStore, ['isModalOpened']),

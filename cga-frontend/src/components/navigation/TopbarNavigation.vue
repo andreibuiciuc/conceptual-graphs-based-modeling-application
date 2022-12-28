@@ -28,7 +28,7 @@
         </v-app-bar-title>
         <template #append>
           <v-list>
-            <a :href="isUserLoggedIn ? constants.INPPUT_VALUES.EMPTY : '#auth'"> 
+            <a :href="scrollToHref"> 
               <v-list-item class="authentication-item" 
                           :value="isUserLoggedIn ? 'logout' : 'login'" 
                           :title="isUserLoggedIn ? 'Logout' : 'Login'"
@@ -61,7 +61,10 @@ export default {
       };
     },
     computed: {
-      ...mapState(useUserStore, ["isUserLoggedIn"])
+      ...mapState(useUserStore, ["isUserLoggedIn"]),
+      scrollToHref: function () {
+        return this.isUserLoggedIn ? constants.inputValues.empty : '#auth';
+      }
     },  
     methods: {
       onNavigationItemClick: function (isHomeLink, navigationItemKey) {
@@ -80,6 +83,7 @@ export default {
     created: function () {
       this.navigationHeader = navigationConstants.toolbar.navigationHeader;
       this.navigationItems = navigationConstants.toolbar.navigationItems;
+      console.log(this.isUserLoggedIn);
     }
 };
 </script>

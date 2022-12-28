@@ -1,5 +1,15 @@
 export default {
-    INPUT_VALUES: {
-        EMPTY: ""
+    inputValues: {
+        empty: ""
+    },
+    defaultLoginCredentials: {
+        email: "",
+        password: ""
+    },
+    defaultRegisterCredentials: {
+        firstname: "",
+        lastname: "",
+        email: "",
+        password: ""
     }
-};
+}; 

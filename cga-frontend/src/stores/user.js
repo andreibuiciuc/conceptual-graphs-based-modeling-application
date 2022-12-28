@@ -2,6 +2,8 @@ import { defineStore } from "pinia";
 
 export default defineStore("user", {
     state: () => {
-        isUserLoggedIn: false
+        return {
+            isUserLoggedIn: false
+        }
     }
 });

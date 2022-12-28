@@ -9,7 +9,9 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@vee-validate/rules": "^4.7.3",
     "firebase": "^8.10.1",
+    "install": "^0.13.0",
     "pinia": "^2.0.26",
     "vee-validate": "^4.7.3",
     "vue": "^3.2.45",
