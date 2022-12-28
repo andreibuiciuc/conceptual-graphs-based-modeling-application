@@ -10,25 +10,16 @@
           <v-card-title class="d-flex justify-center">{{ authModalTitle }}</v-card-title>
           <v-card-text>
             <div class="form-container">
-              <vee-form :validation-schema="registerValidationSchema" @submit="onSubmit">
-                <vee-field name="firstname" v-slot="{ field, errors }">
-                  <v-text-field v-bind="field" variant="outlined" label="Firstname" :error-messages="errors" />
-                </vee-field>
+              
+              <RegisterForm v-if="isRegisterModalActive" />
+              
+              <LoginForm v-else />
 
-                <vee-field name="lastname" v-slot="{ field, errors }">
-                  <v-text-field v-bind="field" variant="outlined" label="Lastname" :error-messages="errors" />
-                </vee-field>
-
-                <vee-field name="email" v-slot="{ field, errors }">
-                  <v-text-field v-bind="field" variant="outlined" label="Email" :error-messages="errors" />
-                </vee-field>
-
-                <vee-field name="password" v-slot="{ field, errors }">
-                  <v-text-field v-bind="field" variant="outlined" label="Password" :error-messages="errors" />
-                </vee-field>
-              </vee-form>
-              <span class="account-link">Already have an account?</span>
-          </div>
+              <span class="account-link" @click.prevent="switchAuthModal">
+                {{ isRegisterModalActive ? 'Already have an account?' : "Create a new account." }}
+              </span>
+          
+            </div>
         </v-card-text>
           <v-card-actions class="justify-end pr-6">
             <v-btn variant="text" @click="toggleAuthModal, isActive.value = false">Close</v-btn>
@@ -44,29 +35,28 @@
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 
+import RegisterForm from '@/components/authentication/RegisterForm.vue';
+import LoginForm from '@/components/authentication/LoginForm.vue';
+
 export default {
     name: "AuthRegister",
-    data: () => {
-      return {
-        isRegisterModalActive: true,
-        registerValidationSchema: {
-
-        }
-      }
+    components: {
+      RegisterForm,
+      LoginForm
     },
     computed: {
-      ...mapWritableState(useAuthModalStore, ["isModalOpened"]),
+      ...mapWritableState(useAuthModalStore, ['isModalOpened', 'isRegisterModalActive']),
       authModalTitle: function () {
-        return "Sign up";
+        return this.isRegisterModalActive ? 'Sign up' : 'Sign in';
       }
     },
     methods: {
       toggleAuthModal: function () {
         this.isModalOpened = !this.isModalOpened;
       },
-      onSubmit: function () {
-
-      }
+      switchAuthModal: function () {
+        this.isRegisterModalActive = !this.isRegisterModalActive;
+      },
     }
 }
 </script>

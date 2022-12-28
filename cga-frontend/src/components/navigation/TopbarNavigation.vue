@@ -13,7 +13,7 @@
           </RouterLink>
         </template>
         <v-app-bar-title>
-          <v-list class="navigation-items-list">
+          <v-list class="navigation-items-list" v-if="isUserLoggedIn">
             <RouterLink v-for="navigationItem in navigationItems" :key="navigationItem.key" :to="navigationItem.pathTo">
               <v-list-item  class="navigation-item"
                             :active="navigationItem.active"
@@ -28,10 +28,10 @@
         </v-app-bar-title>
         <template #append>
           <v-list>
-            <a href="#auth"> 
+            <a :href="isUserLoggedIn ? constants.INPPUT_VALUES.EMPTY : '#auth'"> 
               <v-list-item class="authentication-item" 
-                          value="logIn" 
-                          title="Log In"
+                          :value="isUserLoggedIn ? 'logout' : 'login'" 
+                          :title="isUserLoggedIn ? 'Logout' : 'Login'"
                           append-icon="mdi-account">
               </v-list-item>
             </a>
@@ -43,7 +43,11 @@
 </template>
 
 <script>
+import constants from '@/constants/constants.js';
 import navigationConstants from './navigationConstants.js';
+
+import { mapState } from 'pinia';
+import useUserStore from '@/stores/user'
 
 export default {
     name: "TopbarNavigation",
@@ -56,6 +60,9 @@ export default {
         currentNavigationIndex: 0
       };
     },
+    computed: {
+      ...mapState(useUserStore, ["isUserLoggedIn"])
+    },  
     methods: {
       onNavigationItemClick: function (isHomeLink, navigationItemKey) {
         if (isHomeLink) {
