@@ -1,5 +1,5 @@
 <template>
-<vee-form :validation-schema="registerValidationSchema">
+<vee-form :validation-schema="registerValidationSchema" @submit.prevent="submit">
     <vee-field name="firstname" v-slot="{ field, errors }">
         <v-text-field v-bind="field" v-model="registerCredentials.firstname" 
                       variant="outlined" 
@@ -32,6 +32,7 @@
                      :error-messages="errors"
                      @click:append-inner="showPassword = !showPassword" />
     </vee-field>
+    <v-btn variant="outlined" type="submit" class="action-button submit-button">Submit</v-btn>
 </vee-form>
 </template>
 
@@ -48,7 +49,7 @@ export default {
                 firstname: 'required|min:3|max:50|alpha_spaces',
                 lastname: 'required|min:3|max:50|alpha_spaces',
                 email: 'required|min:3|max:50|email',
-                password: 'required'
+                password: 'required|min:3|max:50'
             },
             registerCredentials: null,
             showPassword: false
@@ -56,6 +57,11 @@ export default {
     },
     computed: {
         ...mapWritableState(useAuthModalStore, ['isModalOpened'])
+    },
+    methods: {
+        submit: function () {
+            console.log("Here");
+        }
     },  
     created: function () {
         this.registerCredentials = Object.assign({}, constants.defaultRegisterCredentials);

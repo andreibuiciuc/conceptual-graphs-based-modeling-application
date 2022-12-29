@@ -83,7 +83,6 @@ export default {
     created: function () {
       this.navigationHeader = navigationConstants.toolbar.navigationHeader;
       this.navigationItems = navigationConstants.toolbar.navigationItems;
-      console.log(this.isUserLoggedIn);
     }
 };
 </script>

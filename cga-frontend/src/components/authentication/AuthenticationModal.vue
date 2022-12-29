@@ -31,12 +31,7 @@
                     <LoginForm key="login-form" v-else />
                   </Transition>
               </div>
-          </v-card-text>
-            <v-card-actions class="pl-6 pr-6">
-              <v-btn variant="outlined" 
-                     class="action-button submit-button"
-                     @click.prevent="authenticate();isActive.value=false">Submit</v-btn>
-            </v-card-actions>
+            </v-card-text>
           </v-card>
       </template>
     </v-dialog>
@@ -67,25 +62,6 @@ export default {
       },
       switchAuthModal: function (isRegisterModalActive = false) {
         this.isRegisterModalActive = isRegisterModalActive;
-      },
-      authenticate: function (isActive) {
-        switch (this.isRegisterModalActive) {
-          case true:
-            this.register();
-            break;
-          case false:
-            this.login();
-            break;
-          default:
-            this.toggleAuthModal(false);    
-        }
-      },
-      register: function () {
-        this.login();
-      },
-      login: function () {
-        this.isUserLoggedIn = true;
-        this.toggleAuthModal(false);
       }
     }
 }

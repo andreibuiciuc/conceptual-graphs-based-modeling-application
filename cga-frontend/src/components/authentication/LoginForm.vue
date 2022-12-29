@@ -18,6 +18,7 @@
                       @click:append-inner="showPassword = !showPassword"
                       :error-messages="errors" />
     </vee-field>
+    <v-btn variant="outlined" type="submit" class="action-button submit-button">Submit</v-btn>
 </vee-form>
 </template>
 
