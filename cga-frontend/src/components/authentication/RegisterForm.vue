@@ -44,15 +44,12 @@
         Submit
     </v-btn>
 </vee-form>
-
 </template>
 
 <script>
 import constants from '@/constants/constants';
 
-import { auth, usersCollection } from '@/includes/firebase';
-
-import { mapWritableState } from 'pinia';
+import { mapWritableState, mapActions } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
 
@@ -75,9 +72,11 @@ export default {
     }),
     computed: {
         ...mapWritableState(useAuthModalStore, ['isModalOpened']),
-        ...mapWritableState(useUserStore, ['isUserLoggedIn'])
     },
     methods: {
+        // These methods are mapped from the user store.
+        ...mapActions(useUserStore, { authenticate: 'register' }),
+        // These methods are used for handling component related logic.
         setUpSnackbarState: function (success = true, message = constants.inputValues.empty) {
             switch (success) {
                 case true:
@@ -102,29 +101,15 @@ export default {
             this.setUpSnackbarState();
             this.$emit('snackbar', this.snackbarState);
         },
+        // These methods handle the authentication process.
         async register () {
             this.isRegistrationInSubmission = true;
-
             try {
-                await auth.createUserWithEmailAndPassword(
-                    this.registerCredentials.email, this.registerCredentials.password
-                );
+                await this.authenticate(this.registerCredentials);
             } catch (error) {
                 this.handleRegistrationError(error);
                 return;
             }
-
-            try {
-                await usersCollection.add({
-                    firstname: this.registerCredentials.firstname,
-                    lastname: this.registerCredentials.lastname,
-                    email: this.registerCredentials.email
-                });
-            } catch (error) {
-                this.handleRegistrationError(error);
-            }
-
-            this.isUserLoggedIn = true;
             this.isModalOpened = false;
             this.handleRegistrationSuccess();
         }
