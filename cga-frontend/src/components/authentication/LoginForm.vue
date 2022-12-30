@@ -1,10 +1,11 @@
 <template>
-<vee-form :validation-schema="loginValidationSchema">
+<vee-form :validation-schema="loginValidationSchema" @submit="login">
     <vee-field name="email" v-slot="{ field, errors }">
         <v-text-field v-bind="field" v-model="loginCredentials.email"
                       variant="outlined" 
                       label="Email" 
                       suffix="@gmail.com"
+                      maxlength="50"
                       :value="loginCredentials.email"
                       :error-messages="errors" />
     </vee-field>
@@ -13,6 +14,7 @@
                       :value="loginCredentials.password"
                       variant="outlined" 
                       label="Password"
+                      maxlength="50"
                       :type="showPassword ? 'text' : 'password'"
                       :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'" 
                       @click:append-inner="showPassword = !showPassword"
@@ -27,14 +29,17 @@ import constants from '@/constants/constants'
 
 export default {
     name: "LoginForm",
-    data: () => {
-        return {
-            loginValidationSchema: { 
-                email: 'required|min:3|max:50|email',
-                password: 'required|min:3|max:50'
-            },
-            loginCredentials: null,
-            showPassword: false
+    data: () => ({
+        loginValidationSchema: { 
+            email: 'required|min:3|max:50|email',
+            password: 'required|min:6|max:50'
+        },
+        loginCredentials: null,
+        showPassword: false
+    }),
+    methods: {
+        login: function () {
+
         }
     },
     created: function () {

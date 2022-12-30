@@ -51,15 +51,13 @@ import useUserStore from '@/stores/user'
 
 export default {
     name: "TopbarNavigation",
-    data: () => {
-      return {
-        title: "CGA",
-        subtitle: "Cassandra",
-        navigationHeader: null,
-        navigationItems: null,
-        currentNavigationIndex: 0
-      };
-    },
+    data: () => ({
+      title: "CGA",
+      subtitle: "Cassandra",
+      navigationHeader: null,
+      navigationItems: null,
+      currentNavigationIndex: 0
+    }),
     computed: {
       ...mapState(useUserStore, ["isUserLoggedIn"]),
       scrollToHref: function () {

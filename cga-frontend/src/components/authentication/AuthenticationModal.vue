@@ -9,7 +9,7 @@
               <div class="d-flex justify-space-between align-center">
                 <span>Your account</span>
                 <v-btn icon flat rounded="0">
-                  <v-icon @click.prevent="toggleAuthModal(false), isActive.value = false">mdi-close</v-icon>
+                  <v-icon @click.prevent="toggleAuthModal(false); isActive.value = false">mdi-close</v-icon>
                 </v-btn>
               </div>
               <div>
@@ -27,7 +27,7 @@
             <v-card-text>
               <div class="form-container">
                   <Transition name="slide" mode="out-in">
-                    <RegisterForm key="register-form" v-if="isRegisterModalActive" />
+                    <RegisterForm key="register-form" v-if="isRegisterModalActive" @snackbar="triggerSnackbar($event)" />
                     <LoginForm key="login-form" v-else />
                   </Transition>
               </div>
@@ -35,9 +35,12 @@
           </v-card>
       </template>
     </v-dialog>
+    <CustomSnackbar v-model="snackbar.isVisible" :message="snackbar.message" :status="snackbar.status" />
 </template>
 
 <script>
+import constants from '@/constants/constants';
+
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
@@ -45,12 +48,21 @@ import useUserStore from '@/stores/user';
 import RegisterForm from '@/components/authentication/RegisterForm.vue';
 import LoginForm from '@/components/authentication/LoginForm.vue';
 
+import CustomSnackbar from '../utilities/CustomSnackbar.vue';
+
 export default {
     name: "AuthenticationModal",
     components: {
       RegisterForm,
-      LoginForm
+      LoginForm,
+      CustomSnackbar
     },
+    data: () => ({
+      snackbar: {
+        message: constants.inputValues.empty,
+        variant: constants.inputValues.empty
+      }
+    }),
     computed: {
       ...mapWritableState(useAuthModalStore, ['isModalOpened', 'isRegisterModalActive']),
       ...mapWritableState(useUserStore, ['isUserLoggedIn'])
@@ -62,7 +74,11 @@ export default {
       },
       switchAuthModal: function (isRegisterModalActive = false) {
         this.isRegisterModalActive = isRegisterModalActive;
-      }
+      },
+      triggerSnackbar: function (snackbar) {
+        this.snackbar = Object.assign({}, snackbar);
+        this.snackbar.isVisible = true;
+      },
     }
 }
 </script>
@@ -97,13 +113,6 @@ export default {
 
   form
     width: 100%
-
-  .account-link 
-    color: variables.$cassandra-blue
-    cursor: pointer
-
-    &:hover
-      color: variables.$cassandra-black
 
 .slide-enter-from
   opacity: 0
