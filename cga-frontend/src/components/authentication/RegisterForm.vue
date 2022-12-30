@@ -40,7 +40,8 @@
            type="submit" 
            class="action-button submit-button" 
            :loading="isRegistrationInSubmission"
-           :disabled="isRegistrationInSubmission">Submit
+           :disabled="isRegistrationInSubmission">
+        Submit
     </v-btn>
 </vee-form>
 
@@ -49,10 +50,11 @@
 <script>
 import constants from '@/constants/constants';
 
-import firebase from '@/includes/firebase';
+import { auth, usersCollection } from '@/includes/firebase';
 
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
+import useUserStore from '@/stores/user';
 
 export default {
     name: 'RegisterForm',
@@ -72,7 +74,8 @@ export default {
         isRegistrationInSubmission: false
     }),
     computed: {
-        ...mapWritableState(useAuthModalStore, ['isModalOpened'])
+        ...mapWritableState(useAuthModalStore, ['isModalOpened']),
+        ...mapWritableState(useUserStore, ['isUserLoggedIn'])
     },
     methods: {
         setUpSnackbarState: function (success = true, message = constants.inputValues.empty) {
@@ -89,24 +92,41 @@ export default {
                     break;
             }
         },
+        handleRegistrationError: function (error) {
+            this.isRegistrationInSubmission = false;
+            this.setUpSnackbarState(false, error.message);
+            this.$emit('snackbar', this.snackbarState);
+        },
+        handleRegistrationSuccess: function () {
+            this.isRegistrationInSubmission = false;
+            this.setUpSnackbarState();
+            this.$emit('snackbar', this.snackbarState);
+        },
         async register () {
             this.isRegistrationInSubmission = true;
 
             try {
-                await firebase.auth().createUserWithEmailAndPassword(
+                await auth.createUserWithEmailAndPassword(
                     this.registerCredentials.email, this.registerCredentials.password
                 );
             } catch (error) {
-                this.isRegistrationInSubmission = false;
-                this.setUpSnackbarState(false, error.message);
-                this.$emit('snackbar', this.snackbarState);
+                this.handleRegistrationError(error);
                 return;
             }
 
-            this.isRegistrationInSubmission = false;
-            this.setUpSnackbarState();
-            this.$emit('snackbar', this.snackbarState);
-            window.location.reload();
+            try {
+                await usersCollection.add({
+                    firstname: this.registerCredentials.firstname,
+                    lastname: this.registerCredentials.lastname,
+                    email: this.registerCredentials.email
+                });
+            } catch (error) {
+                this.handleRegistrationError(error);
+            }
+
+            this.isUserLoggedIn = true;
+            this.isModalOpened = false;
+            this.handleRegistrationSuccess();
         }
     },  
     created: function () {

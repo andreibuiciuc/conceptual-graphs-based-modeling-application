@@ -1,39 +1,34 @@
 <template>
-    <v-dialog persistent transition="dialog-bottom-transition">
-      <template v-slot:activator="{ props }">
-        <v-btn v-bind="props" variant="outlined" @click.prevent="toggleAuthModal(true)">Create an account</v-btn>
-      </template>
-      <template v-slot:default="{ isActive }">
-          <v-card width="500">
-            <v-card-title>
-              <div class="d-flex justify-space-between align-center">
-                <span>Your account</span>
-                <v-btn icon flat rounded="0">
-                  <v-icon @click.prevent="toggleAuthModal(false); isActive.value = false">mdi-close</v-icon>
-                </v-btn>
-              </div>
-              <div>
-                <v-btn variant="outlined" 
-                      class="action-button register-button" 
-                      :class="{ 'action-button-active': isRegisterModalActive }"
-                      @click.prevent="switchAuthModal">Register
-                </v-btn>
-                <v-btn variant="outlined" 
-                      class="action-button login-button"
-                      :class="{ 'action-button-active': !isRegisterModalActive }" 
-                      @click.prevent="switchAuthModal(false)">Login</v-btn>
-              </div>
-            </v-card-title>
-            <v-card-text>
-              <div class="form-container">
-                  <Transition name="slide" mode="out-in">
-                    <RegisterForm key="register-form" v-if="isRegisterModalActive" @snackbar="triggerSnackbar($event)" />
-                    <LoginForm key="login-form" v-else />
-                  </Transition>
-              </div>
-            </v-card-text>
-          </v-card>
-      </template>
+    <v-dialog v-model="isModalOpened" v-if="isModalOpened" persistent transition="dialog-bottom-transition">
+      <v-card width="500">
+        <v-card-title>
+          <div class="d-flex justify-space-between align-center">
+            <span>Your account</span>
+            <v-btn icon flat rounded="0">
+              <v-icon @click.prevent="closeAuthModal">mdi-close</v-icon>
+            </v-btn>
+          </div>
+          <div>
+            <v-btn variant="outlined" 
+                  class="action-button register-button" 
+                  :class="{ 'action-button-active': isRegisterModalActive }"
+                  @click.prevent="switchAuthModal">Register
+            </v-btn>
+            <v-btn variant="outlined" 
+                  class="action-button login-button"
+                  :class="{ 'action-button-active': !isRegisterModalActive }" 
+                  @click.prevent="switchAuthModal(false)">Login</v-btn>
+          </div>
+        </v-card-title>
+        <v-card-text>
+          <div class="form-container">
+              <Transition name="slide" mode="out-in">
+                <RegisterForm key="register-form" v-if="isRegisterModalActive" @snackbar="triggerSnackbar($event)" />
+                <LoginForm key="login-form" v-else />
+              </Transition>
+          </div>
+        </v-card-text>
+      </v-card>
     </v-dialog>
     <CustomSnackbar v-model="snackbar.isVisible" :message="snackbar.message" :status="snackbar.status" />
 </template>
@@ -68,9 +63,9 @@ export default {
       ...mapWritableState(useUserStore, ['isUserLoggedIn'])
     },
     methods: {
-      toggleAuthModal: function (isAuthModalOpened) {
+      closeAuthModal: function () {
         this.isRegisterModalActive = true;
-        this.isModalOpened = isAuthModalOpened;
+        this.isModalOpened = false;
       },
       switchAuthModal: function (isRegisterModalActive = false) {
         this.isRegisterModalActive = isRegisterModalActive;

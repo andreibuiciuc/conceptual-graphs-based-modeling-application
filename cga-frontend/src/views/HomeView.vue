@@ -5,7 +5,8 @@
         <div class="landing-section-content">
           <div class="landing-section-text">
             <h1 style="font-size: 60px;">CGA</h1>
-            <h2 style="font-size: 20px">The interface for modeling Cassandra data structures and querying data, 
+            <h2 style="font-size: 20px">
+              The interface for modeling Cassandra data structures and querying data, 
               based on Conceptual Graphs. Start exploring Cassandra databases and move from blipping consoles to a friendlier
               Visual Query System.</h2>
           </div>
@@ -28,6 +29,9 @@
     <section class="authentication-section" id="auth">
       <div class="authentication-container">
         <h1>Want to start exploring databases? Create an account and you're ready to go.</h1>
+        <v-btn variant="outlined" @click.prevent="isModalOpened = true">
+          Create an account
+        </v-btn>
         <AuthenticationModal />
       </div>
     </section>
@@ -49,12 +53,6 @@ export default {
   },
   computed: {
     ...mapWritableState(useAuthModalStore, ['isModalOpened']),
-  },
-  methods: {
-    toggleAuthModal: function () {
-      this.isModalOpened = !this.isModalOpened;
-      console.log(this.isModalOpened);
-    }
   }
 }
 </script>
