@@ -22,10 +22,10 @@
         </v-card-title>
         <v-card-text>
           <div class="form-container">
-              <Transition name="slide" mode="out-in">
-                <RegisterForm key="register-form" v-if="isRegisterModalActive" @snackbar="triggerSnackbar($event)" />
-                <LoginForm key="login-form" v-else />
-              </Transition>
+              <transition name="slide" mode="out-in">
+                <register-form key="register-form" v-if="isRegisterModalActive" @snackbar="triggerSnackbar($event)" />
+                <login-form key="login-form" v-else />
+              </transition>
           </div>
         </v-card-text>
       </v-card>

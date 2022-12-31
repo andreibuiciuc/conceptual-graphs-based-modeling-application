@@ -4,7 +4,7 @@ export default {
       title: "CGA",
       subtitle: "Cassandra",
       avatar: "/cassandra.png",
-      pathTo: "/"
+      pathTo: "home"
     },
     navigationItems: [
         {
@@ -12,7 +12,7 @@ export default {
           title: "Data Structure CG Design",
           value: "dataStructure",
           icon: "mdi-family-tree",
-          pathTo: "/data-structure",
+          pathTo: "data-structure",
           active: false
         },
         {
@@ -20,7 +20,7 @@ export default {
           title: "Query CG Design",
           value: "query",
           icon: "mdi-database-search",
-          pathTo: "/query",
+          pathTo: "query",
           active: false
         },
     ],

@@ -1,7 +1,7 @@
 <template>
-  <TopbarNavigation />
-  <RouterView />
-  <CustomSnackbar />
+  <topbar-navigation />
+  <router-view />
+  <custom-snackbar />
 </template>
 
 <script>

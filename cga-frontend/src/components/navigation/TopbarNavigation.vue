@@ -3,7 +3,7 @@
     <v-layout>
       <v-app-bar elevation="1" height="88">
         <template #prepend>
-          <RouterLink :to="navigationHeader.pathTo">
+          <RouterLink :to="{ name: navigationHeader.pathTo }">
             <v-list-item class="navigation-item"
                          :prepend-avatar="navigationHeader.avatar"
                          :title="navigationHeader.title"
@@ -14,7 +14,8 @@
         </template>
         <v-app-bar-title>
           <v-list class="navigation-items-list" v-if="isUserLoggedIn">
-            <RouterLink v-for="navigationItem in navigationItems" :key="navigationItem.key" :to="navigationItem.pathTo">
+            <RouterLink v-for="navigationItem in navigationItems" :key="navigationItem.key" 
+                        :to="{ name: navigationItem.pathTo }">
               <v-list-item  class="navigation-item"
                             :active="navigationItem.active"
                             active-class="navigation-item--active"

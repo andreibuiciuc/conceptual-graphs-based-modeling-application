@@ -11,7 +11,7 @@
               Visual Query System.</h2>
           </div>
         </div>
-        <CassandraTerminal />
+        <cassandra-terminal />
       </div>
     </section>
     <div class="delimiter-positive"></div>
@@ -34,7 +34,7 @@
                @click.prevent="isModalOpened = true">
           Create a new account <br /> or <br /> sign in 
         </v-btn>
-        <AuthenticationModal />
+        <authentication-modal />
       </div>
     </section>
   </div>

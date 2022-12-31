@@ -4,6 +4,22 @@
   </div>
 </template>
 
+<script>
+import useUserStore from '@/stores/user'
+
+export default {
+  name: "QueryView",
+  beforeRouteEnter: function (_from, _to, next) {
+    const store = useUserStore();
+    if (store.isUserLoggedIn) {
+      next();
+    } else {
+      next({ name: "home" });
+    }
+  }
+}
+</script>
+
 <style scoped lang="sass">
 @use "@/assets/styles/_containers.sass"
 
