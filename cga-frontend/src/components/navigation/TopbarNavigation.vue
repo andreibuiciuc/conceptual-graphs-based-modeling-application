@@ -28,13 +28,12 @@
         </v-app-bar-title>
         <template #append>
           <v-list>
-            <a :href="scrollToHref"> 
-              <v-list-item class="authentication-item" 
-                          :value="isUserLoggedIn ? 'logout' : 'login'" 
-                          :title="isUserLoggedIn ? 'Logout' : 'Login'"
-                          append-icon="mdi-account">
-              </v-list-item>
-            </a>
+            <v-list-item class="authentication-item"
+                        :value="isUserLoggedIn ? 'logout' : 'login'" 
+                        :title="isUserLoggedIn ? 'Logout' : 'Login'"
+                        append-icon="mdi-account"
+                        @click="logout">
+            </v-list-item>
           </v-list>
         </template>
       </v-app-bar>
@@ -46,7 +45,7 @@
 import constants from '@/constants/constants.js';
 import navigationConstants from './navigationConstants.js';
 
-import { mapState } from 'pinia';
+import { mapWritableState } from 'pinia';
 import useUserStore from '@/stores/user'
 
 export default {
@@ -59,7 +58,7 @@ export default {
       currentNavigationIndex: 0
     }),
     computed: {
-      ...mapState(useUserStore, ["isUserLoggedIn"]),
+      ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
       scrollToHref: function () {
         return this.isUserLoggedIn ? constants.inputValues.empty : '#auth';
       }
@@ -77,6 +76,16 @@ export default {
           this.currentNavigationIndex = index;
         }
       },
+      logout: function () {
+        if (this.isUserLoggedIn) {
+          this.isUserLoggedIn = false;
+        } else {
+          const authSection = document.getElementById('auth');
+          if (authSection) {
+            authSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }
     },
     created: function () {
       this.navigationHeader = navigationConstants.toolbar.navigationHeader;

@@ -27,6 +27,9 @@
 <script>
 import constants from '@/constants/constants'
 
+import { mapActions } from 'pinia';
+import useUserStore from '@/stores/user';
+
 export default {
     name: "LoginForm",
     data: () => ({
@@ -38,8 +41,19 @@ export default {
         showPassword: false
     }),
     methods: {
-        login: function () {
-
+        // These methods are mapped from the user store.
+        ...mapActions(useUserStore, { authenticate: "login" }),
+        // These methods handle the authentication process.~
+        login: async function () {
+            this.isRegistrationInSubmission = true;
+            try {
+                await this.authenticate(this.registerCredentials);
+            } catch (error) {
+                this.handleRegistrationError(error);
+                return;
+            }
+            this.isModalOpened = false;
+            this.handleRegistrationSuccess();
         }
     },
     created: function () {

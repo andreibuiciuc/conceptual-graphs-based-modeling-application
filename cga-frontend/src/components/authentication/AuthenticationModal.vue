@@ -30,7 +30,6 @@
         </v-card-text>
       </v-card>
     </v-dialog>
-    <CustomSnackbar v-model="snackbar.isVisible" :message="snackbar.message" :status="snackbar.status" />
 </template>
 
 <script>
@@ -69,10 +68,6 @@ export default {
       },
       switchAuthModal: function (isRegisterModalActive = false) {
         this.isRegisterModalActive = isRegisterModalActive;
-      },
-      triggerSnackbar: function (snackbar) {
-        this.snackbar = Object.assign({}, snackbar);
-        this.snackbar.isVisible = true;
       },
     }
 }

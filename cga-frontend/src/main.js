@@ -15,7 +15,7 @@ import router from './router';
 import VeeValidatePlugin from './includes/validation';
 
 // Firebase related imports
-import '@/includes/firebase';
+import { auth } from '@/includes/firebase';
 
 // Root component
 import App from './App.vue';
@@ -32,11 +32,16 @@ const vuetify = createVuetify({
     }
 });
 
-const app = createApp(App);
+let app;
+auth.onAuthStateChanged(() => {
+    if (!app) {
+        app = createApp(App);
 
-app.use(createPinia());
-app.use(vuetify);
-app.use(router);
-app.use(VeeValidatePlugin);
+        app.use(createPinia());
+        app.use(vuetify);
+        app.use(router);
+        app.use(VeeValidatePlugin);
 
-app.mount('#app');
+        app.mount('#app');
+    }
+});

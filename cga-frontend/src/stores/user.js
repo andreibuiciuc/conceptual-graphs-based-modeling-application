@@ -7,18 +7,23 @@ export default defineStore("user", {
         isUserLoggedIn: false
     }),
     actions: {
+        // Register the user by email and password using firebase sdk
         register: async function (registerCredentials) {
-            await auth.createUserWithEmailAndPassword(
+            const userCredentials = await auth.createUserWithEmailAndPassword(
                 registerCredentials.email, registerCredentials.password
             );
 
-            await usersCollection.add({
+            await usersCollection.doc(userCredentials.user.uid).set({
                 firstname: registerCredentials.firstname,
                 lastname: registerCredentials.lastname,
                 email: registerCredentials.email
             });
 
             this.isUserLoggedIn = true;
+        },
+        // Login the user
+        login: async function (loginCredentials) {
+
         }
     }
 });

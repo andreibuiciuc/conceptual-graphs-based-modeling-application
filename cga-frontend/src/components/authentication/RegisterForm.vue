@@ -52,6 +52,7 @@ import constants from '@/constants/constants';
 import { mapWritableState, mapActions } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
+import useNotificationStore from "@/stores/notification";
 
 export default {
     name: 'RegisterForm',
@@ -76,42 +77,21 @@ export default {
     methods: {
         // These methods are mapped from the user store.
         ...mapActions(useUserStore, { authenticate: 'register' }),
-        // These methods are used for handling component related logic.
-        setUpSnackbarState: function (success = true, message = constants.inputValues.empty) {
-            switch (success) {
-                case true:
-                    this.snackbarState.status = constants.snackbarStatuses.success;
-                    this.snackbarState.message = constants.snackbarMessages.registerSuccess;
-                    break;
-                case false:
-                    this.snackbarState.status = constants.snackbarStatuses.erorr;
-                    this.snackbarState.message = message;
-                    break;
-                default:
-                    break;
-            }
-        },
-        handleRegistrationError: function (error) {
-            this.isRegistrationInSubmission = false;
-            this.setUpSnackbarState(false, error.message);
-            this.$emit('snackbar', this.snackbarState);
-        },
-        handleRegistrationSuccess: function () {
-            this.isRegistrationInSubmission = false;
-            this.setUpSnackbarState();
-            this.$emit('snackbar', this.snackbarState);
-        },
-        // These methods handle the authentication process.
+        // These methods are mapped from the notification store.
+        ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
+        // These methods handle the registration process.
         async register () {
             this.isRegistrationInSubmission = true;
             try {
                 await this.authenticate(this.registerCredentials);
             } catch (error) {
-                this.handleRegistrationError(error);
+                this.isRegistrationInSubmission = false;
+                this.setUpSnackbarState(false, error.message);
                 return;
             }
+            this.isRegistrationInSubmission = false;
             this.isModalOpened = false;
-            this.handleRegistrationSuccess();
+            this.setUpSnackbarState();
         }
     },  
     created: function () {
