@@ -29,8 +29,10 @@
     <section class="authentication-section" id="auth">
       <div class="authentication-container">
         <h1>Want to start exploring databases? Create an account and you're ready to go.</h1>
-        <v-btn variant="outlined" @click.prevent="isModalOpened = true">
-          Create an account
+        <v-btn variant="outlined" 
+               class="auth-button"
+               @click.prevent="isModalOpened = true">
+          Create a new account <br /> or <br /> sign in 
         </v-btn>
         <AuthenticationModal />
       </div>
@@ -98,6 +100,8 @@ export default {
   .authentication-container 
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
+    .auth-button
+      height: auto
 
 %delimiter 
   aspect-ratio: 900/300

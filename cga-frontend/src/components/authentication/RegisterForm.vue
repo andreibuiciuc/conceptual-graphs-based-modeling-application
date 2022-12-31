@@ -65,10 +65,6 @@ export default {
         },
         registerCredentials: null,
         showPassword: false,
-        snackbarState: {
-            status: constants.inputValues.empty,
-            message: constants.inputValues.empty,
-        },
         isRegistrationInSubmission: false
     }),
     computed: {
@@ -80,7 +76,7 @@ export default {
         // These methods are mapped from the notification store.
         ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
         // These methods handle the registration process.
-        async register () {
+        register: async function () {
             this.isRegistrationInSubmission = true;
             try {
                 await this.authenticate(this.registerCredentials);
@@ -91,7 +87,7 @@ export default {
             }
             this.isRegistrationInSubmission = false;
             this.isModalOpened = false;
-            this.setUpSnackbarState();
+            this.setUpSnackbarState(true, constants.snackbarMessages.registerSuccess);
         }
     },  
     created: function () {

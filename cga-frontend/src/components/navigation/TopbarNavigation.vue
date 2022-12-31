@@ -29,10 +29,10 @@
         <template #append>
           <v-list>
             <v-list-item class="authentication-item"
-                        :value="isUserLoggedIn ? 'logout' : 'login'" 
-                        :title="isUserLoggedIn ? 'Logout' : 'Login'"
+                        :value="isUserLoggedIn ? 'signOut' : 'signIn'" 
+                        :title="isUserLoggedIn ? 'Sign Out' : 'Sign In'"
                         append-icon="mdi-account"
-                        @click="logout">
+                        @click="onAccountActionItemClick">
             </v-list-item>
           </v-list>
         </template>
@@ -45,8 +45,8 @@
 import constants from '@/constants/constants.js';
 import navigationConstants from './navigationConstants.js';
 
-import { mapWritableState } from 'pinia';
-import useUserStore from '@/stores/user'
+import { mapWritableState, mapActions } from 'pinia';
+import useUserStore from '@/stores/user';
 
 export default {
     name: "TopbarNavigation",
@@ -59,11 +59,11 @@ export default {
     }),
     computed: {
       ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
-      scrollToHref: function () {
-        return this.isUserLoggedIn ? constants.inputValues.empty : '#auth';
-      }
     },  
     methods: {
+      // These methods are mapped from the user store.
+      ...mapActions(useUserStore, ["signOut"]),
+      // These methods are component level based
       onNavigationItemClick: function (isHomeLink, navigationItemKey) {
         if (isHomeLink) {
           this.navigationItems[this.currentNavigationIndex].active = false;
@@ -76,14 +76,15 @@ export default {
           this.currentNavigationIndex = index;
         }
       },
-      logout: function () {
+      // These methods handle the signing out process
+      onAccountActionItemClick: function () {
         if (this.isUserLoggedIn) {
-          this.isUserLoggedIn = false;
-        } else {
-          const authSection = document.getElementById('auth');
-          if (authSection) {
-            authSection.scrollIntoView({ behavior: 'smooth' });
-          }
+          this.signOut();
+          return;
+        }
+        const authSectionElement = document.getElementById('auth');
+        if (authSectionElement) {
+          authSectionElement.scrollIntoView({ behavior: 'smooth' });
         }
       }
     },

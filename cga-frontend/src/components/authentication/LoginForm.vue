@@ -20,15 +20,23 @@
                       @click:append-inner="showPassword = !showPassword"
                       :error-messages="errors" />
     </vee-field>
-    <v-btn variant="outlined" type="submit" class="action-button submit-button">Submit</v-btn>
+    <v-btn variant="outlined" 
+           type="submit" 
+           class="action-button submit-button"
+           :loading="isLoginInSubmission"
+           :disabled="isLoginInSubmission">
+           Submit
+    </v-btn>
 </vee-form>
 </template>
 
 <script>
 import constants from '@/constants/constants'
 
-import { mapActions } from 'pinia';
+import { mapActions, mapWritableState } from 'pinia';
+import useAuthModalStore from "@/stores/authModal";
 import useUserStore from '@/stores/user';
+import useNotificationStore from "@/stores/notification";
 
 export default {
     name: "LoginForm",
@@ -38,22 +46,30 @@ export default {
             password: 'required|min:6|max:50'
         },
         loginCredentials: null,
-        showPassword: false
+        showPassword: false,
+        isLoginInSubmission: false
     }),
+    computed: {
+        ...mapWritableState(useAuthModalStore, ["isModalOpened"])
+    },
     methods: {
         // These methods are mapped from the user store.
         ...mapActions(useUserStore, { authenticate: "login" }),
-        // These methods handle the authentication process.~
+        // These methods are mapped from the notification store.
+        ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
+        // These methods handle the login process.
         login: async function () {
-            this.isRegistrationInSubmission = true;
+            this.isLoginInSubmission = true;
             try {
-                await this.authenticate(this.registerCredentials);
+                await this.authenticate(this.loginCredentials);
             } catch (error) {
-                this.handleRegistrationError(error);
+                this.isLoginInSubmission = false;
+                this.setUpSnackbarState(false, error.message);
                 return;
             }
+            this.isLoginInSubmission = false;
             this.isModalOpened = false;
-            this.handleRegistrationSuccess();
+            this.setUpSnackbarState(true, constants.snackbarMessages.loginSuccess);
         }
     },
     created: function () {

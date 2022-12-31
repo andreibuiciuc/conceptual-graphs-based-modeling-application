@@ -9,18 +9,8 @@ export default defineStore("notification", {
     }),
     actions: {
         setUpSnackbarState: function (success = true, message = constants.inputValues.empty) {
-            switch (success) {
-                case true:
-                    this.notificationStatus = constants.snackbarStatuses.success;
-                    this.notificationMessage = constants.snackbarMessages.registerSuccess;
-                    break;
-                case false:
-                    this.notificationStatus = constants.snackbarStatuses.error;
-                    this.notificationMessage = message;
-                    break;
-                default:
-                    break;
-            }
+            this.notificationStatus = success ? constants.snackbarStatuses.success : constants.snackbarStatuses.error;
+            this.notificationMessage = message;
             this.isNotificationTriggered = true;
         }
     }
