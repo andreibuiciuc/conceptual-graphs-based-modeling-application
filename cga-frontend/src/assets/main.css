@@ -1,9 +1,8 @@
 @import './base.css';
-@import './theme.css';
 @import url('https://fonts.googleapis.com/css?family=Roboto+Condensed');
 
 html {
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 #app {

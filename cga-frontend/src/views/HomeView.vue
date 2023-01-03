@@ -4,45 +4,60 @@
       <div class="landing-section-container">
         <div class="landing-section-content">
           <div class="landing-section-text">
-            <h1 style="font-size: 60px;">CGA</h1>
-            <h2 style="font-size: 20px">The interface for modeling Cassandra data structures and querying data, 
-              based on Conceptual Graphs. Start exploring Cassandra databases and move from blipping consoles to a friendlier
-              Visual Query System.</h2>
+            <h1>CGA</h1>
+            <h2>
+              The interface for modeling Cassandra data structures and querying data, 
+              based on Conceptual Graphs.
+            </h2>
+            <h2>
+              Start exploring Cassandra databases and move from blipping consoles to a friendlier
+              Visual Query System.
+            </h2>
           </div>
         </div>
-        <CassandraTerminal />
+        <cassandra-terminal />
       </div>
     </section>
     <div class="delimiter-positive"></div>
     <!-- TODO: Summary section -->
     <section class="summary-section">
       <div class="summary-container">
-        <h1>Start exploring databases</h1>
-        <v-btn variant="outlined">
-          Start
-        </v-btn>
+        <h1>Conceptual Graphs are a great visualization tool</h1>
       </div>
     </section>
     <div class="delimiter-negative"></div>
     <!-- TODO: Authentication section -->
-    <section class="authentication-section">
+    <section class="authentication-section" id="auth">
       <div class="authentication-container">
-        <h1>Start exploring databases</h1>
-        <v-btn variant="outlined">
-          Start
-        </v-btn>
+        <h1>Want to start exploring databases?</h1>
+        <v-card variant="outlined" class="auth-activator">
+          <v-card-text>
+            <v-btn variant="text" class="auth-button" @click.prevent="isModalOpened = true">
+              Create a new account <br /> or <br /> sign in 
+            </v-btn>
+          </v-card-text>
+        </v-card>
+        <authentication-modal />
       </div>
     </section>
   </div>
 </template>
 
 <script>
+import { mapWritableState } from 'pinia';
+import useAuthModalStore from '@/stores/authModal';
+
 import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
+import AuthenticationModal from '@/components/authentication/AuthenticationModal.vue';
 
 export default {
   name: "HomeView",
   components: {
-    CassandraTerminal
+    CassandraTerminal,
+    AuthenticationModal
+  },
+  computed: {
+    ...mapWritableState(useAuthModalStore, ['isModalOpened']),
   }
 }
 </script>
@@ -52,8 +67,11 @@ export default {
 @use "@/assets/styles/_containers.sass"
 
 .homepage
+    overflow-y: auto
+    scroll-behavior: smooth
     margin: 0
     margin-top: variables.$cga-topbar-height
+    height: calc(100vh - variables.$cga-topbar-height)
 
 .landing-section 
   @include containers.flex-container($align-items: center)
@@ -66,9 +84,6 @@ export default {
     .landing-section-text 
       @include containers.flex-container($flex-direction: column)
 
-      h1 
-        color: variables.$cassandra-blue
-        font-weight: bolder
 
 .summary-section 
   color: variables.$cassandra-white
@@ -77,6 +92,9 @@ export default {
   
   .summary-container 
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+    h1
+      color: variables.$cassandra-white
   
 .authentication-section 
   min-height: 100vh
@@ -85,6 +103,11 @@ export default {
   .authentication-container 
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
+    .auth-activator .v-card-text
+        padding: 0
+
+    .auth-button
+      height: auto
 
 %delimiter 
   aspect-ratio: 900/300
