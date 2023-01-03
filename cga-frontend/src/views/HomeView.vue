@@ -4,11 +4,15 @@
       <div class="landing-section-container">
         <div class="landing-section-content">
           <div class="landing-section-text">
-            <h1 style="font-size: 60px;">CGA</h1>
-            <h2 style="font-size: 20px">
+            <h1>CGA</h1>
+            <h2>
               The interface for modeling Cassandra data structures and querying data, 
-              based on Conceptual Graphs. Start exploring Cassandra databases and move from blipping consoles to a friendlier
-              Visual Query System.</h2>
+              based on Conceptual Graphs.
+            </h2>
+            <h2>
+              Start exploring Cassandra databases and move from blipping consoles to a friendlier
+              Visual Query System.
+            </h2>
           </div>
         </div>
         <cassandra-terminal />
@@ -18,22 +22,21 @@
     <!-- TODO: Summary section -->
     <section class="summary-section">
       <div class="summary-container">
-        <h1>Start exploring databases</h1>
-        <v-btn variant="outlined">
-          Start
-        </v-btn>
+        <h1>Conceptual Graphs are a great visualization tool</h1>
       </div>
     </section>
     <div class="delimiter-negative"></div>
     <!-- TODO: Authentication section -->
     <section class="authentication-section" id="auth">
       <div class="authentication-container">
-        <h1>Want to start exploring databases? Create an account and you're ready to go.</h1>
-        <v-btn variant="outlined" 
-               class="auth-button"
-               @click.prevent="isModalOpened = true">
-          Create a new account <br /> or <br /> sign in 
-        </v-btn>
+        <h1>Want to start exploring databases?</h1>
+        <v-card variant="outlined" class="auth-activator">
+          <v-card-text>
+            <v-btn variant="text" class="auth-button" @click.prevent="isModalOpened = true">
+              Create a new account <br /> or <br /> sign in 
+            </v-btn>
+          </v-card-text>
+        </v-card>
         <authentication-modal />
       </div>
     </section>
@@ -81,12 +84,6 @@ export default {
     .landing-section-text 
       @include containers.flex-container($flex-direction: column)
 
-      h1
-        color: variables.$cassandra-blue
-        font-style: normal
-        font-weight: 400
-        font-size: 72px
-        line-height: 80px
 
 .summary-section 
   color: variables.$cassandra-white
@@ -95,6 +92,9 @@ export default {
   
   .summary-container 
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+    h1
+      color: variables.$cassandra-white
   
 .authentication-section 
   min-height: 100vh
@@ -102,6 +102,9 @@ export default {
 
   .authentication-container 
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+    .auth-activator .v-card-text
+        padding: 0
 
     .auth-button
       height: auto

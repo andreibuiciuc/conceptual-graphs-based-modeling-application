@@ -1,19 +1,39 @@
 @use '@/assets/styles/_variables.sass'
 
+// Cusom mixins are defined here.
 @mixin flex-container($flex-direction: row, $justify-content: flex-start, $align-items: flex-start)
     display: flex
     flex-direction: $flex-direction
     justify-content: $justify-content
     align-items: $align-items
 
+
+// Native HTML components are overwritten here.
+%header-text
+    font-style: normal
+    font-weight: 400
+
+h1
+    @extend %header-text
+    font-size: 72px
+    line-height: 80px
+    letter-spacing: 1px
+    color: variables.$cassandra-blue
+    margin-bottom: 32px
+
+h2
+    @extend %header-text
+    font-size: 20px
+    line-height: 32px
+    color: variables.$cassandra-black
+
 section
     @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
     position: relative
     padding: 0 10vw
 
-.v-overlay__content
-    @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
+// Custom global SASS classes are defined here.
 .action-button
     border-color: variables.$cassandra-blue
     background-color: variables.$cassandra-white
@@ -28,3 +48,19 @@ section
     border-color: variables.$cassandra-blue
     background-color: variables.$cassandra-blue
     color: variables.$cassandra-white
+
+
+// Vuetify component classes are overwritten here.
+
+.v-overlay__content
+    @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+.v-dialog .v-overlay__content > .v-card > .v-card-text
+    padding-bottom: 16px
+
+.v-input__details
+    padding-bottom: 6px
+
+.v-list-item--active > .v-list-item__overlay, .v-list-item:focus-visible > .v-list-item__overlay, 
+.v-list-item--active:hover > .v-list-item__overlay
+    opacity: 0

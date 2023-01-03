@@ -43,7 +43,6 @@
 </template>
 
 <script>
-import constants from '@/constants/constants.js';
 import navigationConstants from './navigationConstants.js';
 
 import { mapWritableState, mapActions } from 'pinia';
@@ -82,6 +81,7 @@ export default {
         if (this.isUserLoggedIn) {
           this.signOut();
           this.$router.push({ name: "home" });
+          window.location.reload();
           return;
         }
         const authSectionElement = document.getElementById('auth');
@@ -107,7 +107,7 @@ export default {
 .navigation-items-list 
   @include containers.flex-container($flex-direction: row)
 
-.navigation-item, .authentication-item 
+.navigation-item, .authentication-item
   color: variables.$cassandra-gray
 
 .navigation-item--active 
