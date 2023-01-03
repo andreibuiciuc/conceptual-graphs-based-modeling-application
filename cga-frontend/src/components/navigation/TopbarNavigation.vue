@@ -81,6 +81,7 @@ export default {
       onAccountActionItemClick: function () {
         if (this.isUserLoggedIn) {
           this.signOut();
+          this.$router.push({ name: "home" });
           return;
         }
         const authSectionElement = document.getElementById('auth');

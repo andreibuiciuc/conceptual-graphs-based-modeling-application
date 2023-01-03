@@ -81,9 +81,12 @@ export default {
     .landing-section-text 
       @include containers.flex-container($flex-direction: column)
 
-      h1 
+      h1
         color: variables.$cassandra-blue
-        font-weight: bolder
+        font-style: normal
+        font-weight: 400
+        font-size: 72px
+        line-height: 80px
 
 .summary-section 
   color: variables.$cassandra-white
