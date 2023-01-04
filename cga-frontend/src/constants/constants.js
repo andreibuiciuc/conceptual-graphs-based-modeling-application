@@ -12,6 +12,11 @@ export default {
         email: "",
         password: ""
     },
+    defaultServerConnectionCredentials: {
+        isServerConnected: false,
+        ipAddress: "",
+        port: ""
+    },
     snackbarStatuses: {
         error: "error",
         success: "success"

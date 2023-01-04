@@ -81,7 +81,6 @@ export default {
         if (this.isUserLoggedIn) {
           this.signOut();
           this.$router.push({ name: "home" });
-          window.location.reload();
           return;
         }
         const authSectionElement = document.getElementById('auth');

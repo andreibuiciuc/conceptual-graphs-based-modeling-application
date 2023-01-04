@@ -1,5 +1,5 @@
 <template>
-  <div class="homepage">
+  <div class="homepage" v-if="!isUserLoggedIn">
     <section class="landing-section">
       <div class="landing-section-container">
         <div class="landing-section-content">
@@ -41,22 +41,31 @@
       </div>
     </section>
   </div>
+  <div v-else>
+    <section class="console-section">
+      <connection-console />
+    </section>
+  </div>
 </template>
 
 <script>
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
+import useUserStore from '@/stores/user';
 
-import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
-import AuthenticationModal from '@/components/authentication/AuthenticationModal.vue';
+import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
+import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
+import ConnectionConsole from '../components/utilities/ConnectionConsole.vue';
 
 export default {
   name: "HomeView",
   components: {
     CassandraTerminal,
-    AuthenticationModal
+    AuthenticationModal,
+    ConnectionConsole
   },
   computed: {
+    ...mapWritableState(useUserStore, ['isUserLoggedIn']),
     ...mapWritableState(useAuthModalStore, ['isModalOpened']),
   }
 }
@@ -67,11 +76,17 @@ export default {
 @use "@/assets/styles/_containers.sass"
 
 .homepage
-    overflow-y: auto
-    scroll-behavior: smooth
-    margin: 0
-    margin-top: variables.$cga-topbar-height
-    height: calc(100vh - variables.$cga-topbar-height)
+  overflow-y: auto
+  scroll-behavior: smooth
+  margin: 0
+  margin-top: variables.$cga-topbar-height
+  height: calc(100vh - variables.$cga-topbar-height)
+
+.console-section
+  @include containers.flex-container($flex-direction: column)
+  margin-top: variables.$cga-topbar-height
+  height: calc(100vh - variables.$cga-topbar-height)
+  padding: 5vh 5vw
 
 .landing-section 
   @include containers.flex-container($align-items: center)
