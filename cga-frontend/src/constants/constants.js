@@ -17,6 +17,9 @@ export default {
         ipAddress: "",
         port: ""
     },
+    defaultKeyspaceMetadata: {
+        keyspace_name: ""
+    },
     snackbarStatuses: {
         error: "error",
         success: "success"
@@ -36,5 +39,28 @@ export default {
     requestStatus: {
         SUCCESS: "success",
         ERROR: "error"
+    },
+    conceptTypes: {
+        keyspace: "R",
+        table: "TB",
+        column: "CL",
+        dataType: "T"
+    },
+    relationTypes: {
+        hasMore: "hasMore",
+        hasPartitionKey: "hasPartitionKey",
+        hasClusteringKeyASC: "hasClusteringKeyASC",
+        hasClusteringKeyDESC: "hasClusteringKeyDESC",
+        isOptional: "isOptional",
+        hasType: "hasType"
+    },
+    columnKinds: {
+        regular: "regular",
+        clustering: "clustering",
+        partitionKey: "partitionKey"
+    },
+    clusteringOrders: {
+        ascending: "asc",
+        descending: "desc"
     }
 }; 
