@@ -23,20 +23,27 @@
         </v-expansion-panel-title>
         <v-expansion-panel-text class="panel-container">
             <v-text-field v-model="serverConnectionCredentials.ipAddress" 
-                          hide-details 
-                          placeholder="IP Address" 
+                          placeholder="IP Address"
+                          persistent-hint
+                          hint="Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc."
                           variant="outlined"
-                          maxlength="15">
+                          maxlength="15"
+                          :disabled="serverConnectionCredentials.isServerConnected"
+                          :readonly="serverConnectionCredentials.isServerConnected">
             </v-text-field>
             <v-text-field v-model="serverConnectionCredentials.port" 
-                          hide-details 
-                          placeholder="Port" 
+                          placeholder="Port"
+                          persistent-hint 
+                          hint="Enter the exposed port number of your running cassandra network (server). Example: 9042 (default cassandra port), etc."
                           variant="outlined"
-                          maxlength="4">
+                          maxlength="4"
+                          :disabled="serverConnectionCredentials.isServerConnected"
+                          :readonly="serverConnectionCredentials.isServerConnected">
             </v-text-field>
             <v-btn variant="outlined" 
                    :class="{ 'action-button': !serverConnectionCredentials.isServerConnected, 'action-button--discard': serverConnectionCredentials.isServerConnected }"
-                   :disabled="!isConnectionButtonEnabled"
+                   :disabled="!isConnectionButtonEnabled || isConnectionButtonTriggered"
+                   :loading="isConnectionButtonTriggered"
                    @click.prevent="manageServerConnection">
               {{ serverConnectionCredentials.isServerConnected ? "Disconnect" : "Connect" }}
             </v-btn>
@@ -69,7 +76,7 @@
                         variant="outlined"
                         label="Keyspace"
                         :disabled="!serverConnectionCredentials.isServerConnected"
-                        :items="mockKeyspaces"
+                        :items="keyspaces"
               ></v-select>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -79,13 +86,18 @@
 
 <script>
 import constants from '@/constants/constants';
+import { manageRequest } from "@/includes/requests";
+
+import { mapActions } from "pinia";
+import useNotificationStore from "@/stores/notification";
 
 export default {
   name: "ConnectionConsole",
   data: () => ({
     serverConnectionCredentials: null,
     selectedKeyspace: null,
-    mockKeyspaces: ["weather", "university", "bank"]
+    keyspaces: [],
+    isConnectionButtonTriggered: false
   }),
   computed: {
     connectionPanelExpandedTitle: function () {
@@ -97,6 +109,9 @@ export default {
     }
   },
   methods: {
+    // These methods are mapped from the notification store.
+    ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
+    // These methods handle the connection to the database server.
     manageServerConnection: function () {
       if (this.serverConnectionCredentials.isServerConnected) {
         this.disconnect();
@@ -105,13 +120,67 @@ export default {
       }
     },
     connect: function () {
-      // TODO
-      this.serverConnectionCredentials.isServerConnected = true;
+      this.isConnectionButtonTriggered = true;
+      manageRequest(constants.requestTypes.GET, "connection/on", {
+        host: this.serverConnectionCredentials.ipAddress,
+        port: this.serverConnectionCredentials.port
+      })
+        .then((response) => {
+          if (response) {
+            if (response.data) {
+              const status = response.data.status === constants.requestStatus.SUCCESS ? true : false;
+              let message = response.data.message;
+              if (status) {
+                this.serverConnectionCredentials.isServerConnected = true;
+                message = `Connection to Cassandra server ${this.serverConnectionCredentials.ipAddress}:${this.serverConnectionCredentials.port} established.`;
+                this.retrieveKeyspaces();
+              }
+              this.setUpSnackbarState(status, message);
+            }
+          }
+        })
+        .catch((error) => {
+          this.setUpSnackbarState(false, error);
+        })
+        .finally(() => {
+          this.isConnectionButtonTriggered = false;
+        })
     },
     disconnect: function () {
-      // TODO
-      this.selectedKeyspace = null;
-      this.serverConnectionCredentials = Object.assign({}, constants.defaultServerConnectionCredentials);
+      this.isConnectionButtonTriggered = true;
+      manageRequest(constants.requestTypes.POST, "connection/off")
+        .then((response) => {
+          if (response) {
+            const status = response.data.status === constants.requestStatus.SUCCESS ? true : false;
+            let message = response.data.message;
+            if (status) {
+              this.selectedKeyspace = null;
+              this.serverConnectionCredentials = Object.assign({}, constants.defaultServerConnectionCredentials);
+              message = `Connection to Cassandra server ${this.serverConnectionCredentials.ipAddress}:${this.serverConnectionCredentials.port} discarded.`;
+            }
+            this.setUpSnackbarState(status, message);
+          }
+        })
+        .catch((error) => {
+          this.setUpSnackbarState(false, error);
+        })
+        .finally(() => {
+          this.isConnectionButtonTriggered = false;
+        });
+    },
+    // These methods handle the retrieve of keyspaces
+    retrieveKeyspaces: function () {
+      manageRequest(constants.requestTypes.GET, "keyspaces")
+        .then((response) => {
+          if (response) {
+            const status = response.data.status === constants.requestStatus.SUCCESS ? true: false;
+            if (status) {
+              this.keyspaces = response.data.keyspaces;
+            } else {
+              this.setUpSnackbarState(false, response.data.message);
+            }
+          }
+        })
     }
   },
   created: function () {

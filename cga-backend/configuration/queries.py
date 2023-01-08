@@ -1,12 +1,12 @@
 from typing import Union, List
 
 from cassandra.cluster import Cluster, ResultSet
-from cassandra.query import Statement, dict_factory
+from cassandra.query import dict_factory
 
 from configuration.constants import SUCCESS, ERROR
 from configuration.constants import ALL_KEYSPACES, KEYSPACE_METADATA
 
-global session
+global session, cluster
 
 
 def connect_to_cassandra_server(host: str, port: str) -> Union[dict[str], dict[str, str]]:
@@ -16,7 +16,7 @@ def connect_to_cassandra_server(host: str, port: str) -> Union[dict[str], dict[s
     :param port: The exposed port from the cassandra network
     :return: Object containing the connection status
     """
-    global session
+    global session, cluster
     try:
         cluster = Cluster([host], port)
         session = cluster.connect()
@@ -25,7 +25,20 @@ def connect_to_cassandra_server(host: str, port: str) -> Union[dict[str], dict[s
         return {"status": ERROR, "message": str(exception)}
 
 
-def retrieve_all_keyspaces() -> Union[List[str], dict[str, str]]:
+def disconnect_from_cassandra_server() -> Union[dict[str], dict[str, str]]:
+    """
+    Removes the connection from a running Cassandra server
+    :return: Object containing the connection status
+    """
+    global cluster
+    try:
+        cluster.shutdown()
+        return {"status": SUCCESS}
+    except Exception as exception:
+        return {"status": ERROR, "message": str(exception)}
+
+
+def retrieve_all_keyspaces() -> Union[dict[str, str, List[str]], dict[str, str]]:
     """
     Retrieves all available keyspaces from the Cassandra server
     :return: List containing all the available keyspaces
@@ -34,7 +47,8 @@ def retrieve_all_keyspaces() -> Union[List[str], dict[str, str]]:
     try:
         keyspaces: ResultSet
         keyspaces = session.execute(ALL_KEYSPACES)
-        return [keyspace.keyspace_name for keyspace in keyspaces]
+        keyspaces_list = [keyspace.keyspace_name for keyspace in keyspaces]
+        return {"status": SUCCESS, "message": "", "keyspaces": keyspaces_list}
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}
 

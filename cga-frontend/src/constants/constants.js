@@ -28,5 +28,13 @@ export default {
     snackbarMessages: {
         registerSuccess: "Success! Your account has been created.",
         loginSuccess: "Success! You are now logged in."
+    },
+    requestTypes: {
+        GET: "get",
+        POST: "post"
+    },
+    requestStatus: {
+        SUCCESS: "success",
+        ERROR: "error"
     }
 }; 
