@@ -1,10 +1,7 @@
 from typing import Union, List
-
 from cassandra.cluster import Cluster, ResultSet
-from cassandra.query import dict_factory
-
 from configuration.constants import SUCCESS, ERROR
-from configuration.constants import ALL_KEYSPACES, KEYSPACE_METADATA
+from configuration.constants import ALL_KEYSPACES, ALL_TABLES_FROM_KEYSPACE, ALL_COLUMNS_FROM_TABLE
 
 global session, cluster
 
@@ -59,10 +56,33 @@ def retrieve_keyspace_metadata(keyspace_name: str):
     """
     global session
     try:
-        session.row_factory = dict_factory
-        query = session.prepare(KEYSPACE_METADATA)
+        # Get all tables from the keyspace
+        query = session.prepare(ALL_TABLES_FROM_KEYSPACE)
         query_bound = query.bind([keyspace_name])
-        keyspace = session.execute(query_bound)
-        return keyspace[0]
+        tables = session.execute(query_bound)
+
+        keyspace_metadata = {"keyspace_name": keyspace_name, "tables": []}
+
+        # Get all columns from every table in the keyspace
+        for table_row in tables.current_rows:
+            table_metadata = {"table": table_row.table_name}
+
+            query = session.prepare(ALL_COLUMNS_FROM_TABLE)
+            query_bound = query.bind([keyspace_name, table_row.table_name])
+
+            columns_metadata: ResultSet
+            columns_metadata = session.execute(query_bound)
+            columns = []
+
+            for column_data in columns_metadata.current_rows:
+                column = {"column_name": column_data.column_name, "column_kind": column_data.kind,
+                          "column_type": column_data.type, "clustering_order": column_data.clustering_order}
+                columns.append(column)
+
+            table_metadata["columns"] = columns
+            keyspace_metadata["tables"].append(table_metadata)
+
+        return {"status": SUCCESS, "message": "", "keyspace_metadata": keyspace_metadata}
+
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}

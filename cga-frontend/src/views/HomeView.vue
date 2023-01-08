@@ -55,7 +55,7 @@ import useUserStore from '@/stores/user';
 
 import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
-import ConnectionConsole from '../components/utilities/ConnectionConsole.vue';
+import ConnectionConsole from '../components/dashboard/ConnectionConsole.vue';
 
 export default {
   name: "HomeView",

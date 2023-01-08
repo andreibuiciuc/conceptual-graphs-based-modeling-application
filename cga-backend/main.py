@@ -34,8 +34,8 @@ def get_keyspaces():
 
 
 @app.get("/keyspace")
-def get_keyspace_metadata(keyspace: str):
-    result = retrieve_keyspace_metadata(keyspace)
+def get_keyspace_metadata(keyspace_name: str):
+    result = retrieve_keyspace_metadata(keyspace_name)
     return result
 
 
