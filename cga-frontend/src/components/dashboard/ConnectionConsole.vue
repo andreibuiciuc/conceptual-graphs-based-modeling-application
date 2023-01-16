@@ -77,8 +77,10 @@
                           variant="outlined"
                           label="Keyspace"
                           :disabled="!serverConnectionCredentials.isServerConnected"
+                          :clearable="true"
                           :items="keyspaces"
-                          @change="selectedKeyspace = $event"
+                          @change="changeKeyspace"
+                          @clear.prevent="clearKeyspace"
                 ></v-select>
           </v-expansion-panel-text>
         </v-expansion-panel>
@@ -177,6 +179,11 @@ export default {
           this.isConnectionButtonTriggered = false;
         });
     },
+    // These methods events of components
+    changeKeyspace: function (selectedKeyspace) {
+      this.selectedKeyspace = selectedKeyspace;
+      this.retrieveKeyspaceMetadata();
+    },
     // These methods handle the retrieve of keyspaces
     retrieveKeyspaces: function () {
       manageRequest(constants.requestTypes.GET, "keyspaces")
@@ -189,7 +196,23 @@ export default {
               this.setUpSnackbarState(false, response.data.message);
             }
           }
+        });
+    },
+    // These methods handle the retrieve of keyspace metadata
+    retrieveKeyspaceMetadata: function () {
+        this.resetKeyspaceMetadata();
+        manageRequest(constants.requestTypes.GET, "keyspace", {
+          keyspace_name: this.keyspaceName
         })
+          .then((response) => {
+            if (response) {
+              this.keyspaceMetadata = Object.assign({}, response.data.keyspace_metadata);
+              this.parseKeyspaceMetadata();
+            }
+          });
+    },
+    clearKeyspace: function () {
+      this.selectedKeyspace = null;
     }
   },
   created: function () {
@@ -202,11 +225,12 @@ export default {
 @use "@/assets/styles/_containers.sass"
 
 .dashboard
-  display: grid
-  grid-template-columns: 50vw 50vw
+  @include containers.flex-container($flex-direction: column)
+  height: 100%
+  width: 100%
 
 .connection-console
-  width: 50%
+  width: 30vw
 
   .panel-container 
     margin-top: 16px
