@@ -47,6 +47,7 @@ export default {
         dataType: "T"
     },
     relationTypes: {
+        has: "has",
         hasMore: "hasMore",
         hasPartitionKey: "hasPartitionKey",
         hasClusteringKeyASC: "hasClusteringKeyASC",

@@ -182,7 +182,6 @@ export default {
     // These methods events of components
     changeKeyspace: function (selectedKeyspace) {
       this.selectedKeyspace = selectedKeyspace;
-      this.retrieveKeyspaceMetadata();
     },
     // These methods handle the retrieve of keyspaces
     retrieveKeyspaces: function () {
@@ -198,19 +197,6 @@ export default {
           }
         });
     },
-    // These methods handle the retrieve of keyspace metadata
-    retrieveKeyspaceMetadata: function () {
-        this.resetKeyspaceMetadata();
-        manageRequest(constants.requestTypes.GET, "keyspace", {
-          keyspace_name: this.keyspaceName
-        })
-          .then((response) => {
-            if (response) {
-              this.keyspaceMetadata = Object.assign({}, response.data.keyspace_metadata);
-              this.parseKeyspaceMetadata();
-            }
-          });
-    },
     clearKeyspace: function () {
       this.selectedKeyspace = null;
     }
@@ -225,7 +211,7 @@ export default {
 @use "@/assets/styles/_containers.sass"
 
 .dashboard
-  @include containers.flex-container($flex-direction: column)
+  @include containers.flex-container($flex-direction: row)
   height: 100%
   width: 100%
 
