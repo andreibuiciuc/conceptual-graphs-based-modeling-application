@@ -23,6 +23,11 @@
     <section class="summary-section">
       <div class="summary-container">
         <h1>Conceptual Graphs are a great visualization tool</h1>
+        <conceptual-graph :inverted="true"
+                          :keyspaceConcept="getDummyCG.keyspaceConcept"
+                          :tableConcepts="getDummyCG.tableConcepts"
+                          :columnConcepts="getDummyCG.columnConcepts"
+                          :dataTypeConcepts="getDummyCG.dataTypeConcepts" />
       </div>
     </section>
     <div class="delimiter-negative"></div>
@@ -49,6 +54,7 @@
 </template>
 
 <script>
+import dummyCG from '@/constants/dummyCG';
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
@@ -56,17 +62,22 @@ import useUserStore from '@/stores/user';
 import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
 import Dashboard from '../components/dashboard/Dashboard.vue';
+import ConceptualGraph from '../components/utilities/ConceptualGraph.vue';
 
 export default {
   name: "HomeView",
   components: {
     CassandraTerminal,
     AuthenticationModal,
-    Dashboard
+    Dashboard,
+    ConceptualGraph
   },
   computed: {
     ...mapWritableState(useUserStore, ['isUserLoggedIn']),
     ...mapWritableState(useAuthModalStore, ['isModalOpened']),
+    getDummyCG: function () {
+      return dummyCG;
+    }
   }
 }
 </script>

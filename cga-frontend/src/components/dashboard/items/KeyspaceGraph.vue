@@ -1,5 +1,6 @@
 <template>
-  <conceptual-graph :keyspace-concept="keyspaceConcept" 
+  <conceptual-graph :inverted="false"
+                    :keyspace-concept="keyspaceConcept" 
                     :table-concepts="tableConcepts" 
                     :column-concepts="columnConcepts"
                     :data-type-concepts="dataTypeConcepts" />

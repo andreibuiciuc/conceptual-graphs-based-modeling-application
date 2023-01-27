@@ -1,5 +1,5 @@
 <template>
-  <div class="tf-tree conceptual-graph">
+  <div class="tf-tree conceptual-graph" :class="{ 'conceptual-graph-inverted': inverted }">
     <ul v-if="keyspaceConcept" class="conceptual-graph-root">
       <!-- Keyspace level-->
       <li>
@@ -57,7 +57,8 @@ export default {
     keyspaceConcept: Object,
     tableConcepts: Array,
     columnConcepts: Object,
-    dataTypeConcepts: Object
+    dataTypeConcepts: Object,
+    inverted: Boolean
   },
   computed: {
     keyspaceRelation: function () {
@@ -103,5 +104,11 @@ export default {
   .conceptual-graph-relation
     border-radius: 1.5em
     font-style: italic
+
+.conceptual-graph-inverted 
+  
+  & .tf-nc, .concept-type, .tf-nc::before, .tf-nc::after, li::before
+    color: variables.$cassandra-white
+    border-color: variables.$cassandra-white !important
 
 </style>
