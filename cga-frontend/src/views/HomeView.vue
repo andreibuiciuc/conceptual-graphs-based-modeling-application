@@ -43,7 +43,7 @@
   </div>
   <div v-else>
     <section class="console-section">
-      <connection-console />
+      <dashboard />
     </section>
   </div>
 </template>
@@ -55,14 +55,14 @@ import useUserStore from '@/stores/user';
 
 import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
-import ConnectionConsole from '../components/dashboard/ConnectionConsole.vue';
+import Dashboard from '../components/dashboard/Dashboard.vue';
 
 export default {
   name: "HomeView",
   components: {
     CassandraTerminal,
     AuthenticationModal,
-    ConnectionConsole
+    Dashboard
   },
   computed: {
     ...mapWritableState(useUserStore, ['isUserLoggedIn']),
