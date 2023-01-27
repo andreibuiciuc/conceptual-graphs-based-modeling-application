@@ -17,9 +17,6 @@ export default {
         ipAddress: "",
         port: ""
     },
-    defaultKeyspaceMetadata: {
-        keyspace_name: ""
-    },
     snackbarStatuses: {
         error: "error",
         success: "success"
