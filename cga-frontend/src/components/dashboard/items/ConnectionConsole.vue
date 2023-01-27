@@ -75,6 +75,7 @@
                         flat
                         variant="outlined"
                         label="Keyspace"
+                        :clearable="true"
                         :disabled="!serverConnectionCredentials.isServerConnected"
                         :items="keyspaces"
                         @update:modelValue="changeKeyspace">
@@ -194,7 +195,6 @@ export default {
     this.serverConnectionCredentials = Object.assign({}, constants.defaultServerConnectionCredentials);
   }
 }
-
 </script>
 
 <style lang="sass">
