@@ -87,8 +87,8 @@
           </v-select>
           <v-btn variant="outlined"
                  class="action-button"
-                 :disabled="!currentKeyspace"
-                 @click.prevent="changeKeyspace(currentKeyspace)">
+                 :disabled="!cassandraServerCredentials.isCassandraServerConnected && currentKeyspace == ''"
+                 @click.prevent="rerenderGraph">
             Re-render conceptual graph
           </v-btn>
         </v-expansion-panel-text> 
@@ -125,8 +125,10 @@ export default {
     manageServerConnection: function () {
       if (this.cassandraServerCredentials.isCassandraServerConnected) {
         this.disconnect();
+        this.currentActivePanels.pop();
       } else {
         this.connect();
+        this.currentActivePanels.push(1);
       }
     },
     prefillServerCredentials: function () {
@@ -136,6 +138,11 @@ export default {
       this.currentKeyspace = selectedKeyspace ? this.currentKeyspace : null;
       this.$emit("changekeyspace", this.currentKeyspace);
     },
+    rerenderGraph: function () {
+      if (this.currentKeyspace) {
+        this.$emit("changekeyspace", this.currentKeyspace);
+      }
+    }
   },
   beforeMount: function () {
     if (this.cassandraServerCredentials.isCassandraServerConnected) {

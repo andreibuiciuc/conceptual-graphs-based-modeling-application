@@ -45,10 +45,9 @@
 <script>
 import navigationConstants from './navigationConstants.js';
 
-import { mapWritableState, mapActions } from 'pinia';
+import { mapActions, mapState, mapWritableState, } from 'pinia';
 import useUserStore from '@/stores/user';
 import useConnectionStore from "@/stores/connection";
-import constants from '../../constants/constants';
 
 export default {
     name: "TopbarNavigation",
@@ -60,12 +59,14 @@ export default {
       currentNavigationIndex: 0
     }),
     computed: {
+      ...mapState(useConnectionStore, ["cassandraServerCredentials"]),
       ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
-      ...mapWritableState(useConnectionStore, ["cassandraServerCredentials"])
     },  
     methods: {
       // These methods are mapped from the user store.
       ...mapActions(useUserStore, ["signOut"]),
+      // These methods are mapped from the connection store.
+      ...mapActions(useConnectionStore, ["disconnect"]),
       // These methods are component level based
       onNavigationItemClick: function (isHomeLink, navigationItemKey) {
         if (isHomeLink) {
@@ -82,6 +83,9 @@ export default {
       // These methods handle the signing out process
       onAccountActionItemClick: function () {
         if (this.isUserLoggedIn) {
+          if (this.cassandraServerCredentials.isCassandraServerConnected) {
+            this.disconnect();
+          }
           this.signOut();
           this.$router.push({ name: "home" });
           return;
