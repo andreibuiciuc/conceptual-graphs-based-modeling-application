@@ -54,7 +54,7 @@ export default defineStore("authModal", {
             let message = response.data.message;
             if (status) {
               this.cassandraServerCredentials = Object.assign({}, constants.defaultServerConnectionCredentials);
-              this.currentKeyspace = constants.inputValues.empty;
+              this.currentKeyspace = null;
               message = `Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} discarded.`;
             }
             notificationStore.setUpSnackbarState(status, message);

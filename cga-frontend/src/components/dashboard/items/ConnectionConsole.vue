@@ -125,6 +125,7 @@ export default {
     manageServerConnection: function () {
       if (this.cassandraServerCredentials.isCassandraServerConnected) {
         this.disconnect();
+        this.$emit("changekeyspace", null);
         this.currentActivePanels.pop();
       } else {
         this.connect();
