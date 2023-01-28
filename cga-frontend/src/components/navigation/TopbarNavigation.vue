@@ -47,6 +47,8 @@ import navigationConstants from './navigationConstants.js';
 
 import { mapWritableState, mapActions } from 'pinia';
 import useUserStore from '@/stores/user';
+import useConnectionStore from "@/stores/connection";
+import constants from '../../constants/constants';
 
 export default {
     name: "TopbarNavigation",
@@ -59,6 +61,7 @@ export default {
     }),
     computed: {
       ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
+      ...mapWritableState(useConnectionStore, ["cassandraServerCredentials"])
     },  
     methods: {
       // These methods are mapped from the user store.

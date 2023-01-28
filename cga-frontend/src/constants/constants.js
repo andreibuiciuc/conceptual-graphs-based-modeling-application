@@ -13,9 +13,14 @@ export default {
         password: ""
     },
     defaultServerConnectionCredentials: {
-        isServerConnected: false,
         ipAddress: "",
-        port: ""
+        port: "",
+        isCassandraServerConnected: false
+    },
+    defaultCassandraNetwork: {
+        ipAddress: "127.0.0.1",
+        port: "9042",
+        isCassandraServerConnected: false
     },
     snackbarStatuses: {
         error: "error",

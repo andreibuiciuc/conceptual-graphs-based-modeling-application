@@ -98,7 +98,7 @@ export default {
       } else {
         this.resetKeyspaceMetadata();
       }
-    }
+    },
   },
   watch: {
     'selectedKeyspace': function() {
