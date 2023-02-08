@@ -129,7 +129,9 @@ export default {
         this.currentActivePanels.pop();
       } else {
         this.connect();
-        this.currentActivePanels.push(1);
+        if (this.cassandraServerCredentials.isCassandraServerConnected) {
+          this.currentActivePanels.push(1);
+        }
       }
     },
     prefillServerCredentials: function () {
@@ -143,6 +145,11 @@ export default {
       if (this.currentKeyspace) {
         this.$emit("changekeyspace", this.currentKeyspace);
       }
+    }
+  },
+  created: function () {
+    if (!this.cassandraServerCredentials) {
+      this.cassandraServerCredentials = { ... constants.emptyCassandraNetwork };
     }
   },
   beforeMount: function () {

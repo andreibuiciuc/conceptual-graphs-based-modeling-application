@@ -3,7 +3,7 @@ import useNotificationStore from "./notification";
 import constants from "@/constants/constants";
 import { manageRequest } from "@/includes/requests";
 
-export default defineStore("authModal", {
+export default defineStore("connection", {
   state: () => ({
     cassandraServerCredentials: {
       ipAddress: constants.inputValues.empty,
@@ -16,7 +16,6 @@ export default defineStore("authModal", {
   actions: {
     connect: function () {
       const notificationStore = useNotificationStore();
-
       this.isConnectionButtonTriggered = true;
       manageRequest(constants.requestTypes.GET, "connection/on", {
         host: this.cassandraServerCredentials.ipAddress,
@@ -45,7 +44,6 @@ export default defineStore("authModal", {
     },
     disconnect: function () {
       const notificationStore = useNotificationStore();
-
       this.isConnectionButtonTriggered = true;
       manageRequest(constants.requestTypes.POST, "connection/off")
         .then((response) => {
@@ -69,7 +67,6 @@ export default defineStore("authModal", {
     },
     retrieveKeyspaces: function () {
       const notificationStore = useNotificationStore();
-
       manageRequest(constants.requestTypes.GET, "keyspaces")
         .then((response) => {
           if (response) {

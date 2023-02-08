@@ -12,7 +12,7 @@ export default {
         email: "",
         password: ""
     },
-    defaultServerConnectionCredentials: {
+    emptyCassandraNetwork: {
         ipAddress: "",
         port: "",
         isCassandraServerConnected: false
