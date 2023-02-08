@@ -12,12 +12,15 @@
             <v-btn variant="outlined" 
                   class="action-button register-button" 
                   :class="{ 'action-button-active': isRegisterModalActive }"
-                  @click.prevent="switchAuthModal">Register
+                  @click.prevent="switchAuthModal">
+              Register
             </v-btn>
             <v-btn variant="outlined" 
                   class="action-button login-button"
                   :class="{ 'action-button-active': !isRegisterModalActive }" 
-                  @click.prevent="switchAuthModal(false)">Login</v-btn>
+                  @click.prevent="switchAuthModal(false)">
+              Login
+            </v-btn>
           </div>
         </v-card-title>
         <v-card-text>
