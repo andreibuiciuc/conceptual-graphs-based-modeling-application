@@ -1,5 +1,5 @@
 <template>
-  <div class="homepage">
+  <div class="homepage" v-if="!isUserLoggedIn">
     <section class="landing-section">
       <div class="landing-section-container">
         <div class="landing-section-content">
@@ -23,6 +23,11 @@
     <section class="summary-section">
       <div class="summary-container">
         <h1>Conceptual Graphs are a great visualization tool</h1>
+        <conceptual-graph :inverted="true"
+                          :keyspaceConcept="getDummyCG.keyspaceConcept"
+                          :tableConcepts="getDummyCG.tableConcepts"
+                          :columnConcepts="getDummyCG.columnConcepts"
+                          :dataTypeConcepts="getDummyCG.dataTypeConcepts" />
       </div>
     </section>
     <div class="delimiter-negative"></div>
@@ -41,23 +46,38 @@
       </div>
     </section>
   </div>
+  <div v-else>
+    <section class="console-section">
+      <dashboard />
+    </section>
+  </div>
 </template>
 
 <script>
+import dummyCG from '@/constants/dummyCG';
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
+import useUserStore from '@/stores/user';
 
-import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
-import AuthenticationModal from '@/components/authentication/AuthenticationModal.vue';
+import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
+import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
+import Dashboard from '../components/dashboard/Dashboard.vue';
+import ConceptualGraph from '../components/utilities/ConceptualGraph.vue';
 
 export default {
   name: "HomeView",
   components: {
     CassandraTerminal,
-    AuthenticationModal
+    AuthenticationModal,
+    Dashboard,
+    ConceptualGraph
   },
   computed: {
+    ...mapWritableState(useUserStore, ['isUserLoggedIn']),
     ...mapWritableState(useAuthModalStore, ['isModalOpened']),
+    getDummyCG: function () {
+      return dummyCG;
+    }
   }
 }
 </script>
@@ -67,11 +87,17 @@ export default {
 @use "@/assets/styles/_containers.sass"
 
 .homepage
-    overflow-y: auto
-    scroll-behavior: smooth
-    margin: 0
-    margin-top: variables.$cga-topbar-height
-    height: calc(100vh - variables.$cga-topbar-height)
+  overflow-y: auto
+  scroll-behavior: smooth
+  margin: 0
+  margin-top: variables.$cga-topbar-height
+  height: calc(100vh - variables.$cga-topbar-height)
+
+.console-section
+  @include containers.flex-container($flex-direction: column)
+  margin-top: variables.$cga-topbar-height
+  height: calc(100vh - variables.$cga-topbar-height)
+  padding: 5vh 5vw
 
 .landing-section 
   @include containers.flex-container($align-items: center)

@@ -44,11 +44,23 @@ section
         background-color: variables.$cassandra-blue
         color: variables.$cassandra-white
 
+.action-button--discard
+    border-color: variables.$cassandra-red
+    background-color: variables.$cassandra-white
+    color: variables.$cassandra-red
+
+    &:hover
+        border-color: variables.$cassandra-red
+        background-color: variables.$cassandra-red
+        color: variables.$cassandra-white
+
 .action-button-active
     border-color: variables.$cassandra-blue
     background-color: variables.$cassandra-blue
     color: variables.$cassandra-white
 
+.text--cassandra-blue
+    color: variables.$cassandra-blue
 
 // Vuetify component classes are overwritten here.
 
@@ -64,3 +76,14 @@ section
 .v-list-item--active > .v-list-item__overlay, .v-list-item:focus-visible > .v-list-item__overlay, 
 .v-list-item--active:hover > .v-list-item__overlay
     opacity: 0
+
+.v-list.v-theme--light.v-list--density-default.v-list--one-line
+    width: 100%
+
+.v-text-field .v-input__details
+    padding-inline-start: 0
+
+.v-expansion-panel-title--active:hover > .v-expansion-panel-title__overlay,
+.v-expansion-panel-title:hover > .v-expansion-panel-title__overlay,
+.v-expansion-panel-title__overlay 
+    background-color: variables.$cassandra-blue
