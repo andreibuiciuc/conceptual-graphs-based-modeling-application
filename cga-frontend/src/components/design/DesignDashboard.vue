@@ -54,7 +54,6 @@ export default {
 </script>
 
 <style scoped lang="sass">
-@use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
 
 .dashboard
