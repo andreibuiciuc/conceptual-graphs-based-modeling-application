@@ -1,19 +1,15 @@
 <template>
-    <div class="landing-terminal-wrapper">
+    <div v-if="showTerminal" class="landing-terminal-wrapper">
       <div class="landing-terminal-header">
-        <div class="dot"></div>
+        <div class="dot" :class="{ 'dot-close': !isTerminalReadonly }" @click.prevent="closeTerminal"></div>
         <div class="dot"></div>
         <div class="dot"></div>
       </div>
       <div class="landing-terminal">
         <div class="command-line">
-        <pre>cqlsh >> DESCRIBE keyspaces;</pre>
-        <pre>cqlsh >> TODO: response</pre>
-        <pre>cqlsh >> USE daily_weather_measurements;</pre>
-        <pre>cqlsh >> SELECT m_date , city , station_code, min_temp , max_temp</pre>
-        <pre>      >> FROM daily_weather_measurements</pre>
-        <pre>      >> WHERE m_date ='2020-01-12'</pre>
-        <pre>      >> ORDER BY city ASC<span class="blip">|</span></pre> 
+          <template v-for="command in commands" :key="command.lineNumber">
+            <pre>{{ command.lineContent }}<span class="blip" v-if="command.lineNumber === commands.length - 1">|</span></pre>
+          </template>
         </div>
     </div>
     </div>
@@ -21,7 +17,24 @@
 
 <script>
 export default {
-    name: "CassandraTerminal"
+    name: "CassandraTerminal",
+    props: {
+      isTerminalOpened: Boolean,
+      isTerminalReadonly: Boolean,
+      commands: Array
+    },
+    methods: {
+      closeTerminal: function () {
+        if (!this.isTerminalReadonly) {
+          this.$emit("close");
+        }
+      }
+    },
+    computed: {
+      showTerminal: function () {
+        return this.isTerminalOpened;
+      }
+    }
 }
 </script>
 
@@ -53,6 +66,8 @@ export default {
     &:nth-of-type(3)
       background-color: variables.$cassandra-blue
 
+  .dot-close:hover
+    cursor: pointer
 
 .landing-terminal 
   background-color: variables.$cassandra-black

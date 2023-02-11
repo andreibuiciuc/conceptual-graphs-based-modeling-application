@@ -87,7 +87,7 @@
           </v-select>
           <v-btn variant="outlined"
                  class="action-button"
-                 :disabled="!cassandraServerCredentials.isCassandraServerConnected && currentKeyspace == ''"
+                 :disabled="!cassandraServerCredentials.isCassandraServerConnected"
                  @click.prevent="rerenderGraph">
             Re-render conceptual graph
           </v-btn>

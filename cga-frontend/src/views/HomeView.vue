@@ -15,7 +15,7 @@
             </h2>
           </div>
         </div>
-        <cassandra-terminal />
+        <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" />
       </div>
     </section>
     <div class="delimiter-positive"></div>
@@ -55,6 +55,7 @@
 
 <script>
 import dummyCG from '@/constants/dummyCG';
+import cassandraTerminalConstants from '../components/graphic/cassandraTerminalConstants';
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
@@ -77,6 +78,9 @@ export default {
     ...mapWritableState(useAuthModalStore, ['isModalOpened']),
     getDummyCG: function () {
       return dummyCG;
+    },
+    getDummyCommands: function () {
+      return cassandraTerminalConstants.dummyCQL;
     }
   }
 }

@@ -1,18 +1,18 @@
 <template>
   <div class="flex">
-    <CGDesignToolbox />
+    <DesignDashboard />
   </div>
 </template>
 
 <script>
-import CGDesignToolbox from '../components/design/CGDesignToolbox.vue';
 import useUserStore from '@/stores/user';
+import DesignDashboard from '../components/design/DesignDashboard.vue';
 
 export default {
   name: "DataStructureView",
   components: {
-    CGDesignToolbox
-  },
+    DesignDashboard
+},
   beforeRouteEnter: function (_from, _to, next) {
     const store = useUserStore();
     if (store.isUserLoggedIn) {

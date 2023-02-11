@@ -1,19 +1,19 @@
 <template>
   <div class="tf-tree conceptual-graph" :class="{ 'conceptual-graph-inverted': inverted }">
-    <ul v-if="keyspaceConcept" class="conceptual-graph-root">
+    <ul class="conceptual-graph-root">
       <!-- Keyspace level-->
       <li>
         <div class="tf-nc keyspace-concept" v-if="keyspaceConcept">
           <span class="concept-type">{{ keyspaceConcept.conceptType }}:</span>
           <span class="concept-name">{{ keyspaceConcept.conceptName }}</span>
         </div>
-        <span class="tf-nc conceptual-graph-relation"> 
+        <span class="tf-nc conceptual-graph-relation" v-if="keyspaceConcept"> 
           {{ keyspaceRelation }}
         </span>
         <ul>
           <!-- Table level -->
           <li v-for="tableConcept in tableConcepts" :key="tableConcept.conceptName">
-            <div class="tf-nc">
+            <div class="tf-nc" :class="{ 'table-first': noKeyspace }">
               <span class="concept-type">{{ tableConcept.conceptType }}:</span> 
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
             </div>
@@ -58,7 +58,8 @@ export default {
     tableConcepts: Array,
     columnConcepts: Object,
     dataTypeConcepts: Object,
-    inverted: Boolean
+    inverted: Boolean,
+    noKeyspace: Boolean
   },
   computed: {
     keyspaceRelation: function () {
@@ -80,6 +81,9 @@ export default {
 
 .tf-tree li ul
   margin: 0.5em 0
+
+.table-first.tf-nc::before
+  content: none !important
 
 .last.tf-nc::after
   content: none !important

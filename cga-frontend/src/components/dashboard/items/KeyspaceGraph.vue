@@ -17,7 +17,7 @@ export default {
     ConceptualGraph
   },
   props: {
-    selectedKeyspace: constants.inputValues.empty
+    selectedKeyspace: String
   },
   data: () => ({
     keyspaceConcept: null,

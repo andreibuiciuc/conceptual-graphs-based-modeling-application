@@ -60,7 +60,7 @@ export default {
     }),
     computed: {
       ...mapState(useConnectionStore, ["cassandraServerCredentials"]),
-      ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
+      ...mapWritableState(useUserStore, ["isUserLoggedIn", "userCredentials"]),
     },  
     methods: {
       // These methods are mapped from the user store.

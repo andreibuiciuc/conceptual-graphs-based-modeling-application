@@ -30,7 +30,7 @@
 </vee-form>
 </template>
 
-<script>
+<script lang="js">
 import constants from '@/constants/constants'
 
 import { mapActions, mapWritableState } from 'pinia';

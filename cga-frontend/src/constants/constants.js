@@ -48,6 +48,10 @@ export default {
         column: "CL",
         dataType: "T"
     },
+    defaultConcept: {
+        conceptName: "",
+        conceptType: ""
+    },
     relationTypes: {
         has: "has",
         hasMore: "hasMore",
