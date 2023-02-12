@@ -13,14 +13,13 @@
                         :clearable="true"
                         :readonly="isGraphRendered"
                         :hide-details="true"
-                        @click:clear="initializeToolboxFields"
-                        @update:modelValue="updateTableConcept">
+                        @click:clear="initializeToolboxFields">
           </v-text-field>
           <v-btn variant="text" 
                  class="icon-button"
                  :class="{ 'icon-button--disabled': isGraphRendered }"
                  :disabled="!isAddTableConceptButtonEnabled"
-                 @click.prevent="renderConceptualGraph">
+                 @click.prevent="addTableConceptToGraph">
             <v-icon>mdi-plus</v-icon>
           </v-btn>
         </div>
@@ -31,11 +30,12 @@
                           variant="outlined"
                           label="New column name"
                           :hide-details="true"
-                          :disabled="!currentTableConcept"
-                          @update:focused="updateColumnConcept">
+                          :error="doesColumnConceptAlreadyExists"
+                          :disabled="!currentTableConcept">
             </v-text-field>
             <div class="column-selects">
-              <v-select variant="outlined"
+              <v-select v-model="currentColumnConcept.relation"
+                        variant="outlined"
                         class="data-type-select"
                         label="Column Option"
                         :hide-details="true"
@@ -44,7 +44,7 @@
               <v-select v-model="currentDataTypeConcept.conceptName"
                         variant="outlined"
                         class="data-type-select"
-                        label="Column Data Type"
+                        label="Data Type"
                         :hide-details="true"
                         :items="columnDataTypeItems">
               </v-select>
@@ -53,7 +53,7 @@
           <v-btn variant="text"
                  class="icon-button--double"
                  :disabled="!isAddColumnConceptButtonEnabled"
-                 @click.prevent="renderConceptualGraph">
+                 @click.prevent="addColumnConceptToGraph">
             <v-icon>mdi-plus</v-icon>
           </v-btn>
         </div>
@@ -75,38 +75,44 @@ import designToolboxConstants from "../designToolboxConstants";
 export default {
   name: "DesignToolbox",
   data: () => ({
+    // This data is related to the current configuration inside the Toolbox
+    // TODO: Handle this data with only one object
     currentTableConcept: null,
     currentColumnConcept: null,
     currentDataTypeConcept: null,
+    // This data is related to the rendering of the Conceptual Graph
     tableConcepts: {},
     columnConcepts: {},
     dataTypeConcepts: {},
-    //
     isGraphRendered: false
   }),
   methods: {
-    // These methods handle clear events of components
+    // These methods handle the clear events of components
     initializeToolboxFields: function () {
       this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
-      this.currentColumnConcept = { ... constants.defaultConcep, conceptType: constants.conceptTypes.column };
-      this.currentDataTypeConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.dataType };
+      this.currentColumnConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.column };
+      this.currentDataTypeConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.dataType, relation: constants.relationTypes.hasType };
       this.tableConcepts = [];
       this.columnConcepts = {};
       this.dataTypeConcepts = {};
       this.renderConceptualGraph();
       this.isGraphRendered = false;
     },
-    // These methods handle update events of components
-    updateTableConcept: function () {
+    // These methods handle the rendering of the graph
+    addTableConceptToGraph: function () {
       this.tableConcepts = [this.currentTableConcept];
+      this.columnConcepts[this.currentTableConcept.conceptName] = [];
+      this.renderConceptualGraph();
     },
-    updateColumnConcept: function () {
-      this.columnConcepts[this.currentTableConcept.conceptName] = [{ ... this.currentColumnConcept }];
-      this.dataTypeConcepts[this.currentColumnConcept.conceptName] = { conceptType: constants.conceptTypes.dataType, conceptName: "test"};
+    addColumnConceptToGraph: function () {
+      this.columnConcepts[this.currentTableConcept.conceptName].push({ ... this.currentColumnConcept });
+      this.dataTypeConcepts[this.currentColumnConcept.conceptName] = { ... this.currentDataTypeConcept };
+      this.renderConceptualGraph();
     },
-    // These methods handle triggering of events
+    // These methods handle the triggering of events
     generateQuery: function () {  
-      // this.$emit("openTerminal");
+      // TODO: Logic for generating a CQL query
+      this.$emit("openTerminal");
     },
     renderConceptualGraph: function () {
       const conceptualGraphData = {
@@ -125,14 +131,18 @@ export default {
     columnOptionsItems: function () {
       return designToolboxConstants.CQL_COLUMN_OPTIONS;
     },
+    doesColumnConceptAlreadyExists: function () {
+      return Object.values(this.columnConcepts).some(x => x.conceptName === this.currentColumnConcept.conceptName);
+    },
     isAddTableConceptButtonEnabled: function () {
-      return this.currentTableConcept.conceptName !== constants.inputValues.empty && !this.isGraphRendered;
+      return this.currentTableConcept && this.currentTableConcept.conceptName && !this.isGraphRendered;
     },
     isAddColumnConceptButtonEnabled: function () {
-      return this.currentColumnConcept.conceptName && this.currentColumnConcept.relation && this.currentDataTypeConcept.conceptName;
+      return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.relation && 
+             this.currentDataTypeConcept && this.currentDataTypeConcept.conceptName;
     },
     isQueryGeneratorButtonEnabled: function () {
-      return this.currentTableConcept.conceptName && this.currentColumnConcept.conceptName;
+      return this.currentTableConcept && this.currentTableConcept.conceptName && this.currentColumnConcept && this.currentColumnConcept.conceptName;
     },
   },
   created: function () {
@@ -160,7 +170,6 @@ export default {
     height: calc(112px + 1rem)
 
   .v-btn.icon-button--disabled
-    border: 1px solid variables.$cassandra-blue
     opacity: none
   
   .v-btn.icon-button:hover
@@ -182,5 +191,8 @@ export default {
 
     .v-text-field
       margin-bottom: 1rem
+
+  .column-selects > .v-text-field:first-of-type
+    margin-right: 1rem
 
 </style>

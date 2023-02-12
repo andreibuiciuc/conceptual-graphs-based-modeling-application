@@ -49,8 +49,9 @@ export default {
         dataType: "T"
     },
     defaultConcept: {
-        conceptName: "",
-        conceptType: ""
+        conceptName: null,
+        conceptType: null,
+        relation: null
     },
     relationTypes: {
         has: "has",
