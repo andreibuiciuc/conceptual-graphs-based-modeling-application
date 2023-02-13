@@ -89,14 +89,17 @@ export default {
   methods: {
     // These methods handle the clear events of components
     initializeToolboxFields: function () {
-      this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
-      this.currentColumnConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.column };
-      this.currentDataTypeConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.dataType, relation: constants.relationTypes.hasType };
       this.tableConcepts = [];
       this.columnConcepts = {};
       this.dataTypeConcepts = {};
+      this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
+      this.resetColumnConceptFields();
       this.renderConceptualGraph();
       this.isGraphRendered = false;
+    },
+    resetColumnConceptFields: function () {
+      this.currentColumnConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.column };
+      this.currentDataTypeConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.dataType, relation: constants.relationTypes.hasType };
     },
     // These methods handle the rendering of the graph
     addTableConceptToGraph: function () {
@@ -105,12 +108,15 @@ export default {
       this.renderConceptualGraph();
     },
     addColumnConceptToGraph: function () {
-      this.columnConcepts[this.currentTableConcept.conceptName].push({ ... this.currentColumnConcept });
-      this.dataTypeConcepts[this.currentColumnConcept.conceptName] = { ... this.currentDataTypeConcept };
-      this.renderConceptualGraph();
+      if (!this.doesColumnConceptAlreadyExists) {
+        this.columnConcepts[this.currentTableConcept.conceptName].push({ ... this.currentColumnConcept });
+        this.dataTypeConcepts[this.currentColumnConcept.conceptName] = { ... this.currentDataTypeConcept };
+        this.resetColumnConceptFields();
+        this.renderConceptualGraph();
+      }
     },
     // These methods handle the triggering of events
-    generateQuery: function () {  
+    generateQuery: function () {
       // TODO: Logic for generating a CQL query
       this.$emit("openTerminal");
     },
@@ -125,6 +131,10 @@ export default {
     }
   },
   computed: {
+    areColumnConceptFieldsCompleted: function () {
+      return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.relation && 
+             this.currentDataTypeConcept && this.currentDataTypeConcept.conceptName;
+    },
     columnDataTypeItems: function () {
       return designToolboxConstants.CQL_DATA_TYPES;
     },
@@ -132,18 +142,18 @@ export default {
       return designToolboxConstants.CQL_COLUMN_OPTIONS;
     },
     doesColumnConceptAlreadyExists: function () {
-      return Object.values(this.columnConcepts).some(x => x.conceptName === this.currentColumnConcept.conceptName);
+      return this.columnConcepts[this.currentTableConcept.conceptName] && 
+        this.columnConcepts[this.currentTableConcept.conceptName].some(x => x.conceptName === this.currentColumnConcept.conceptName);
     },
     isAddTableConceptButtonEnabled: function () {
       return this.currentTableConcept && this.currentTableConcept.conceptName && !this.isGraphRendered;
     },
     isAddColumnConceptButtonEnabled: function () {
-      return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.relation && 
-             this.currentDataTypeConcept && this.currentDataTypeConcept.conceptName;
+      return this.areColumnConceptFieldsCompleted && !this.doesColumnConceptAlreadyExists;
     },
     isQueryGeneratorButtonEnabled: function () {
       return this.currentTableConcept && this.currentTableConcept.conceptName && this.currentColumnConcept && this.currentColumnConcept.conceptName;
-    },
+    }
   },
   created: function () {
     this.initializeToolboxFields();
@@ -194,5 +204,8 @@ export default {
 
   .column-selects > .v-text-field:first-of-type
     margin-right: 1rem
+
+  .column-selects .v-input
+    width: 50% !important
 
 </style>
