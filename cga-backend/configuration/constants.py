@@ -1,6 +1,8 @@
 # Configuration constants
 SUCCESS = "success"
 ERROR = "error"
+EXCLUDED_KEYSPACES = ["system", "system_auth", "system_distributed", "system_schema", "system_traces", "system_views",
+                      "system_virtual_schema"]
 
 # Cassandra query constants
 ALL_KEYSPACES = "DESCRIBE KEYSPACES"

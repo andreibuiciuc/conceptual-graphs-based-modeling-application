@@ -4,7 +4,9 @@
    <ConceptualGraph :table-concepts="tableConcepts" 
                     :column-concepts="columnConcepts" 
                     :data-type-concepts="dataTypeConcepts"
-                    :no-keyspace="true" />
+                    :no-keyspace="true"
+                    :are-column-concepts-deletable="true"
+                    @remove="removeColumnConcept" />
   </div>
   <v-dialog v-model="isTerminalOpened" v-if="isTerminalOpened" persistent transition="dialog-bottom-transition">
     <CassandraTerminal :is-terminal-opened="isTerminalOpened" :is-terminal-readonly="false" :commands="getStarterCommand" @close="closeTerminal"/>
@@ -43,6 +45,18 @@ export default {
       this.tableConcepts = JSON.parse(JSON.stringify(conceptualGraphData.tableConcepts));
       this.columnConcepts = { ... conceptualGraphData.columnConcepts };
       this.dataTypeConcepts = { ... conceptualGraphData.dataTypeConcepts };
+    },
+    removeColumnConcept: function (tableAndColumnConcepts) {
+      if (tableAndColumnConcepts) {
+        const tableConceptIndex = this.tableConcepts.findIndex(x => x.conceptName === tableAndColumnConcepts.tableConcept.conceptName);
+        if (tableConceptIndex > -1) {
+          const tableConceptName = this.tableConcepts[tableConceptIndex].conceptName;
+          const columnConceptIndex = this.columnConcepts[tableConceptName].findIndex(x => x.conceptName === tableAndColumnConcepts.columnConcept.conceptName);
+          if (columnConceptIndex > -1) {
+            this.columnConcepts[tableConceptName].splice(columnConceptIndex, 1);
+          }
+        }
+      }
     }
   },
   computed: {

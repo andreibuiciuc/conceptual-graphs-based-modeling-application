@@ -20,7 +20,8 @@
                  :class="{ 'icon-button--disabled': isGraphRendered }"
                  :disabled="!isAddTableConceptButtonEnabled"
                  @click.prevent="addTableConceptToGraph">
-            <v-icon>mdi-plus</v-icon>
+            <v-icon v-if="isGraphRendered">mdi-check</v-icon>
+            <v-icon v-else>mdi-plus</v-icon>
           </v-btn>
         </div>
         <v-divider></v-divider>
@@ -31,14 +32,16 @@
                           label="New column name"
                           :hide-details="true"
                           :error="doesColumnConceptAlreadyExists"
-                          :disabled="!currentTableConcept">
+                          :disabled="!currentTableConcept.conceptName || !isGraphRendered">
             </v-text-field>
+            <span class="error-message">{{ getErrorMessage }}</span>
             <div class="column-selects">
               <v-select v-model="currentColumnConcept.relation"
                         variant="outlined"
                         class="data-type-select"
                         label="Column Option"
                         :hide-details="true"
+                        :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
                         :items="columnOptionsItems">
               </v-select>
               <v-select v-model="currentDataTypeConcept.conceptName"
@@ -46,6 +49,7 @@
                         class="data-type-select"
                         label="Data Type"
                         :hide-details="true"
+                        :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
                         :items="columnDataTypeItems">
               </v-select>
           </div>
@@ -81,7 +85,7 @@ export default {
     currentColumnConcept: null,
     currentDataTypeConcept: null,
     // This data is related to the rendering of the Conceptual Graph
-    tableConcepts: {},
+    tableConcepts: [],
     columnConcepts: {},
     dataTypeConcepts: {},
     isGraphRendered: false
@@ -145,6 +149,9 @@ export default {
       return this.columnConcepts[this.currentTableConcept.conceptName] && 
         this.columnConcepts[this.currentTableConcept.conceptName].some(x => x.conceptName === this.currentColumnConcept.conceptName);
     },
+    getErrorMessage: function () {
+      return this.doesColumnConceptAlreadyExists ? "Column already exists" : constants.inputValues.empty;
+    },
     isAddTableConceptButtonEnabled: function () {
       return this.currentTableConcept && this.currentTableConcept.conceptName && !this.isGraphRendered;
     },
@@ -152,7 +159,7 @@ export default {
       return this.areColumnConceptFieldsCompleted && !this.doesColumnConceptAlreadyExists;
     },
     isQueryGeneratorButtonEnabled: function () {
-      return this.currentTableConcept && this.currentTableConcept.conceptName && this.currentColumnConcept && this.currentColumnConcept.conceptName;
+      return this.tableConcepts[0] && this.columnConcepts && this.columnConcepts[this.tableConcepts[0].conceptName].length > 0;
     }
   },
   created: function () {
@@ -199,13 +206,15 @@ export default {
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: normal)
     width: 100%
 
-    .v-text-field
-      margin-bottom: 1rem
-
   .column-selects > .v-text-field:first-of-type
     margin-right: 1rem
 
   .column-selects .v-input
     width: 50% !important
+
+  .error-message
+    color: variables.$cassandra-red
+    margin-bottom: 1rem
+    margin-top: 0.5rem
 
 </style>

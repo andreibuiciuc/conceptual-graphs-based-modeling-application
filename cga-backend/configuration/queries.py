@@ -1,6 +1,6 @@
 from typing import Union, List
 from cassandra.cluster import Cluster, ResultSet
-from configuration.constants import SUCCESS, ERROR
+from configuration.constants import SUCCESS, ERROR, EXCLUDED_KEYSPACES
 from configuration.constants import ALL_KEYSPACES, ALL_TABLES_FROM_KEYSPACE, ALL_COLUMNS_FROM_TABLE
 
 global session, cluster
@@ -44,7 +44,8 @@ def retrieve_all_keyspaces() -> Union[dict[str, str, List[str]], dict[str, str]]
     try:
         keyspaces: ResultSet
         keyspaces = session.execute(ALL_KEYSPACES)
-        keyspaces_list = [keyspace.keyspace_name for keyspace in keyspaces]
+        keyspaces_list = [keyspace.keyspace_name for keyspace in keyspaces
+                          if keyspace.keyspace_name not in EXCLUDED_KEYSPACES]
         return {"status": SUCCESS, "message": "", "keyspaces": keyspaces_list}
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}

@@ -53,7 +53,7 @@
   </div>
 </template>
 
-<script>
+<script lang="js">
 import dummyCG from '@/constants/dummyCG';
 import cassandraTerminalConstants from '../components/graphic/cassandraTerminalConstants';
 import { mapWritableState } from 'pinia';

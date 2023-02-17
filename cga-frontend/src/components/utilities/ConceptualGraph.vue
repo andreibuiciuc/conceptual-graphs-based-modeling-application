@@ -13,7 +13,7 @@
         <ul>
           <!-- Table level -->
           <li v-for="tableConcept in tableConcepts" :key="tableConcept.conceptName">
-            <div class="tf-nc" :class="{ 'table-first': noKeyspace }">
+            <div class="tf-nc" :class="{ 'table-first': noKeyspace, 'table-first-no-col':  doesGraphHaveOnlyTableConcept(tableConcept) }">
               <span class="concept-type">{{ tableConcept.conceptType }}:</span> 
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
             </div>
@@ -26,6 +26,9 @@
                 <div class="tf-nc">
                   <span class="concept-type">{{ columnConcept.conceptType }}:</span>
                   <span class="concept-name">{{ columnConcept.conceptName }}</span>
+                  <v-btn v-if="areColumnConceptsDeletable" @click="removeColumnConcept(tableConcept, columnConcept)" variant="text">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
                 </div>
                 <ul>
                   <!-- Type level -->
@@ -59,7 +62,21 @@ export default {
     columnConcepts: Object,
     dataTypeConcepts: Object,
     inverted: Boolean,
-    noKeyspace: Boolean
+    noKeyspace: Boolean,
+    areColumnConceptsDeletable: Boolean
+  },
+  methods: {
+    doesGraphHaveOnlyTableConcept: function (tableConcept) {
+      return tableConcept && this.columnConcepts && this.columnConcepts[tableConcept.conceptName].length === 0;
+    },
+    removeColumnConcept: function (tableConcept, columnConcept) {
+      if (columnConcept) {
+        this.$emit('remove', {
+          tableConcept,
+          columnConcept
+        });
+      }
+    }
   },
   computed: {
     keyspaceRelation: function () {
@@ -67,7 +84,7 @@ export default {
     },
     columnRelation: function () {
       return constants.relationTypes.hasType;
-    }
+    },
   }
 }
 </script>
@@ -78,11 +95,24 @@ export default {
 
 .tf-nc
   margin-bottom: 1.5em
+  position: relative
+
+  .v-btn
+    position: absolute
+    top: -45%
+    left: 65%
+    min-width: 0
+
+    .v-icon
+      color: variables.$cassandra-red
 
 .tf-tree li ul
   margin: 0.5em 0
 
 .table-first.tf-nc::before
+  content: none !important
+
+.table-first-no-col.tf-nc::after
   content: none !important
 
 .last.tf-nc::after
