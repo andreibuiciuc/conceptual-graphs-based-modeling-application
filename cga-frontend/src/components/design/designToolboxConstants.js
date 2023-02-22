@@ -1,6 +1,11 @@
+import constants from "@/constants/constants";
+
 export default {
   CQL_COLUMN_OPTIONS: [
-    { value: "test", title: "test" }
+    { value: "isOptional", title: "isOptional" },
+    { value: "hasPartitionKey", title: "hasPartitionKey" },
+    { value: "hasClusteringKeyASC", title: "hasClusteringKeyASC" },
+    { value: "hasClusteringKeyDESC", title: "hasClusteringKeyDESC" }
   ],
   CQL_DATA_TYPES: [
     { value: "ascii", title: "ascii" },
@@ -22,5 +27,13 @@ export default {
     { value: "tinyint", title: "tinyint" },
     { value: "tuple", title: "tuple" },
     { value: "uuid", title: "uuid" },
-  ]  
-}
+  ],
+  CQL_BASH_COMMAND: "cqlsh >>",
+  CQL_BASH_BLANK_COMMAND: "      >> ",
+  CQL_CREATE_TABLE_SNIPPET: " CREATE TABLE IF NOT EXISTS ",
+  CQL_PUNCTUATION: {
+    DOT: ".",
+    COMMA: ",",
+    SPACE: " "
+  }  
+};

@@ -106,6 +106,9 @@ export default {
     .v-icon
       color: variables.$cassandra-red
 
+    &:hover > .v-btn__overlay 
+      opacity: 0
+
 .tf-tree li ul
   margin: 0.5em 0
 
@@ -140,7 +143,6 @@ export default {
     font-style: italic
 
 .conceptual-graph-inverted 
-  
   & .tf-nc, .concept-type, .tf-nc::before, .tf-nc::after, li::before
     color: variables.$cassandra-white
     border-color: variables.$cassandra-white !important

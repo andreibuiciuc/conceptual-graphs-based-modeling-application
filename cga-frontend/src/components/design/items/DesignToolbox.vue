@@ -1,8 +1,12 @@
 <template>
-   <v-card width="500" variant="outlined" class="toolbox">
+   <v-card width="500" variant="outlined" class="toolbox" :class="{ 'toolbox-warning': !currentKeyspace }">
     <v-card-title>
       <div class="d-flex justify-center align-center">
         Conceptual Graph Design Toolbox
+        <v-icon v-if="!currentKeyspace">
+          mdi-alert-box-outline
+          <v-tooltip activator="parent" location="right">There is no keyspace selected</v-tooltip>
+        </v-icon>
       </div>
     </v-card-title>
     <v-card-text>
@@ -13,6 +17,7 @@
                         :clearable="true"
                         :readonly="isGraphRendered"
                         :hide-details="true"
+                        :disabled="!currentKeyspace"
                         @click:clear="initializeToolboxFields">
           </v-text-field>
           <v-btn variant="text" 
@@ -75,12 +80,13 @@
 <script lang="js">
 import constants from "@/constants/constants";
 import designToolboxConstants from "../designToolboxConstants";
+import { mapState} from 'pinia';
+import useConnectionStore from "@/stores/connection";
 
 export default {
   name: "DesignToolbox",
   data: () => ({
     // This data is related to the current configuration inside the Toolbox
-    // TODO: Handle this data with only one object
     currentTableConcept: null,
     currentColumnConcept: null,
     currentDataTypeConcept: null,
@@ -93,13 +99,16 @@ export default {
   methods: {
     // These methods handle the clear events of components
     initializeToolboxFields: function () {
-      this.tableConcepts = [];
-      this.columnConcepts = {};
-      this.dataTypeConcepts = {};
       this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
+      this.resetCassandraTerminalData();
       this.resetColumnConceptFields();
       this.renderConceptualGraph();
       this.isGraphRendered = false;
+    },
+    resetCassandraTerminalData: function () {
+      this.tableConcepts = [];
+      this.columnConcepts = {};
+      this.dataTypeConcepts = {};
     },
     resetColumnConceptFields: function () {
       this.currentColumnConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.column };
@@ -121,8 +130,36 @@ export default {
     },
     // These methods handle the triggering of events
     generateQuery: function () {
-      // TODO: Logic for generating a CQL query
-      this.$emit("openTerminal");
+      let commands = [];
+      let currentLine = 0;
+
+      // Compute the first line of the CQL command for the Cassandra Terminal component.
+      const tableConceptName = this.tableConcepts[0].conceptName;
+      const definitionCommandContent = designToolboxConstants.CQL_BASH_COMMAND
+        .concat(designToolboxConstants.CQL_CREATE_TABLE_SNIPPET)
+        .concat(this.currentKeyspace)
+        .concat(designToolboxConstants.CQL_PUNCTUATION.DOT)
+        .concat(tableConceptName)
+        .concat(" (");
+      commands.push({ lineNumber: currentLine, lineContent: definitionCommandContent });
+      currentLine = currentLine + 1;
+
+      // For each column definitiom, add the corresponding line in the commands array.
+      this.columnConcepts[tableConceptName].forEach(columnConcept => {
+        const columnConceptCommandContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND
+          .concat(columnConcept.conceptName)
+          .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE)
+          .concat(this.dataTypeConcepts[columnConcept.conceptName].conceptName)
+          .concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
+        commands.push({ lineNumber: currentLine, lineContent: columnConceptCommandContent });
+        currentLine = currentLine + 1;
+      });
+      
+      const lastCommandLineLength = commands.at(-1).lineContent.length;
+      const lastCommandContent = commands.at(-1).lineContent.slice(0, lastCommandLineLength - 1).concat(" );");
+      commands.splice(commands.length - 1, 1, { lineNumber: currentLine, lineContent: lastCommandContent });
+
+      this.$emit("openTerminal", commands);
     },
     renderConceptualGraph: function () {
       const conceptualGraphData = {
@@ -135,6 +172,9 @@ export default {
     }
   },
   computed: {
+    // These computed properties are mapped from the connection store
+    ...mapState(useConnectionStore, ['currentKeyspace']),
+    // These computed properties are related to the Design Toolbox
     areColumnConceptFieldsCompleted: function () {
       return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.relation && 
              this.currentDataTypeConcept && this.currentDataTypeConcept.conceptName;
@@ -172,11 +212,16 @@ export default {
 @use '@/assets/styles/_containers.sass'
 @use '@/assets/styles/_variables.sass'
 
+.toolbox-warning
+  border-color: variables.$cassandra-yellow
 .toolbox
   min-width: 500px
 
   .v-card-title
     margin-bottom: 1rem
+
+    .v-icon
+      color: variables.$cassandra-yellow
 
   .v-btn.icon-button, .v-btn.icon-button--double
     height: 56px

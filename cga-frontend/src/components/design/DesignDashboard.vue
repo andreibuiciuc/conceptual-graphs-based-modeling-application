@@ -9,7 +9,10 @@
                     @remove="removeColumnConcept" />
   </div>
   <v-dialog v-model="isTerminalOpened" v-if="isTerminalOpened" persistent transition="dialog-bottom-transition">
-    <CassandraTerminal :is-terminal-opened="isTerminalOpened" :is-terminal-readonly="false" :commands="getStarterCommand" @close="closeTerminal"/>
+    <CassandraTerminal :is-terminal-opened="isTerminalOpened" 
+                       :is-terminal-readonly="false" 
+                       :commands="commands" 
+                       @close="closeTerminal"/>
  </v-dialog>
 </template>
 
@@ -29,6 +32,7 @@ export default {
   data: () => ({
     // This data is related to the Cassandra Terminal component
     isTerminalOpened: false,
+    commands: [],
     // This data is related to the Conceptual Graph component
     tableConcepts: [],
     columnConcepts: {},
@@ -38,7 +42,8 @@ export default {
     closeTerminal: function () {
       this.isTerminalOpened = false;
     },
-    openTerminal: function () {
+    openTerminal: function (commands) {
+      this.commands = JSON.parse(JSON.stringify(commands));
       this.isTerminalOpened = true;
     },
     renderConceptualGraph: function (conceptualGraphData) {
@@ -63,6 +68,9 @@ export default {
     getStarterCommand: function () {
       return cassandraTerminalConstants.starterCQL;
     }
+  },
+  created: function () {
+    this.commands.push(this.getStarterCommand);
   }
 }
 </script>
