@@ -1,5 +1,8 @@
 <template>
-  <div class="tf-tree conceptual-graph" :class="{ 'conceptual-graph-inverted': inverted }">
+  <div
+    class="tf-tree conceptual-graph"
+    :class="{ 'conceptual-graph-inverted': inverted }"
+  >
     <ul class="conceptual-graph-root">
       <!-- Keyspace level-->
       <li>
@@ -7,26 +10,49 @@
           <span class="concept-type">{{ keyspaceConcept.conceptType }}:</span>
           <span class="concept-name">{{ keyspaceConcept.conceptName }}</span>
         </div>
-        <span class="tf-nc conceptual-graph-relation" v-if="keyspaceConcept"> 
+        <span class="tf-nc conceptual-graph-relation" v-if="keyspaceConcept">
           {{ keyspaceRelation }}
         </span>
         <ul>
           <!-- Table level -->
-          <li v-for="tableConcept in tableConcepts" :key="tableConcept.conceptName">
-            <div class="tf-nc" :class="{ 'table-first': noKeyspace, 'table-first-no-col':  doesGraphHaveOnlyTableConcept(tableConcept) }">
-              <span class="concept-type">{{ tableConcept.conceptType }}:</span> 
+          <li
+            v-for="tableConcept in tableConcepts"
+            :key="tableConcept.conceptName"
+          >
+            <div
+              class="tf-nc"
+              :class="{
+                'table-first': noKeyspace,
+                'table-first-no-col':
+                  doesGraphHaveOnlyTableConcept(tableConcept),
+              }"
+            >
+              <span class="concept-type">{{ tableConcept.conceptType }}:</span>
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
             </div>
             <ul>
               <!-- Column level -->
-              <li v-for="columnConcept in columnConcepts[tableConcept.conceptName]">
+              <li
+                v-for="columnConcept in columnConcepts[
+                  tableConcept.conceptName
+                ]"
+                :key="columnConcept.conceptName"
+              >
                 <div class="tf-nc conceptual-graph-relation">
                   <span class="concept-name">{{ columnConcept.relation }}</span>
                 </div>
                 <div class="tf-nc">
-                  <span class="concept-type">{{ columnConcept.conceptType }}:</span>
-                  <span class="concept-name">{{ columnConcept.conceptName }}</span>
-                  <v-btn v-if="areColumnConceptsDeletable" @click="removeColumnConcept(tableConcept, columnConcept)" variant="text">
+                  <span class="concept-type"
+                    >{{ columnConcept.conceptType }}:</span
+                  >
+                  <span class="concept-name">{{
+                    columnConcept.conceptName
+                  }}</span>
+                  <v-btn
+                    v-if="areColumnConceptsDeletable"
+                    @click="removeColumnConcept(tableConcept, columnConcept)"
+                    variant="text"
+                  >
                     <v-icon>mdi-close</v-icon>
                   </v-btn>
                 </div>
@@ -37,8 +63,15 @@
                       <span class="concept-name">hasType</span>
                     </div>
                     <div class="tf-nc last">
-                      <span class="concept-type">{{ dataTypeConcepts[columnConcept.conceptName].conceptType }}:</span>
-                      <span class="concept-name">{{ dataTypeConcepts[columnConcept.conceptName].conceptName }}</span>
+                      <span class="concept-type"
+                        >{{
+                          dataTypeConcepts[columnConcept.conceptName]
+                            .conceptType
+                        }}:</span
+                      >
+                      <span class="concept-name">{{
+                        dataTypeConcepts[columnConcept.conceptName].conceptName
+                      }}</span>
                     </div>
                   </li>
                 </ul>
@@ -54,7 +87,7 @@
 <script lang="js">
 import constants from "@/constants/constants";
 
-export default {  
+export default {
   name: "ConceptualGraph",
   props: {
     keyspaceConcept: Object,
@@ -106,7 +139,7 @@ export default {
     .v-icon
       color: variables.$cassandra-red
 
-    &:hover > .v-btn__overlay 
+    &:hover > .v-btn__overlay
       opacity: 0
 
 .tf-tree li ul
@@ -130,21 +163,20 @@ export default {
   margin-right: 0.25em
 
 .conceptual-graph
-  @include containers.flex-container($align-items: center, $justify-content: center) 
+  @include containers.flex-container($align-items: center, $justify-content: center)
   width: 100%
   height: 100%
   overflow: auto
 
   .conceptual-graph-root
     overflow: auto
-  
+
   .conceptual-graph-relation
     border-radius: 1.5em
     font-style: italic
 
-.conceptual-graph-inverted 
+.conceptual-graph-inverted
   & .tf-nc, .concept-type, .tf-nc::before, .tf-nc::after, li::before
     color: variables.$cassandra-white
     border-color: variables.$cassandra-white !important
-
 </style>

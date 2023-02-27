@@ -1,19 +1,32 @@
 <template>
   <div class="dashboard">
-   <DesignToolbox @openTerminal="openTerminal" @render="renderConceptualGraph" />
-   <ConceptualGraph :table-concepts="tableConcepts" 
-                    :column-concepts="columnConcepts" 
-                    :data-type-concepts="dataTypeConcepts"
-                    :no-keyspace="true"
-                    :are-column-concepts-deletable="true"
-                    @remove="removeColumnConcept" />
+    <DesignToolbox
+      :keyspace="currentKeyspace"
+      @openTerminal="openTerminal"
+      @render="renderConceptualGraph"
+    />
+    <ConceptualGraph
+      :table-concepts="tableConcepts"
+      :column-concepts="columnConcepts"
+      :data-type-concepts="dataTypeConcepts"
+      :no-keyspace="true"
+      :are-column-concepts-deletable="true"
+      @remove="removeColumnConcept"
+    />
   </div>
-  <v-dialog v-model="isTerminalOpened" v-if="isTerminalOpened" persistent transition="dialog-bottom-transition">
-    <CassandraTerminal :is-terminal-opened="isTerminalOpened" 
-                       :is-terminal-readonly="false" 
-                       :commands="commands" 
-                       @close="closeTerminal"/>
- </v-dialog>
+  <v-dialog
+    v-model="isTerminalOpened"
+    v-if="isTerminalOpened"
+    persistent
+    transition="dialog-bottom-transition"
+  >
+    <CassandraTerminal
+      :is-terminal-opened="isTerminalOpened"
+      :is-terminal-readonly="false"
+      :commands="commands"
+      @close="closeTerminal"
+    />
+  </v-dialog>
 </template>
 
 <script lang="js">
@@ -23,7 +36,8 @@ import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
 import DesignToolbox from './items/DesignToolbox.vue';
 import ConceptualGraph from '../utilities/ConceptualGraph.vue';
 import useNotificationStore from "@/stores/notification";
-import { mapActions } from "pinia";
+import useConnectionStore from "@/stores/connection";
+import { mapActions, mapState } from "pinia";
 import { useClipboard } from '@/composables/clipboard';
 
 export default {
@@ -46,6 +60,10 @@ export default {
     columnConcepts: {},
     dataTypeConcepts: {}
   }),
+  computed: {
+    // These computed properties are mapped from the connection store
+    ...mapState(useConnectionStore, ["currentKeyspace"]),
+  },
   methods: {
     // These methods are mapped from the notification store.
     ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
@@ -82,6 +100,11 @@ export default {
       const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);
       return queryFromCommands.replace(designToolboxConstants.CQL_COMMAND_REGEX, constants.inputValues.empty);
     }
+  },
+  created: function () {
+    if (!this.currentKeyspace) {
+      this.setUpSnackbarState(false, designToolboxConstants.NO_SELECTED_KEYSPACE_MESSAGE);
+    }
   }
 }
 </script>
@@ -93,5 +116,4 @@ export default {
   @include containers.flex-container($flex-direction: row)
   height: 100%
   width: 100%
-
 </style>

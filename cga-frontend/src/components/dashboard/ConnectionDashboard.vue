@@ -6,20 +6,20 @@
 </template>
 
 <script>
-import constants from '@/constants/constants';
-import ConnectionConsole from './items/ConnectionConsole.vue';
-import KeyspaceGraph from './items/KeyspaceGraph.vue';
+import constants from "@/constants/constants";
+import ConnectionConsole from "./items/ConnectionConsole.vue";
+import KeyspaceGraph from "./items/KeyspaceGraph.vue";
 
 export default {
-  name: "Dashboard",
+  name: "ConnectionDashboard",
   components: {
     ConnectionConsole,
-    KeyspaceGraph
+    KeyspaceGraph,
   },
   data: () => ({
     selectedKeyspace: constants.inputValues.empty,
-  })
-}
+  }),
+};
 </script>
 
 <style scoped lang="sass">
@@ -29,5 +29,4 @@ export default {
   @include containers.flex-container($flex-direction: row)
   height: 100%
   width: 100%
-
 </style>

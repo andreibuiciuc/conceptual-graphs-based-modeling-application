@@ -3,7 +3,7 @@ export default {
     { value: "isOptional", title: "isOptional" },
     { value: "hasPartitionKey", title: "hasPartitionKey" },
     { value: "hasClusteringKeyASC", title: "hasClusteringKeyASC" },
-    { value: "hasClusteringKeyDESC", title: "hasClusteringKeyDESC" }
+    { value: "hasClusteringKeyDESC", title: "hasClusteringKeyDESC" },
   ],
   CQL_DATA_TYPES: [
     { value: "ascii", title: "ascii" },
@@ -32,8 +32,11 @@ export default {
   CQL_PUNCTUATION: {
     DOT: ".",
     COMMA: ",",
-    SPACE: " "
+    SPACE: " ",
   },
-  CQL_COMMAND_REGEX: /(cqlsh >> )|(      >> )/gi,
-  COPY_QUERY_CLIPBOARD_MESSAGE: "CQL command was successfully copied to clipboard"  
+  CQL_COMMAND_REGEX: /(cqlsh >> )|( {6}>> )/gi,
+  COPY_QUERY_CLIPBOARD_MESSAGE:
+    "CQL command was successfully copied to clipboard",
+  NO_SELECTED_KEYSPACE_MESSAGE:
+    "No keyspace selected. Please select a keyspace"
 };

@@ -1,73 +1,98 @@
 <template>
-   <v-card width="500" variant="outlined" class="toolbox" :class="{ 'toolbox-warning': !currentKeyspace }">
+  <v-card
+    width="500"
+    variant="outlined"
+    class="toolbox"
+    :class="{ 'toolbox-warning': !keyspace }"
+  >
     <v-card-title>
       <div class="d-flex justify-center align-center">
         Conceptual Graph Design Toolbox
-        <v-icon v-if="!currentKeyspace">mdi-alert-box-outline</v-icon>
+        <v-icon v-if="!keyspace">mdi-alert-box-outline</v-icon>
       </div>
     </v-card-title>
     <v-card-text>
-        <div class="d-flex">
-          <v-text-field v-model="currentTableConcept.conceptName" 
-                        variant="outlined"
-                        label="Table name"
-                        :clearable="true"
-                        :readonly="isGraphRendered"
-                        :hide-details="true"
-                        :disabled="!currentKeyspace"
-                        @click:clear="initializeToolboxFields">
+      <div class="d-flex">
+        <v-text-field
+          v-model="currentTableConcept.conceptName"
+          variant="outlined"
+          label="Table name"
+          :clearable="true"
+          :readonly="isGraphRendered"
+          :hide-details="true"
+          :disabled="!keyspace"
+          @click:clear="setupToolboxData"
+        >
+        </v-text-field>
+        <v-btn
+          variant="text"
+          class="icon-button"
+          :class="{ 'icon-button--disabled': isGraphRendered }"
+          :disabled="!isAddTableConceptButtonEnabled"
+          @click.prevent="addTableConceptToGraph"
+        >
+          <v-icon v-if="isGraphRendered">mdi-check</v-icon>
+          <v-icon v-else>mdi-plus</v-icon>
+        </v-btn>
+      </div>
+      <v-divider></v-divider>
+      <div class="column-concept-container">
+        <div class="column-concept-config">
+          <v-text-field
+            v-model="currentColumnConcept.conceptName"
+            variant="outlined"
+            label="New column name"
+            :hide-details="true"
+            :error="doesColumnConceptAlreadyExists"
+            :disabled="!currentTableConcept.conceptName || !isGraphRendered"
+          >
           </v-text-field>
-          <v-btn variant="text" 
-                 class="icon-button"
-                 :class="{ 'icon-button--disabled': isGraphRendered }"
-                 :disabled="!isAddTableConceptButtonEnabled"
-                 @click.prevent="addTableConceptToGraph">
-            <v-icon v-if="isGraphRendered">mdi-check</v-icon>
-            <v-icon v-else>mdi-plus</v-icon>
-          </v-btn>
-        </div>
-        <v-divider></v-divider>
-        <div class="column-concept-container">
-          <div class="column-concept-config">
-            <v-text-field v-model="currentColumnConcept.conceptName"
-                          variant="outlined"
-                          label="New column name"
-                          :hide-details="true"
-                          :error="doesColumnConceptAlreadyExists"
-                          :disabled="!currentTableConcept.conceptName || !isGraphRendered">
-            </v-text-field>
-            <span class="error-message">{{ getErrorMessage }}</span>
-            <div class="column-selects">
-              <v-select v-model="currentColumnConcept.relation"
-                        variant="outlined"
-                        class="data-type-select"
-                        label="Column Option"
-                        :hide-details="true"
-                        :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
-                        :items="columnOptionsItems">
-              </v-select>
-              <v-select v-model="currentDataTypeConcept.conceptName"
-                        variant="outlined"
-                        class="data-type-select"
-                        label="Data Type"
-                        :hide-details="true"
-                        :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
-                        :items="columnDataTypeItems">
-              </v-select>
+          <span class="error-message">{{ getErrorMessage }}</span>
+          <div class="column-selects">
+            <v-select
+              v-model="currentColumnConcept.relation"
+              variant="outlined"
+              class="data-type-select"
+              label="Column Option"
+              :hide-details="true"
+              :disabled="
+                !currentColumnConcept.conceptName ||
+                doesColumnConceptAlreadyExists
+              "
+              :items="columnOptionsItems"
+            >
+            </v-select>
+            <v-select
+              v-model="currentDataTypeConcept.conceptName"
+              variant="outlined"
+              class="data-type-select"
+              label="Data Type"
+              :hide-details="true"
+              :disabled="
+                !currentColumnConcept.conceptName ||
+                doesColumnConceptAlreadyExists
+              "
+              :items="columnDataTypeItems"
+            >
+            </v-select>
           </div>
-          </div>
-          <v-btn variant="text"
-                 class="icon-button--double"
-                 :disabled="!isAddColumnConceptButtonEnabled"
-                 @click.prevent="addColumnConceptToGraph">
-            <v-icon>mdi-plus</v-icon>
-          </v-btn>
         </div>
+        <v-btn
+          variant="text"
+          class="icon-button--double"
+          :disabled="!isAddColumnConceptButtonEnabled"
+          @click.prevent="addColumnConceptToGraph"
+        >
+          <v-icon>mdi-plus</v-icon>
+        </v-btn>
+      </div>
     </v-card-text>
     <v-card-actions>
-      <v-btn variant="outlined"
-             :disabled="!isQueryGeneratorButtonEnabled"
-             @click.prevent="generateQuery(false)">
+      <v-btn
+        variant="outlined"
+        :disabled="!isQueryGeneratorButtonEnabled"
+        @click.prevent="generateQuery(false)"
+      >
         Generate CQL Query
       </v-btn>
     </v-card-actions>
@@ -77,11 +102,12 @@
 <script lang="js">
 import constants from "@/constants/constants";
 import designToolboxConstants from "../designToolboxConstants";
-import { mapState} from 'pinia';
-import useConnectionStore from "@/stores/connection";
 
 export default {
   name: "DesignToolbox",
+  props: {
+    keyspace: String
+  },
   data: () => ({
     // This data is related to the current configuration inside the Toolbox
     currentTableConcept: null,
@@ -95,10 +121,10 @@ export default {
   }),
   methods: {
     // These methods handle the clear events of components
-    initializeToolboxFields: function () {
+    setupToolboxData: function () {
       this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
-      this.resetCassandraTerminalData();
       this.resetColumnConceptFields();
+      this.resetCassandraTerminalData();
       this.renderConceptualGraph();
       this.isGraphRendered = false;
     },
@@ -137,7 +163,7 @@ export default {
     // These methods handle the query generator
     generateQuery: function () {
       const commands = this.generateQueryAsCommands();
-      this.$emit("openTerminal", commands);      
+      this.$emit("openTerminal", commands);
     },
     generateQueryAsCommands: function () {
       let commands = [];
@@ -147,7 +173,7 @@ export default {
       const tableConceptName = this.tableConcepts[0].conceptName;
       const definitionCommandContent = designToolboxConstants.CQL_BASH_COMMAND
         .concat(designToolboxConstants.CQL_CREATE_TABLE_SNIPPET)
-        .concat(this.currentKeyspace)
+        .concat(this.keyspace)
         .concat(designToolboxConstants.CQL_PUNCTUATION.DOT)
         .concat(tableConceptName)
         .concat(" (");
@@ -164,21 +190,18 @@ export default {
         commands.push({ lineNumber: currentLine, lineContent: columnConceptCommandContent });
         currentLine = currentLine + 1;
       });
-      
+
       const lastCommandLineLength = commands.at(-1).lineContent.length;
       const lastCommandContent = commands.at(-1).lineContent.slice(0, lastCommandLineLength - 1).concat(" );");
       commands.splice(commands.length - 1, 1, { lineNumber: currentLine, lineContent: lastCommandContent });
-      
-      // this.$emit("openTerminal", commands);
+
       return commands;
     }
   },
   computed: {
-    // These computed properties are mapped from the connection store
-    ...mapState(useConnectionStore, ['currentKeyspace']),
     // These computed properties are related to the Design Toolbox
     areColumnConceptFieldsCompleted: function () {
-      return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.relation && 
+      return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.relation &&
              this.currentDataTypeConcept && this.currentDataTypeConcept.conceptName;
     },
     columnDataTypeItems: function () {
@@ -188,7 +211,7 @@ export default {
       return designToolboxConstants.CQL_COLUMN_OPTIONS;
     },
     doesColumnConceptAlreadyExists: function () {
-      return this.columnConcepts[this.currentTableConcept.conceptName] && 
+      return this.columnConcepts[this.currentTableConcept.conceptName] &&
         this.columnConcepts[this.currentTableConcept.conceptName].some(x => x.conceptName === this.currentColumnConcept.conceptName);
     },
     getErrorMessage: function () {
@@ -205,7 +228,7 @@ export default {
     }
   },
   created() {
-    this.initializeToolboxFields();
+    this.setupToolboxData();
   }
 }
 </script>
@@ -235,20 +258,20 @@ export default {
 
   .v-btn.icon-button--disabled
     opacity: none
-  
+
   .v-btn.icon-button:hover
     border: 1px solid variables.$cassandra-blue
 
   .v-divider
     margin-bottom: 1rem
     margin-top: 1rem
-  
+
   .v-card-actions
     justify-content: center
 
   .column-concept-container, .column-selects
     @include containers.flex-container()
-    
+
   .column-concept-config
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: normal)
     width: 100%
@@ -263,5 +286,4 @@ export default {
     color: variables.$cassandra-red
     margin-bottom: 1rem
     margin-top: 0.5rem
-
 </style>

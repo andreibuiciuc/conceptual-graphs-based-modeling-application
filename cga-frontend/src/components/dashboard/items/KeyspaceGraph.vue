@@ -1,9 +1,11 @@
 <template>
-  <conceptual-graph :inverted="false"
-                    :keyspace-concept="keyspaceConcept" 
-                    :table-concepts="tableConcepts" 
-                    :column-concepts="columnConcepts"
-                    :data-type-concepts="dataTypeConcepts" />
+  <conceptual-graph
+    :inverted="false"
+    :keyspace-concept="keyspaceConcept"
+    :table-concepts="tableConcepts"
+    :column-concepts="columnConcepts"
+    :data-type-concepts="dataTypeConcepts"
+  />
 </template>
 
 <script lang="js">
@@ -31,8 +33,8 @@ export default {
         case constants.columnKinds.partitionKey:
           return constants.relationTypes.hasPartitionKey;
         case constants.columnKinds.clustering:
-          return clusteringOrder === constants.clusteringOrders.ascending 
-            ? constants.relationTypes.hasClusteringKeyASC 
+          return clusteringOrder === constants.clusteringOrders.ascending
+            ? constants.relationTypes.hasClusteringKeyASC
             : constants.relationTypes.hasClusteringKeyDESC
         case constants.columnKinds.regular:
         default:
@@ -51,9 +53,9 @@ export default {
       // Create concept for each table in the keyspace.
       keyspaceMetadata.tables.forEach(table => {
         // Create table concept.
-        const tableConcept = { 
+        const tableConcept = {
           conceptType: constants.conceptTypes.table,
-          conceptName: table.table, 
+          conceptName: table.table,
         };
         // Create a relation between the keyspace and the table concepts.
         this.tableConcepts.push({ ...tableConcept });

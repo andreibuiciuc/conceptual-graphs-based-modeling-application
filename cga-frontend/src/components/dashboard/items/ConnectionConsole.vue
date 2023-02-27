@@ -5,9 +5,7 @@
         <v-expansion-panel-title>
           <template #default="{ expanded }">
             <v-row no-gutters>
-              <v-col cols="4" class="d-flex justify-start">
-                Connection
-              </v-col>
+              <v-col cols="4" class="d-flex justify-start"> Connection </v-col>
               <v-col cols="8">
                 <v-fade-transition leave-absolute>
                   <span v-if="expanded" key="0">
@@ -22,51 +20,66 @@
           </template>
         </v-expansion-panel-title>
         <v-expansion-panel-text class="panel-container">
-            <v-text-field v-model="cassandraServerCredentials.ipAddress" 
-                          placeholder="IP Address"
-                          persistent-hint
-                          hint="Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc."
-                          variant="outlined"
-                          maxlength="15"
-                          :disabled="cassandraServerCredentials.isCassandraServerConnected"
-                          :readonly="cassandraServerCredentials.isCassandraServerConnected">
-            </v-text-field>
-            <v-text-field v-model="cassandraServerCredentials.port" 
-                          placeholder="Port"
-                          persistent-hint 
-                          hint="Enter the exposed port number of your running cassandra network (server). Example: 9042 (default cassandra port), etc."
-                          variant="outlined"
-                          maxlength="4"
-                          :disabled="cassandraServerCredentials.isCassandraServerConnected"
-                          :readonly="cassandraServerCredentials.isCassandraServerConnected">
-            </v-text-field>
-            <v-btn variant="outlined"
-                   class="action-button"
-                   :disabled="cassandraServerCredentials.isCassandraServerConnected"
-                   @click.prevent="prefillServerCredentials">
-              Prefill with default network
-            </v-btn>
-            <v-btn variant="outlined" 
-                  :class="{ 'action-button': !cassandraServerCredentials.isCassandraServerConnected, 'action-button--discard': cassandraServerCredentials.isCassandraServerConnected }"
-                  :disabled="!isConnectionButtonEnabled || isConnectionButtonTriggered"
-                  :loading="isConnectionButtonTriggered"
-                  @click.prevent="manageServerConnection">
-              {{ cassandraServerCredentials.isCassandraServerConnected ? "Disconnect" : "Connect" }}
-            </v-btn>
+          <v-text-field
+            v-model="cassandraServerCredentials.ipAddress"
+            placeholder="IP Address"
+            persistent-hint
+            hint="Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc."
+            variant="outlined"
+            maxlength="15"
+            :disabled="cassandraServerCredentials.isCassandraServerConnected"
+            :readonly="cassandraServerCredentials.isCassandraServerConnected"
+          >
+          </v-text-field>
+          <v-text-field
+            v-model="cassandraServerCredentials.port"
+            placeholder="Port"
+            persistent-hint
+            hint="Enter the exposed port number of your running cassandra network (server). Example: 9042 (default cassandra port), etc."
+            variant="outlined"
+            maxlength="4"
+            :disabled="cassandraServerCredentials.isCassandraServerConnected"
+            :readonly="cassandraServerCredentials.isCassandraServerConnected"
+          >
+          </v-text-field>
+          <v-btn
+            variant="outlined"
+            class="action-button"
+            :disabled="cassandraServerCredentials.isCassandraServerConnected"
+            @click.prevent="prefillServerCredentials"
+          >
+            Prefill with default network
+          </v-btn>
+          <v-btn
+            variant="outlined"
+            :class="{
+              'action-button':
+                !cassandraServerCredentials.isCassandraServerConnected,
+              'action-button--discard':
+                cassandraServerCredentials.isCassandraServerConnected,
+            }"
+            :disabled="
+              !isConnectionButtonEnabled || isConnectionButtonTriggered
+            "
+            :loading="isConnectionButtonTriggered"
+            @click.prevent="manageServerConnection"
+          >
+            {{
+              cassandraServerCredentials.isCassandraServerConnected
+                ? "Disconnect"
+                : "Connect"
+            }}
+          </v-btn>
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-title>
           <template #default="{ expanded }">
             <v-row no-gutters>
-              <v-col cols="4" class="d-flex justify-start">
-                Keyspace
-              </v-col>
+              <v-col cols="4" class="d-flex justify-start"> Keyspace </v-col>
               <v-col cols="8">
                 <v-fade-transition leave-absolute>
-                  <span v-if="expanded" key="2">
-                    Select a keyspace
-                  </span>
+                  <span v-if="expanded" key="2"> Select a keyspace </span>
                   <span v-else key="3">
                     {{ currentKeyspace }}
                   </span>
@@ -76,22 +89,26 @@
           </template>
         </v-expansion-panel-title>
         <v-expansion-panel-text class="panel-container">
-          <v-select v-model="currentKeyspace"
-                    hide-details
-                    flat
-                    variant="outlined"
-                    label="Keyspace"
-                    :disabled="!cassandraServerCredentials.isCassandraServerConnected"
-                    :items="availableKeyspaces"
-                    @update:modelValue="changeKeyspace">
+          <v-select
+            v-model="currentKeyspace"
+            hide-details
+            flat
+            variant="outlined"
+            label="Keyspace"
+            :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+            :items="availableKeyspaces"
+            @update:modelValue="changeKeyspace"
+          >
           </v-select>
-          <v-btn variant="outlined"
-                 class="action-button"
-                 :disabled="!cassandraServerCredentials.isCassandraServerConnected"
-                 @click.prevent="rerenderGraph">
+          <v-btn
+            variant="outlined"
+            class="action-button"
+            :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+            @click.prevent="rerenderGraph"
+          >
             Re-render conceptual graph
           </v-btn>
-        </v-expansion-panel-text> 
+        </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
   </div>
@@ -167,12 +184,12 @@ export default {
   width: 40vw
   margin-right: 2em
 
-  .panel-container 
+  .panel-container
     margin-top: 16px
 
     .v-text-field
       margin-bottom: 16px
-    
+
     .v-btn
       width: 100%
 
