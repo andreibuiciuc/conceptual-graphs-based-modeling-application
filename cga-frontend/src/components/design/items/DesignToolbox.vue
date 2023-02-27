@@ -3,10 +3,7 @@
     <v-card-title>
       <div class="d-flex justify-center align-center">
         Conceptual Graph Design Toolbox
-        <v-icon v-if="!currentKeyspace">
-          mdi-alert-box-outline
-          <v-tooltip activator="parent" location="right">There is no keyspace selected</v-tooltip>
-        </v-icon>
+        <v-icon v-if="!currentKeyspace">mdi-alert-box-outline</v-icon>
       </div>
     </v-card-title>
     <v-card-text>
@@ -70,7 +67,7 @@
     <v-card-actions>
       <v-btn variant="outlined"
              :disabled="!isQueryGeneratorButtonEnabled"
-             @click.prevent="generateQuery">
+             @click.prevent="generateQuery(false)">
         Generate CQL Query
       </v-btn>
     </v-card-actions>
@@ -128,8 +125,21 @@ export default {
         this.renderConceptualGraph();
       }
     },
-    // These methods handle the triggering of events
+    renderConceptualGraph: function () {
+      const conceptualGraphData = {
+        tableConcepts: this.tableConcepts,
+        columnConcepts: this.columnConcepts,
+        dataTypeConcepts: this.dataTypeConcepts
+      };
+      this.$emit("render", conceptualGraphData);
+      this.isGraphRendered = true;
+    },
+    // These methods handle the query generator
     generateQuery: function () {
+      const commands = this.generateQueryAsCommands();
+      this.$emit("openTerminal", commands);      
+    },
+    generateQueryAsCommands: function () {
       let commands = [];
       let currentLine = 0;
 
@@ -158,17 +168,9 @@ export default {
       const lastCommandLineLength = commands.at(-1).lineContent.length;
       const lastCommandContent = commands.at(-1).lineContent.slice(0, lastCommandLineLength - 1).concat(" );");
       commands.splice(commands.length - 1, 1, { lineNumber: currentLine, lineContent: lastCommandContent });
-
-      this.$emit("openTerminal", commands);
-    },
-    renderConceptualGraph: function () {
-      const conceptualGraphData = {
-        tableConcepts: this.tableConcepts,
-        columnConcepts: this.columnConcepts,
-        dataTypeConcepts: this.dataTypeConcepts
-      };
-      this.$emit("render", conceptualGraphData);
-      this.isGraphRendered = true;
+      
+      // this.$emit("openTerminal", commands);
+      return commands;
     }
   },
   computed: {
@@ -202,7 +204,7 @@ export default {
       return this.tableConcepts[0] && this.columnConcepts && this.columnConcepts[this.tableConcepts[0].conceptName].length > 0;
     }
   },
-  created: function () {
+  created() {
     this.initializeToolboxFields();
   }
 }

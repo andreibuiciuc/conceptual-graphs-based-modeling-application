@@ -7,8 +7,8 @@
       </div>
       <div class="landing-terminal">
         <div class="command-line">
-          <template v-for="command in commands" :key="command.lineNumber">
-            <pre>{{ command.lineContent }}</pre>
+          <template v-for="command, index in commands" :key="command.lineNumber">
+            <pre>{{ command.lineContent }}<span v-if="index === commands.length - 1" class="blip">|</span></pre>
           </template>
         </div>
     </div>
@@ -36,7 +36,6 @@ export default {
       }
     }
 }
-// <span class="blip" v-if="command.lineNumber === commands.length - 1">|</span></pre>
 </script>
 
 <style scoped lang="sass">

@@ -1,5 +1,3 @@
-import constants from "@/constants/constants";
-
 export default {
   CQL_COLUMN_OPTIONS: [
     { value: "isOptional", title: "isOptional" },
@@ -35,5 +33,7 @@ export default {
     DOT: ".",
     COMMA: ",",
     SPACE: " "
-  }  
+  },
+  CQL_COMMAND_REGEX: /(cqlsh >> )|(      >> )/gi,
+  COPY_QUERY_CLIPBOARD_MESSAGE: "CQL command was successfully copied to clipboard"  
 };

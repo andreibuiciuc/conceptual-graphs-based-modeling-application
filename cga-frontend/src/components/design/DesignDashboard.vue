@@ -17,10 +17,14 @@
 </template>
 
 <script lang="js">
-import cassandraTerminalConstants from '../graphic/cassandraTerminalConstants';
+import constants from "@/constants/constants";
+import designToolboxConstants from './designToolboxConstants';
 import CassandraTerminal from '@/components/graphic/CassandraTerminal.vue';
 import DesignToolbox from './items/DesignToolbox.vue';
 import ConceptualGraph from '../utilities/ConceptualGraph.vue';
+import useNotificationStore from "@/stores/notification";
+import { mapActions } from "pinia";
+import { useClipboard } from '@/composables/clipboard';
 
 export default {
   name: "CGDesignToolbox",
@@ -28,6 +32,10 @@ export default {
     DesignToolbox,
     ConceptualGraph,
     CassandraTerminal
+  },
+  setup() {
+    const { copyToClipboard } = useClipboard();
+    return { copyToClipboard }
   },
   data: () => ({
     // This data is related to the Cassandra Terminal component
@@ -39,13 +47,20 @@ export default {
     dataTypeConcepts: {}
   }),
   methods: {
-    closeTerminal: function () {
-      this.isTerminalOpened = false;
-    },
+    // These methods are mapped from the notification store.
+    ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
+    // These methods handle events of components
     openTerminal: function (commands) {
       this.commands = JSON.parse(JSON.stringify(commands));
       this.isTerminalOpened = true;
     },
+    closeTerminal: function () {
+      this.isTerminalOpened = false;
+      const queryString = this.getQueryAsString(this.commands);
+      this.copyToClipboard(queryString);
+      this.setUpSnackbarState(true, designToolboxConstants.COPY_QUERY_CLIPBOARD_MESSAGE);
+    },
+    // These methods handle the rendering og the Conceptual Graph
     renderConceptualGraph: function (conceptualGraphData) {
       this.tableConcepts = JSON.parse(JSON.stringify(conceptualGraphData.tableConcepts));
       this.columnConcepts = { ... conceptualGraphData.columnConcepts };
@@ -62,15 +77,11 @@ export default {
           }
         }
       }
+    },
+    getQueryAsString: function (commands) {
+      const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);
+      return queryFromCommands.replace(designToolboxConstants.CQL_COMMAND_REGEX, constants.inputValues.empty);
     }
-  },
-  computed: {
-    getStarterCommand: function () {
-      return cassandraTerminalConstants.starterCQL;
-    }
-  },
-  created: function () {
-    this.commands.push(this.getStarterCommand);
   }
 }
 </script>
