@@ -67,12 +67,12 @@
 
 <script lang="js">
 import dummyCG from '@/constants/dummyCG';
-import cassandraTerminalConstants from '../components/graphic/cassandraTerminalConstants';
+import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
 
-import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
+import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
 import ConceptualGraph from '../components/utilities/ConceptualGraph.vue';

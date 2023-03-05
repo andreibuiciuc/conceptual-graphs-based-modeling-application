@@ -38,7 +38,6 @@
             <register-form
               key="register-form"
               v-if="isRegisterModalActive"
-              @snackbar="triggerSnackbar($event)"
             />
             <login-form key="login-form" v-else />
           </transition>

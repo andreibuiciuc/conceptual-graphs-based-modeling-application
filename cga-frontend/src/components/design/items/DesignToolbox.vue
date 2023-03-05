@@ -1,6 +1,5 @@
 <template>
   <v-card
-    width="500"
     variant="outlined"
     class="toolbox"
     :class="{ 'toolbox-warning': !keyspace }"
@@ -239,7 +238,9 @@ export default {
 
 .toolbox-warning
   border-color: variables.$cassandra-yellow
+
 .toolbox
+  border-color: variables.$cassandra-blue
   min-width: 500px
 
   .v-card-title
