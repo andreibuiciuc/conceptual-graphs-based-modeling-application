@@ -241,8 +241,7 @@ export default {
 
 .toolbox
   border-color: variables.$cassandra-blue
-  min-width: 500px
-
+  
   .v-card-title
     margin-bottom: 1rem
 
@@ -287,4 +286,13 @@ export default {
     color: variables.$cassandra-red
     margin-bottom: 1rem
     margin-top: 0.5rem
+
+@media (max-width: variables.$cga-mac-width)
+  .toolbox
+    min-width: 400px
+
+@media (min-width: variables.$cga-mac-width)
+  .toolbox
+    min-width: 500px
+
 </style>

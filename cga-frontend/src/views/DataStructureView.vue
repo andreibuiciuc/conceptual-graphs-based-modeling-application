@@ -1,28 +1,38 @@
 <template>
-  <div class="slide-cards-container" :style="{ justifyContent: selectedCardIndex === 0 ? 'flex-start' : 'flex-end' }">
-    <ConceptualGraph v-if="selectedCardIndex === 1"
+  
+  <div class="slide-cards-container" 
+       :class="{ 'flex-start': selectedCardIndex === slideContainers.FIRST && isAnimationFinished, 
+                   'flex-end': selectedCardIndex === slideContainers.SECOND && isAnimationFinished }">
+   
+    <div v-if="selectedCardIndex === slideContainers.SECOND && isCardOn" class="conceptual-graph-container">
+      <ConceptualGraph
                     :table-concepts="tableConcepts"
                     :column-concepts="columnConcepts"
                     :data-type-concepts="dataTypeConcepts"
                     :no-keyspace="true"
                     :are-column-concepts-deletable="true"
+                    :apply-border="isCardOn"
                     @remove="removeColumnConcept">
-    </ConceptualGraph>
-    <div class="design-toolbox-container">
-      <SlideCard v-if="selectedCardIndex !== 1"
-               class="slide-card" :class="{ 'slide-card-slide-left': selectedCardIndex === 0 }"
-               style="margin-right: 2.5rem"
+      </ConceptualGraph>
+    </div>
+
+    <Transition name="fade" mode="out-in">
+      <div v-if="selectedCardIndex !== slideContainers.SECOND" class="design-toolbox-container" 
+         :class="{ 'design-toolbox-container-slide-left': selectedCardIndex === slideContainers.FIRST }"
+         @transitionend="isAnimationFinished = true">
+      <SlideCard 
+               class="slide-card"
                icon="mdi-pencil" 
-               :is-card-grayed="currentActiveCardIndex === 1"
-               :is-card-selected="selectedCardIndex === 0"
+               card-title="Design by form"
+               :is-card-grayed="currentActiveCardIndex === slideContainers.SECOND"
+               :is-card-selected="selectedCardIndex === slideContainers.FIRST"
                :is-card-on="isCardOn"
-               @transitionend="isAnimationFinished = true"
-               @hovered="currentActiveCardIndex = 0"
-               @leave="currentActiveCardIndex = -1"
-               @selected="selectDesignCard(0)">
+               @hovered="currentActiveCardIndex = slideContainers.FIRST"
+               @leave="currentActiveCardIndex = slideContainers.NONE"
+               @selected="selectDesignCard(slideContainers.FIRST)">
       </SlideCard>
       <Transition name="swipe" mode="out-in">
-        <DesignToolbox v-if="selectedCardIndex === 0 && isCardOn && isAnimationFinished"
+        <DesignToolbox v-if="selectedCardIndex === slideContainers.FIRST && isCardOn && isAnimationFinished"
                       class="design-toolbox"
                       :keyspace="currentKeyspace"
                       @openTerminal="openTerminal"
@@ -30,27 +40,39 @@
         </DesignToolbox>
       </Transition>
     </div>
-    <div class="design-toolbox-container">
-      <SlideCard v-if="selectedCardIndex !== 0"
-               class="slide-card" :class="{ 'slide-card-slide-right': selectedCardIndex === 1 }"
-               icon="mdi-cursor-move" 
-               :is-card-grayed="currentActiveCardIndex === 0"
-               :is-card-selected="selectedCardIndex === 1"
+    </Transition>
+
+    <Transition name="fade" mode="out-in">
+      <div v-if="selectedCardIndex !== slideContainers.FIRST" class="design-toolbox-container"
+         :class="{ 'design-toolbox-container-slide-right': selectedCardIndex === slideContainers.SECOND }"
+         @transitionend="isAnimationFinished = true">
+      <SlideCard 
+               class="slide-card"
+               icon="mdi-cursor-move"
+               card-title="Design by drag and drop" 
+               :is-card-grayed="currentActiveCardIndex === slideContainers.FIRST"
+               :is-card-selected="selectedCardIndex === slideContainers.SECOND"
                :is-card-on="isCardOn"
-               @hovered="currentActiveCardIndex = 1"
-               @leave="currentActiveCardIndex = -1"
-               @selected="selectDesignCard(1)">
+               @hovered="currentActiveCardIndex = slideContainers.SECOND"
+               @leave="currentActiveCardIndex = slideContainers.NONE"
+               @selected="selectDesignCard(slideContainers.SECOND)">
       </SlideCard>
+      </div>
+    </Transition>
+
+    <div v-if="selectedCardIndex === slideContainers.FIRST && isCardOn" class="conceptual-graph-container">
+      <ConceptualGraph 
+                  :table-concepts="tableConcepts"
+                  :column-concepts="columnConcepts"
+                  :data-type-concepts="dataTypeConcepts"
+                  :no-keyspace="true"
+                  :are-column-concepts-deletable="true"
+                  :apply-border="false"
+                  @remove="removeColumnConcept">
+      </ConceptualGraph>
     </div>
-    <ConceptualGraph v-if="selectedCardIndex === 0"
-                    :table-concepts="tableConcepts"
-                    :column-concepts="columnConcepts"
-                    :data-type-concepts="dataTypeConcepts"
-                    :no-keyspace="true"
-                    :are-column-concepts-deletable="true"
-                    @remove="removeColumnConcept">
-    </ConceptualGraph>
   </div>
+
   <v-dialog v-model="isTerminalOpened"
             v-if="isTerminalOpened"
             persistent
@@ -76,6 +98,12 @@ import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.
 import { useClipboard } from '../composables/clipboard';
 import { mapState, mapActions } from "pinia"
 
+const slideContainers = {
+  NONE: -1,
+  FIRST: 0,
+  SECOND: 1
+};
+
 export default {
   name: "DataStructureView",
   components: {
@@ -91,6 +119,7 @@ export default {
     hideCardIndex: -1,
     isCardOn: false,
     isAnimationFinished: false,
+    isCardInvisible: false,
     // This data is related to the Cassandra Terminal component
     isTerminalOpened: false,
     commands: [],
@@ -105,20 +134,28 @@ export default {
     return { copyToClipboard }
   },
   computed: {
-    ...mapState(useConnectionStore, ['currentKeyspace'])
+    // These computed properties are mapped from the Cassandra Connection store
+    ...mapState(useConnectionStore, ['currentKeyspace']),
+    // These computed properties are related to the usage of constants
+    slideContainers: () => { return slideContainers; }
   },
   methods: {
      // These methods are mapped from the notification store.
      ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
     // These methods are related to the Slide Card components
     selectDesignCard: function (cardIndex) {
-      if (this.isCardOn) {
-        this.isCardOn = false;
-      } else if (this.selectedCardIndex === cardIndex) {
-        this.isCardOn = true;
-      }
-      this.selectedCardIndex = cardIndex;
       this.isAnimationFinished = false;
+      if (this.isCardOn) {
+        this.selectedCardIndex = -1;
+        this.isCardOn = false;
+        this.renderConceptualGraph(null);
+        this.isCardInvisible = false;
+      } else {
+        if (this.selectedCardIndex === cardIndex) {
+          this.isCardOn = true;
+        }
+        this.selectedCardIndex = cardIndex;
+      }
     },
     // These methods handle events of components
     openTerminal: function (commands) {
@@ -170,32 +207,58 @@ export default {
 @use "@/assets/styles/_containers.sass"
 @use "@/assets/styles/_variables.sass"
 
+// Shared Sass vatriables for transitions
+$transition-all-time: 0.5s
+$translate-percentage: 50%
+
+// Shared Sass classes between media
 .slide-cards-container
+  @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
   height: 100vh
-  display: flex
-  align-items: center
-  justify-content: space-around
-  padding: variables.$cga-topbar-height 20% 0
+  padding-top: variables.$cga-topbar-height
 
-  .design-toolbox-container
-    @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
-    height: 100%
-    padding-top: 2.5rem
+.design-toolbox-container
+  @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
+  height: 100%
+  padding: 40px 0
 
-    .slide-card
-      max-height: 800px
+  .slide-card
+    margin-right: 2.5rem
 
-    .slide-card-slide-left
-      transform: translateX(-50%)
-      transition: all 0.5s
+  .design-toolbox
+    margin-top: 40px
 
-    .slide-card-slide-right
-      transform: translateX(50%)
-      transition: all 0.5s
+.conceptual-graph-container
+  height: 100%
+  width: 100%
+  padding: 40px
 
-.design-toolbox
-  transform: translateX(-50%)
-  margin: 2.5rem 2.5rem 0 0
+@media (min-width: variables.$cga-ipad-width) and (max-width: variables.$cga-mac-width)
+  .slide-cards-container
+    height: 100vh
+    @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+
+@media (min-width: calc(variables.$cga-mac-width))
+  .slide-cards-container
+    padding: variables.$cga-topbar-height 20% 2.5rem
+
+    .design-toolbox-container
+      @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
+      height: 100%
+
+    .design-toolbox-container-slide-left
+      transition: all $transition-all-time
+      transform: translateX(-$translate-percentage)
+
+      .slide-card
+        margin-right: 0
+    
+    .design-toolbox-container-slide-right
+      transition: all $transition-all-time
+      transform: translate($translate-percentage)
+    
+      .slide-card
+        max-height: 800px
 
 .swipe-enter-active, .swipe-leave-active
   opacity: 0
@@ -208,6 +271,16 @@ export default {
   opacity: 1
 
 .swipe-leave-to
+  opacity: 0
+
+.fade-enter-active, .fade-leave-active
+  opacity: 0
+  transition: opacity 0.5s linear
+
+.fade-leave-from
+  opacity: 1
+
+.fade-leave-to
   opacity: 0
 
 </style>

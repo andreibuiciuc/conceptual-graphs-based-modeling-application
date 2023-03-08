@@ -1,7 +1,7 @@
 <template>
   <div
     class="tf-tree conceptual-graph"
-    :class="{ 'conceptual-graph-inverted': inverted }"
+    :class="{ 'conceptual-graph-inverted': inverted, 'conceptual-graph-with-border': applyBorder }"
   >
     <ul class="conceptual-graph-root">
       <!-- Keyspace level-->
@@ -95,6 +95,7 @@ export default {
     columnConcepts: Object,
     dataTypeConcepts: Object,
     inverted: Boolean,
+    applyBorder: Boolean,
     noKeyspace: Boolean,
     areColumnConceptsDeletable: Boolean
   },
@@ -176,7 +177,13 @@ export default {
     font-style: italic
 
 .conceptual-graph-inverted
+  
   & .tf-nc, .concept-type, .tf-nc::before, .tf-nc::after, li::before
     color: variables.$cassandra-white
     border-color: variables.$cassandra-white !important
+
+.conceptual-graph-with-border
+  border: 1px dashed variables.$cassandra-blue
+  width: 100%
+
 </style>

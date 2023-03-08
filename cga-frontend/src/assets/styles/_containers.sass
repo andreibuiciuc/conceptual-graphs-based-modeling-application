@@ -34,6 +34,17 @@ section
 
 
 // Custom global SASS classes are defined here.
+.flex-start
+    justify-content: flex-start !important
+    padding-right: 0 !important
+
+.flex-end
+    justify-content: flex-end !important
+    padding-left: 0 !important
+
+.flex-center
+    justify-content: center
+
 .action-button
     border-color: variables.$cassandra-blue
     background-color: variables.$cassandra-white
@@ -63,7 +74,6 @@ section
     color: variables.$cassandra-blue
 
 // Vuetify component classes are overwritten here.
-
 .v-overlay__content
     @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
