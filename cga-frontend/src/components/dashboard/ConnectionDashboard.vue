@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
-    <connection-console @changekeyspace="selectedKeyspace = $event" />
-    <keyspace-graph :selected-keyspace="selectedKeyspace" />
+    <connection-console @changekeyspace="selectedKeyspace = $event" @limit="conceptualGraphLeftLimit = $event"/>
+    <keyspace-graph :selected-keyspace="selectedKeyspace" :left-limit="conceptualGraphLeftLimit" />
   </div>
 </template>
 
@@ -18,7 +18,8 @@ export default {
   },
   data: () => ({
     selectedKeyspace: constants.inputValues.empty,
-  }),
+    conceptualGraphLeftLimit: 0
+  })
 };
 </script>
 

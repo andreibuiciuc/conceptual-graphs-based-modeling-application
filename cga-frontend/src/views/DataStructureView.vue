@@ -20,7 +20,7 @@
       <div v-if="selectedCardIndex !== slideContainers.SECOND" class="design-toolbox-container" 
          :class="{ 'design-toolbox-container-slide-left': selectedCardIndex === slideContainers.FIRST }"
          @transitionend="isAnimationFinished = true">
-      <SlideCard 
+      <SlideCard :disabled="false"
                class="slide-card"
                icon="mdi-pencil" 
                card-title="Design by form"
@@ -46,7 +46,7 @@
       <div v-if="selectedCardIndex !== slideContainers.FIRST" class="design-toolbox-container"
          :class="{ 'design-toolbox-container-slide-right': selectedCardIndex === slideContainers.SECOND }"
          @transitionend="isAnimationFinished = true">
-      <SlideCard 
+      <SlideCard :disabled="true"
                class="slide-card"
                icon="mdi-cursor-move"
                card-title="Design by drag and drop" 

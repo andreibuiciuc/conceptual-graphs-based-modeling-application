@@ -11,6 +11,7 @@
       </div>
     </v-card-title>
     <v-card-text>
+      <!-- Table concept section -->
       <div class="d-flex">
         <v-text-field
           v-model="currentTableConcept.conceptName"
@@ -34,7 +35,10 @@
           <v-icon v-else>mdi-plus</v-icon>
         </v-btn>
       </div>
+      
       <v-divider></v-divider>
+
+      <!-- Column concepts section -->
       <div class="column-concept-container">
         <div class="column-concept-config">
           <v-text-field
@@ -49,7 +53,7 @@
           <span class="error-message">{{ getErrorMessage }}</span>
           <div class="column-selects">
             <v-select
-              v-model="currentColumnConcept.relation"
+              v-model="currentColumnConcept.kind"
               variant="outlined"
               class="data-type-select"
               label="Column Option"
@@ -85,6 +89,34 @@
           <v-icon>mdi-plus</v-icon>
         </v-btn>
       </div>
+
+      <v-divider></v-divider>
+
+      <div class="d-flex">
+        <v-select
+          variant="outlined"
+          style="margin-right: 1rem;"
+          label="Clustering Index"
+          :hide-details="true"
+          :items="[]"
+          :disabled="!currentTableConcept.conceptName || !isGraphRendered">
+        </v-select>
+        <v-select
+          variant="outlined"
+          label="Order"
+          :hide-details="true"
+          :items="clusteringOrderItems"
+          :disabled="!currentTableConcept.conceptName || !isGraphRendered">
+        </v-select>
+        <v-btn
+          variant="text"
+          class="icon-button"
+        >
+          <v-icon>mdi-plus</v-icon>
+        </v-btn>
+      </div>
+
+
     </v-card-text>
     <v-card-actions>
       <v-btn
@@ -112,6 +144,7 @@ export default {
     currentTableConcept: null,
     currentColumnConcept: null,
     currentDataTypeConcept: null,
+    currentClusteringOrderOptions: null,
     // This data is related to the rendering of the Conceptual Graph
     tableConcepts: [],
     columnConcepts: {},
@@ -184,15 +217,39 @@ export default {
         const columnConceptCommandContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND
           .concat(columnConcept.conceptName)
           .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE)
-          .concat(this.dataTypeConcepts[columnConcept.conceptName].conceptName)
+          .concat(this.dataTypeConcepts[columnConcept.conceptName].conceptName.toUpperCase())
           .concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
         commands.push({ lineNumber: currentLine, lineContent: columnConceptCommandContent });
         currentLine = currentLine + 1;
       });
 
-      const lastCommandLineLength = commands.at(-1).lineContent.length;
-      const lastCommandContent = commands.at(-1).lineContent.slice(0, lastCommandLineLength - 1).concat(" );");
-      commands.splice(commands.length - 1, 1, { lineNumber: currentLine, lineContent: lastCommandContent });
+      // Add primary and partition keys
+      let primaryKeyCommandSnippet = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat("PRIMARY KEY ( ");
+      let partitionKeySnippet = "( "
+      let clusteringColumnsSnippet = "( ";
+      let hasExplicitPartitionKeys = false;
+      let hasExplicitClusteringColumn = false;
+
+      this.columnConcepts[tableConceptName].forEach(columnConcept => {
+        if (columnConcept.kind === constants.columnKinds.partitionKey) {
+          partitionKeySnippet = partitionKeySnippet.concat(columnConcept.conceptName).concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
+          hasExplicitPartitionKeys = true;
+        } else if (columnConcept.kind === constants.columnKinds.clustering) {
+          clusteringColumnsSnippet = clusteringColumnsSnippet.concat(columnConcept.conceptName).concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
+          hasExplicitClusteringColumn = true;
+        }
+      });
+      partitionKeySnippet = partitionKeySnippet.slice(0, partitionKeySnippet.length - 1).concat(" ),");
+      clusteringColumnsSnippet = clusteringColumnsSnippet.slice(0, clusteringColumnsSnippet.length - 1).concat(" );");
+
+      primaryKeyCommandSnippet = primaryKeyCommandSnippet
+        .concat(hasExplicitPartitionKeys ? partitionKeySnippet + designToolboxConstants.CQL_PUNCTUATION.COMMA : "")
+        .concat(hasExplicitClusteringColumn ? clusteringColumnsSnippet + designToolboxConstants.CQL_PUNCTUATION.COMMA : "")
+
+      commands.push({ lineNumber: currentLine, lineContent: primaryKeyCommandSnippet });
+      currentLine = currentLine + 1;
+      
+      // Add clustering indices
 
       return commands;
     }
@@ -200,14 +257,19 @@ export default {
   computed: {
     // These computed properties are related to the Design Toolbox
     areColumnConceptFieldsCompleted: function () {
-      return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.relation &&
+      return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.kind &&
              this.currentDataTypeConcept && this.currentDataTypeConcept.conceptName;
+    },
+    areClusteringOrderFieldsCompleted: function () {
     },
     columnDataTypeItems: function () {
       return designToolboxConstants.CQL_DATA_TYPES;
     },
     columnOptionsItems: function () {
       return designToolboxConstants.CQL_COLUMN_OPTIONS;
+    },
+    clusteringOrderItems: function () {
+      return designToolboxConstants.CQL_CLUSTERING_ORDER_ITEMS;
     },
     doesColumnConceptAlreadyExists: function () {
       return this.columnConcepts[this.currentTableConcept.conceptName] &&

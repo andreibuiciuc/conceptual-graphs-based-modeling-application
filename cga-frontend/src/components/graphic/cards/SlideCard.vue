@@ -1,6 +1,8 @@
 <template>
     <div class="slide-card" 
-         :class="{ 'slide-card-gray': isCardGrayed, 'slide-card-mini': isCardOn }" 
+         :class="{ 'slide-card-gray': isCardGrayed, 
+                   'slide-card-mini': isCardOn, 
+                   'slide-card-disabled': disabled }"
          @mouseover="onCardHover" 
          @mouseleave="onCardLeave"
          @click="onCardSelected"
@@ -11,8 +13,12 @@
             </Transition>
         </div>
         <div class="slide-card-info-container">
-            <span v-if="isCardSelected && !isCardOn">Press to start modelling Cassandra tables</span>
-            <v-icon>{{ props.icon }}</v-icon>
+            <span v-if="disabled">Coming Soon</span>
+            <template v-else>
+                <span v-if="isCardSelected && !isCardOn">Press to start modelling Cassandra tables</span>
+                <v-icon>{{ props.icon }}</v-icon>
+            </template>
+            
         </div>
     </div>
 </template>
@@ -25,7 +31,8 @@ interface SlideCardProps {
     isCardGrayed: boolean | null;
     isCardSelected: boolean | null;
     isCardOn: boolean | null;
-    cardTitle: String
+    cardTitle: String,
+    disabled?: boolean
 };   
 
 const props = defineProps<SlideCardProps>();
@@ -34,17 +41,23 @@ const emit = defineEmits(['hovered', 'leave', 'selected', 'transition']);
 const isCardHovered = ref(false);
 
 const onCardHover = () => {
-    isCardHovered.value = true;
-    emit('hovered');
+    if (!props.disabled) {
+        isCardHovered.value = true;
+        emit('hovered');
+    }
 };
 
 const onCardLeave = () => {
-    isCardHovered.value = false;
-    emit('leave');
+    if (!props.disabled) {
+        isCardHovered.value = false;
+        emit('leave');
+    }
 };
 
 const onCardSelected = () => {
-    emit('selected');
+    if (!props.disabled) {
+        emit('selected');
+    }
 };
 
 </script>
@@ -53,7 +66,7 @@ const onCardSelected = () => {
 @use '@/assets/styles/_containers.sass'
 @use '@/assets/styles/_variables.sass'
 
-.slide-card-gray
+.slide-card-gray, .slide-card-disabled
     background-color: variables.$cassandra-light-gray
     border: none !important
     opacity: 0.5
@@ -76,7 +89,10 @@ const onCardSelected = () => {
         height: 30%
         font-size: 2rem
 
-    &:hover
+    .slide-card-info-container
+        @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+    &:hover:not(.slide-card-disabled)
         box-shadow: 0 0 11px rgba(33,33,33,.2) 
         transform: scale(1.025)
         cursor: pointer
@@ -84,7 +100,7 @@ const onCardSelected = () => {
         .card-title
             color: variables.$cassandra-blue
     
-    &::before
+    &:not(.slide-card-disabled)::before
       align-self: flex-end
       content: ""
       position: absolute
@@ -96,12 +112,9 @@ const onCardSelected = () => {
       z-index: -1
       transition: 0.5s
 
-    &:hover::before
+    &:hover:not(.slide-card-disabled)::before
         height: 70%
 
-    .slide-card-info-container
-        @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-        
 .slide-card-mini
     height: 50px
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="connection-console">
+  <div class="connection-console" ref="connectionConsole">
     <v-expansion-panels variant="popout" v-model="currentActivePanels" multiple>
       <v-expansion-panel>
         <v-expansion-panel-title>
@@ -173,6 +173,10 @@ export default {
     if (this.cassandraServerCredentials.isCassandraServerConnected) {
       this.currentActivePanels.push(1);
     }
+  },
+  mounted: function () {
+    const conceptualGraphLeftLimit = this.$refs.connectionConsole.getBoundingClientRect().x;
+    this.$emit("limit", conceptualGraphLeftLimit);
   }
 }
 </script>

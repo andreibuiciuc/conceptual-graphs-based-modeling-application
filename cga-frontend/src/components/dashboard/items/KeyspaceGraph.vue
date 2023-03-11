@@ -5,6 +5,7 @@
     :table-concepts="tableConcepts"
     :column-concepts="columnConcepts"
     :data-type-concepts="dataTypeConcepts"
+    :left-limit="leftLimit"
   />
 </template>
 
@@ -19,7 +20,8 @@ export default {
     ConceptualGraph
   },
   props: {
-    selectedKeyspace: String
+    selectedKeyspace: String,
+    leftLimit: Number
   },
   data: () => ({
     keyspaceConcept: null,

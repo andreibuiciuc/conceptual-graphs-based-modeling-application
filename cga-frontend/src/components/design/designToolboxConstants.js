@@ -1,9 +1,8 @@
 export default {
   CQL_COLUMN_OPTIONS: [
-    { value: "isOptional", title: "isOptional" },
-    { value: "hasPartitionKey", title: "hasPartitionKey" },
-    { value: "hasClusteringKeyASC", title: "hasClusteringKeyASC" },
-    { value: "hasClusteringKeyDESC", title: "hasClusteringKeyDESC" },
+    { value: "regular", title: "regular" },
+    { value: "clustering", title: "clustering" },
+    { value: "partitionKey", title: "partition key"}
   ],
   CQL_DATA_TYPES: [
     { value: "ascii", title: "ascii" },
@@ -26,6 +25,13 @@ export default {
     { value: "tuple", title: "tuple" },
     { value: "uuid", title: "uuid" },
   ],
+  CQL_CLUSTERING_ORDER_ITEMS: [
+    { value: "asc", title: "ASC" },
+    { value: "desc", title: "DESC" }
+  ],
+  DEFAULT_CLUSTERING_OPTIONS: {
+    
+  },
   CQL_BASH_COMMAND: "cqlsh >>",
   CQL_BASH_BLANK_COMMAND: "      >> ",
   CQL_CREATE_TABLE_SNIPPET: " CREATE TABLE IF NOT EXISTS ",

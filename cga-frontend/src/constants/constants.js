@@ -52,6 +52,7 @@ export default {
   defaultConcept: {
     conceptName: null,
     conceptType: null,
+    kind: null,
     relation: null,
   },
   relationTypes: {
