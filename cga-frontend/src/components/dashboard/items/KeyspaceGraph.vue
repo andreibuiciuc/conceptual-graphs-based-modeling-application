@@ -12,7 +12,7 @@
 <script lang="js">
 import constants from '@/constants/constants';
 import { manageRequest } from "@/includes/requests";
-import ConceptualGraph from '../../utilities/ConceptualGraph.vue';
+import ConceptualGraph from '../../graphic/graph/ConceptualGraph.vue';
 
 export default {
   name: "KeyspaceGraph",

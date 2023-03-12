@@ -75,7 +75,7 @@ import useUserStore from '@/stores/user';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
-import ConceptualGraph from '../components/utilities/ConceptualGraph.vue';
+import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 
 export default {
   name: "HomeView",

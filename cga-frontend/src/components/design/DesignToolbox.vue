@@ -132,7 +132,7 @@
 
 <script lang="js">
 import constants from "@/constants/constants";
-import designToolboxConstants from "../designToolboxConstants";
+import designToolboxConstants from "./designToolboxConstants";
 
 export default {
   name: "DesignToolbox",
@@ -157,7 +157,7 @@ export default {
       this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
       this.resetColumnConceptFields();
       this.resetCassandraTerminalData();
-      this.renderConceptualGraph();
+      this.renderConceptualGraph(true);
       this.isGraphRendered = false;
     },
     resetCassandraTerminalData: function () {
@@ -177,17 +177,30 @@ export default {
     },
     addColumnConceptToGraph: function () {
       if (!this.doesColumnConceptAlreadyExists) {
-        this.columnConcepts[this.currentTableConcept.conceptName].push({ ... this.currentColumnConcept });
+        this.columnConcepts[this.currentTableConcept.conceptName].push({ ... this.currentColumnConcept, relation: this.getRelationForColumnConcept() });
         this.dataTypeConcepts[this.currentColumnConcept.conceptName] = { ... this.currentDataTypeConcept };
         this.resetColumnConceptFields();
         this.renderConceptualGraph();
       }
     },
-    renderConceptualGraph: function () {
+    getRelationForColumnConcept: function () {
+      switch (this.currentColumnConcept.kind) {
+        case constants.columnKinds.regular:
+          return constants.relationTypes.isOptional;
+        case constants.columnKinds.partitionKey:
+          return constants.relationTypes.hasPartitionKey;
+        case constants.columnKinds.clustering:
+          return constants.relationTypes.hasClusteringKeyASC;
+        default:
+          return constants.relationTypes.isOptional;
+      } 
+    },
+    renderConceptualGraph: function (onInitialLoad = false) {
       const conceptualGraphData = {
         tableConcepts: this.tableConcepts,
         columnConcepts: this.columnConcepts,
-        dataTypeConcepts: this.dataTypeConcepts
+        dataTypeConcepts: this.dataTypeConcepts,
+        onInitialLoad
       };
       this.$emit("render", conceptualGraphData);
       this.isGraphRendered = true;

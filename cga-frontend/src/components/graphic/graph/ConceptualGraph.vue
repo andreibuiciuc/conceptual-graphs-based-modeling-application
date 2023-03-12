@@ -87,7 +87,6 @@
 <script lang="js">
 import constants from "@/constants/constants";
 import arrowCreate, { DIRECTION } from 'arrows-svg';
-import { ribbonArrow } from "d3-chord";
 
 export default {
   name: "ConceptualGraph",
@@ -230,7 +229,6 @@ export default {
   width: 100%
   height: 100%
   overflow: auto
-  position: sticky
 
   .conceptual-graph-root
     overflow: auto

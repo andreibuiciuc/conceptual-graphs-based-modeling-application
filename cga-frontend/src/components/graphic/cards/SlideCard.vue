@@ -9,16 +9,14 @@
     >
         <div class="card-title">
             <Transition name="card-title-fade" mode="out-in">
-                <span v-if="isCardHovered">{{ cardTitle.toUpperCase() }}</span>
+                <span v-if="(isCardHovered || isCardSelected) && !isCardOn">{{ cardTitle.toUpperCase() }}</span>
             </Transition>
         </div>
         <div class="slide-card-info-container">
             <span v-if="disabled">Coming Soon</span>
             <template v-else>
-                <span v-if="isCardSelected && !isCardOn">Press to start modelling Cassandra tables</span>
                 <v-icon>{{ props.icon }}</v-icon>
             </template>
-            
         </div>
     </div>
 </template>
@@ -80,6 +78,10 @@ const onCardSelected = () => {
     position: relative
     overflow: hidden
 
+    .card-section
+        @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
+        height: 100%
+
     .card-title
         @include containers.flex-container($justify-content: center, $align-items: center)
         position: absolute
@@ -92,6 +94,10 @@ const onCardSelected = () => {
     .slide-card-info-container
         @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
+        .v-icon
+            color: variables.$cassandra-blue
+            font-size: variables.$cga-font-size-large
+    
     &:hover:not(.slide-card-disabled)
         box-shadow: 0 0 11px rgba(33,33,33,.2) 
         transform: scale(1.025)
@@ -110,9 +116,9 @@ const onCardSelected = () => {
       height: 0%
       background-color: variables.$cassandra-light-blue
       z-index: -1
-      transition: 0.5s
+      transition: all 0.5s
 
-    &:hover:not(.slide-card-disabled)::before
+    &:hover:not(.slide-card-disabled, .slide-card-mini)::before
         height: 70%
 
 .slide-card-mini
@@ -128,9 +134,9 @@ const onCardSelected = () => {
 
 .card-title-fade-enter-active, .card-title-slide-leave-active
     opacity: 0
-    transition: transform 0.25s, opacity 0.30s linear
+    transition: transform 0.25s, opacity 0.5s linear
 
-.card-title-fade-enter-to, card-title-fade-leave-from
+.card-title-fade-enter-to, .card-title-fade-leave-from
     opacity: 1
 
 .card-tile-fade-leave-to
