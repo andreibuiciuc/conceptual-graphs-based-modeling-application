@@ -26,11 +26,11 @@ import { ref } from 'vue';
 
 interface SlideCardProps {
     icon: string;
-    isCardGrayed: boolean | null;
-    isCardSelected: boolean | null;
-    isCardOn: boolean | null;
     cardTitle: String,
+    isCardSelected: boolean;
     disabled?: boolean
+    isCardGrayed?: boolean;
+    isCardOn?: boolean;
 };   
 
 const props = defineProps<SlideCardProps>();

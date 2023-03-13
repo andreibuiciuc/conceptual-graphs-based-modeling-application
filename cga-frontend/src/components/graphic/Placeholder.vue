@@ -2,12 +2,23 @@
     <div class="placeholder-wrapper">
         <div class="placeholder">
             <div class="placeholder-overlay"></div>
-            <span>Waiting for the Conceptual Graph to be rendered ...</span>
+            <div class="placeholder-text">
+                {{ props.text }}
+                <div v-for="index in loadingDotsCount" :key="index" class="dot"></div>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+
+interface PlaceholderProps {
+    text?: string
+    inLoadingState: boolean | null
+}
+
+const loadingDotsCount = 3;
+const props = defineProps<PlaceholderProps>();
 
 </script>
 
@@ -16,6 +27,7 @@
 @use '@/assets/styles/_variables.sass'
 
 .placeholder-wrapper
+    position: sticky
     transform: translateX(-25%)
     width: 100%
     height: 100%
@@ -29,8 +41,32 @@
     border-radius: 10px
     overflow: hidden
 
-    span
+    .placeholder-text
+        @include containers.flex-container($align-items: center)
         font-size: variables.$cga-font-size-medium
+
+        %dot
+            width: 10px
+            height: 10px
+            margin-right: 5px
+            border-radius: 50%
+            animation: dot-loading-animation 1.5s ease-in-out infinite
+
+        .dot:nth-child(1)
+            @extend %dot
+            margin-left: 10px
+            background-color: variables.$cassandra-black
+        
+        .dot:nth-child(2)
+            @extend %dot
+            background-color: variables.$cassandra-blue
+            animation-delay: 0.2s
+
+        .dot:nth-child(3)
+            @extend %dot
+            margin-right: 0
+            background-color: variables.$cassandra-light-blue
+            animation-delay: 0.4s
 
 .placeholder::before
     content: ''
@@ -50,6 +86,11 @@
     0%
         transform: rotate(0deg)
     100%
-        transform: rotate(360deg)    
+        transform: rotate(360deg)   
+
+@keyframes dot-loading-animation
+    50%
+        opacity: 0
+        transform: translateY(5px) scale(0.5)
 
 </style>

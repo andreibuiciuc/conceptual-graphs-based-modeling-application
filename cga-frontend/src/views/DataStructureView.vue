@@ -1,7 +1,7 @@
 <template>
   
   <div class="slide-cards-container" 
-       :class="{ 'flex-start': selectedCardIndex === slideContainers.FIRST && isAnimationFinished, 
+       :class="{ 'flex-start': isTransformTransitionFinished && selectedCardIndex === slideContainers.FIRST, 
                    'flex-end': selectedCardIndex === slideContainers.SECOND && isAnimationFinished }">
    
     <div v-if="selectedCardIndex === slideContainers.SECOND && isGraphRendered" class="conceptual-graph-container">
@@ -60,8 +60,6 @@
       </div>
     </Transition>
 
-    
-    
     <Transition name="fade" mode="out-in">
       <div v-if="selectedCardIndex === slideContainers.FIRST && !isPlaceholderVisible" class="conceptual-graph-container">
       <ConceptualGraph 
@@ -74,7 +72,7 @@
                   @remove="removeColumnConcept">
       </ConceptualGraph>
     </div>
-      <Placeholder v-else-if="isPlaceholderVisible" />
+      <Placeholder v-else-if="isPlaceholderVisible" :in-loading-state="true" />
     </Transition>
   </div>
 
@@ -127,6 +125,8 @@ export default {
     isCardOn: false,
     isAnimationFinished: false,
     isCardInvisible: false,
+    //
+    isTransformTransitionFinished: false,
     // This data is related to the Cassandra Terminal component
     isTerminalOpened: false,
     commands: [],
@@ -146,7 +146,7 @@ export default {
     // These computed properties are related to the usage of constants
     slideContainers: () => { return slideContainers; },
     // These computed properties are related to the animations
-    isPlaceholderVisible: function () { return this.selectedCardIndex > -1 && !this.isGraphRendered; }
+    isPlaceholderVisible: function () { return this.selectedCardIndex > -1 && this.isTransformTransitionFinished && !this.isGraphRendered; },
   },
   methods: {
      // These methods are mapped from the notification store.
@@ -158,6 +158,7 @@ export default {
         this.selectedCardIndex = -1;
         this.isCardOn = false;
         this.isCardInvisible = false;
+        this.isTransformTransitionFinished = false;
       } else {
         if (this.selectedCardIndex === cardIndex) {
           this.isCardOn = true;
@@ -165,7 +166,10 @@ export default {
         this.selectedCardIndex = cardIndex;
       }
     },
-    onTransitionEnd: function () {
+    onTransitionEnd: function (transitionEvent) {
+      if (transitionEvent.propertyName === "transform") {
+        this.isTransformTransitionFinished = true;
+      }
       this.showGraphPlaceholder = true;
       this.isAnimationFinished = true;
     },
@@ -229,7 +233,7 @@ $translate-percentage: 50%
 
 // Shared Sass classes between media
 .slide-cards-container
-  @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+  @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
   height: 100vh
   padding-top: variables.$cga-topbar-height
 
@@ -237,9 +241,6 @@ $translate-percentage: 50%
   @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
   height: 100%
   padding: 40px 0
-
-  .slide-card
-    margin-right: 2.5rem
 
   .design-toolbox
     margin-top: 40px
@@ -268,9 +269,6 @@ $translate-percentage: 50%
       transition: all $transition-all-time
       transform: translateX(-$translate-percentage)
 
-      .slide-card
-        margin-right: 0
-    
     .design-toolbox-container-slide-right
       transition: all $transition-all-time
       transform: translate($translate-percentage)
