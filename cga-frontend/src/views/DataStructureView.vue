@@ -20,7 +20,7 @@
       <div v-if="selectedCardIndex !== slideContainers.SECOND" class="design-toolbox-container" 
          :class="{ 'design-toolbox-container-slide-left': selectedCardIndex === slideContainers.FIRST }"
          @transitionend="onTransitionEnd">
-      <SlideCard :disabled="false"
+      <SlideCard :disabled="!currentKeyspace"
                class="slide-card"
                icon="mdi-pencil" 
                card-title="Design by form"

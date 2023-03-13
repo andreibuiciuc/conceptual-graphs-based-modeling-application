@@ -25,8 +25,8 @@
 import { ref } from 'vue';
 
 interface SlideCardProps {
-    icon: string;
     cardTitle: String,
+    icon: string;
     isCardSelected: boolean;
     disabled?: boolean
     isCardGrayed?: boolean;
@@ -63,20 +63,21 @@ const onCardSelected = () => {
 <style lang="sass">
 @use '@/assets/styles/_containers.sass'
 @use '@/assets/styles/_variables.sass'
+@use '@/assets/styles/_functions.sass'
 
 .slide-card-gray, .slide-card-disabled
-    background-color: variables.$cassandra-light-gray
+    background-color: functions.getCassandraColorByState(variables.$cassandra-disabled-state)
     border: none !important
     opacity: 0.5
 
 .slide-card
     @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
-    height: 100%
-    border-radius: 10px
     border: 1px solid variables.$cassandra-blue
-    transition: all .2s ease-in-out
     position: relative
     overflow: hidden
+    height: 100%
+    border-radius: 10px
+    transition: all .2s ease-in-out
 
     .card-section
         @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
@@ -107,16 +108,16 @@ const onCardSelected = () => {
             color: variables.$cassandra-blue
     
     &:not(.slide-card-disabled)::before
-      align-self: flex-end
-      content: ""
-      position: absolute
-      left: 0
-      bottom: 0
-      width: 100%
-      height: 0%
-      background-color: variables.$cassandra-light-blue
-      z-index: -1
-      transition: all 0.5s
+        background-color: functions.getCassandraColorByState(variables.$cassandra-default-state)
+        align-self: flex-end
+        content: ""
+        position: absolute
+        left: 0
+        bottom: 0
+        width: 100%
+        height: 0%
+        z-index: -1
+        transition: all 0.5s
 
     &:hover:not(.slide-card-disabled, .slide-card-mini)::before
         height: 70%
