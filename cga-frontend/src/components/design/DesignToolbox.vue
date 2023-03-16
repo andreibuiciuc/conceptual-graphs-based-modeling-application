@@ -1,4 +1,5 @@
 <template>
+  <!-- Table concepts section -->
   <v-card
     variant="outlined"
     class="toolbox"
@@ -116,28 +117,56 @@
         </v-btn>
       </div>
 
-
     </v-card-text>
-    <v-card-actions>
-      <v-btn
-        variant="outlined"
-        :disabled="!isQueryGeneratorButtonEnabled"
-        @click.prevent="generateQuery(false)"
-      >
-        Generate CQL Query
+  </v-card>
+
+  <!-- Actions section -->
+  <v-card
+    variant="outlined"
+    class="toolbox"
+    :class="{ 'toolbox-warning': !keyspace }"
+  >
+    <v-card-title class="d-flex justify-center">
+      Design Toolbox Actions
+    </v-card-title>
+    <v-card-text>
+      <div class="actions-row">
+        <v-btn
+          class="action-button"
+          variant="outlined"
+          :disabled="!isQueryGeneratorButtonEnabled"
+          @click.prevent="generateQuery(false)"
+        >
+          GENERATE CQL COMMAND
       </v-btn>
-    </v-card-actions>
+      </div>
+      <div class="actions-row">
+        <v-btn
+          class="action-button"
+          variant="outlined"
+          :disabled="true"
+        >
+          SAVE CQL TABLE (TODO)
+      </v-btn>
+      </div>
+    </v-card-text>
+
   </v-card>
 </template>
 
 <script lang="js">
 import constants from "@/constants/constants";
 import designToolboxConstants from "./designToolboxConstants";
+import { useQuery } from "../../composables/query";
 
 export default {
   name: "DesignToolbox",
   props: {
     keyspace: String
+  },
+  setup: () => {
+   const { generateQueryAsCommands } = useQuery();
+   return { generateQueryAsCommands }
   },
   data: () => ({
     // This data is related to the current configuration inside the Toolbox
@@ -207,64 +236,8 @@ export default {
     },
     // These methods handle the query generator
     generateQuery: function () {
-      const commands = this.generateQueryAsCommands();
+      const commands = this.generateQueryAsCommands(this.keyspace, this.tableConcepts, this.columnConcepts, this.dataTypeConcepts);
       this.$emit("openTerminal", commands);
-    },
-    generateQueryAsCommands: function () {
-      let commands = [];
-      let currentLine = 0;
-
-      // Compute the first line of the CQL command for the Cassandra Terminal component.
-      const tableConceptName = this.tableConcepts[0].conceptName;
-      const definitionCommandContent = designToolboxConstants.CQL_BASH_COMMAND
-        .concat(designToolboxConstants.CQL_CREATE_TABLE_SNIPPET)
-        .concat(this.keyspace)
-        .concat(designToolboxConstants.CQL_PUNCTUATION.DOT)
-        .concat(tableConceptName)
-        .concat(" (");
-      commands.push({ lineNumber: currentLine, lineContent: definitionCommandContent });
-      currentLine = currentLine + 1;
-
-      // For each column definitiom, add the corresponding line in the commands array.
-      this.columnConcepts[tableConceptName].forEach(columnConcept => {
-        const columnConceptCommandContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND
-          .concat(columnConcept.conceptName)
-          .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE)
-          .concat(this.dataTypeConcepts[columnConcept.conceptName].conceptName.toUpperCase())
-          .concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
-        commands.push({ lineNumber: currentLine, lineContent: columnConceptCommandContent });
-        currentLine = currentLine + 1;
-      });
-
-      // Add primary and partition keys
-      let primaryKeyCommandSnippet = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat("PRIMARY KEY ( ");
-      let partitionKeySnippet = "( "
-      let clusteringColumnsSnippet = "( ";
-      let hasExplicitPartitionKeys = false;
-      let hasExplicitClusteringColumn = false;
-
-      this.columnConcepts[tableConceptName].forEach(columnConcept => {
-        if (columnConcept.kind === constants.columnKinds.partitionKey) {
-          partitionKeySnippet = partitionKeySnippet.concat(columnConcept.conceptName).concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
-          hasExplicitPartitionKeys = true;
-        } else if (columnConcept.kind === constants.columnKinds.clustering) {
-          clusteringColumnsSnippet = clusteringColumnsSnippet.concat(columnConcept.conceptName).concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
-          hasExplicitClusteringColumn = true;
-        }
-      });
-      partitionKeySnippet = partitionKeySnippet.slice(0, partitionKeySnippet.length - 1).concat(" ),");
-      clusteringColumnsSnippet = clusteringColumnsSnippet.slice(0, clusteringColumnsSnippet.length - 1).concat(" );");
-
-      primaryKeyCommandSnippet = primaryKeyCommandSnippet
-        .concat(hasExplicitPartitionKeys ? partitionKeySnippet + designToolboxConstants.CQL_PUNCTUATION.COMMA : "")
-        .concat(hasExplicitClusteringColumn ? clusteringColumnsSnippet + designToolboxConstants.CQL_PUNCTUATION.COMMA : "")
-
-      commands.push({ lineNumber: currentLine, lineContent: primaryKeyCommandSnippet });
-      currentLine = currentLine + 1;
-      
-      // Add clustering indices
-
-      return commands;
     }
   },
   computed: {
@@ -298,7 +271,7 @@ export default {
       return this.areColumnConceptFieldsCompleted && !this.doesColumnConceptAlreadyExists;
     },
     isQueryGeneratorButtonEnabled: function () {
-      return this.tableConcepts[0] && this.columnConcepts && this.columnConcepts[this.tableConcepts[0].conceptName].length > 0;
+      return this.tableConcepts[0] && this.columnConcepts && this.columnConcepts[this.tableConcepts[0].conceptName].length > 0 && !this.doesColumnConceptAlreadyExists;
     }
   },
   created() {
@@ -316,12 +289,24 @@ export default {
 
 .toolbox
   border-color: variables.$cassandra-blue
-  
+  margin-top: 40px
+
   .v-card-title
     margin-bottom: 1rem
 
     .v-icon
       color: variables.$cassandra-yellow
+
+  .actions-row
+    @include containers.flex-container($justify-content: center)
+    width: 100%
+
+    &:first-of-type
+      margin-bottom: 1rem
+
+    .v-btn
+      width: 100%
+      height: 56px
 
   .v-btn.icon-button, .v-btn.icon-button--double
     height: 56px
