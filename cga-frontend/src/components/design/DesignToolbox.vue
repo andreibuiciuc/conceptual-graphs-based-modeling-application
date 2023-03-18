@@ -1,169 +1,171 @@
 <template>
+  <div>
   <!-- Table concepts section -->
-  <v-card
-    variant="outlined"
-    class="toolbox"
-    :class="{ 'toolbox-warning': !keyspace }"
-  >
-    <v-card-title>
-      <div class="d-flex justify-center align-center">
-        Conceptual Graph Design Toolbox
-        <v-icon v-if="!keyspace">mdi-alert-box-outline</v-icon>
-      </div>
-    </v-card-title>
-    <v-card-text>
-      <!-- Table concept section -->
-      <div class="d-flex">
-        <v-text-field
-          v-model="currentTableConcept.conceptName"
-          variant="outlined"
-          label="Table name"
-          :clearable="true"
-          :readonly="isGraphRendered"
-          :hide-details="true"
-          :disabled="!keyspace"
-          @click:clear="setupToolboxData"
-        >
-        </v-text-field>
-        <v-btn
-          variant="text"
-          class="icon-button"
-          :class="{ 'icon-button--disabled': isGraphRendered }"
-          :disabled="!isAddTableConceptButtonEnabled"
-          @click.prevent="addTableConceptToGraph"
-        >
-          <v-icon v-if="isGraphRendered">mdi-check</v-icon>
-          <v-icon v-else>mdi-plus</v-icon>
-        </v-btn>
-      </div>
-      
-      <v-divider></v-divider>
-
-      <!-- Column concepts section -->
-      <div class="column-concept-container">
-        <div class="column-concept-config">
+    <v-card
+      variant="outlined"
+      class="toolbox"
+      :class="{ 'toolbox-warning': !keyspace }"
+    >
+      <v-card-title>
+        <div class="d-flex justify-center align-center">
+          Conceptual Graph Design Toolbox
+          <v-icon v-if="!keyspace">mdi-alert-box-outline</v-icon>
+        </div>
+      </v-card-title>
+      <v-card-text>
+        <!-- Table concept section -->
+        <div class="d-flex">
           <v-text-field
-            v-model="currentColumnConcept.conceptName"
+            v-model="currentTableConcept.conceptName"
             variant="outlined"
-            label="New column name"
+            label="Table name"
+            :clearable="true"
+            :readonly="isGraphRendered"
             :hide-details="true"
-            :error="doesColumnConceptAlreadyExists"
-            :disabled="!currentTableConcept.conceptName || !isGraphRendered"
+            :disabled="!keyspace"
+            @click:clear="setupToolboxData"
           >
           </v-text-field>
-          <span class="error-message">{{ getErrorMessage }}</span>
-          <div class="column-selects">
-            <v-select
-              v-model="currentColumnConcept.kind"
-              variant="outlined"
-              class="data-type-select"
-              label="Column Option"
-              :hide-details="true"
-              :disabled="
-                !currentColumnConcept.conceptName ||
-                doesColumnConceptAlreadyExists
-              "
-              :items="columnOptionsItems"
-            >
-            </v-select>
-            <v-select
-              v-model="currentDataTypeConcept.conceptName"
-              variant="outlined"
-              class="data-type-select"
-              label="Data Type"
-              :hide-details="true"
-              :disabled="
-                !currentColumnConcept.conceptName ||
-                doesColumnConceptAlreadyExists
-              "
-              :items="columnDataTypeItems"
-            >
-            </v-select>
-          </div>
+          <v-btn
+            variant="text"
+            class="icon-button"
+            :class="{ 'icon-button--disabled': isGraphRendered }"
+            :disabled="!isAddTableConceptButtonEnabled"
+            @click.prevent="addTableConceptToGraph"
+          >
+            <v-icon v-if="isGraphRendered">mdi-check</v-icon>
+            <v-icon v-else>mdi-plus</v-icon>
+          </v-btn>
         </div>
-        <v-btn
-          variant="text"
-          class="icon-button--double"
-          :disabled="!isAddColumnConceptButtonEnabled"
-          @click.prevent="addColumnConceptToGraph"
-        >
-          <v-icon>mdi-plus</v-icon>
+        
+        <v-divider></v-divider>
+
+        <!-- Column concepts section -->
+        <div class="column-concept-container">
+          <div class="column-concept-config">
+            <v-text-field
+              v-model="currentColumnConcept.conceptName"
+              variant="outlined"
+              label="New column name"
+              :hide-details="true"
+              :error="doesColumnConceptAlreadyExists"
+              :disabled="!currentTableConcept.conceptName || !isGraphRendered"
+            >
+            </v-text-field>
+            <span class="error-message">{{ getErrorMessage }}</span>
+            <div class="column-selects">
+              <v-select
+                v-model="currentColumnConcept.kind"
+                variant="outlined"
+                class="data-type-select"
+                label="Column Option"
+                :hide-details="true"
+                :disabled="
+                  !currentColumnConcept.conceptName ||
+                  doesColumnConceptAlreadyExists
+                "
+                :items="columnOptionsItems"
+              >
+              </v-select>
+              <v-select
+                v-model="currentDataTypeConcept.conceptName"
+                variant="outlined"
+                class="data-type-select"
+                label="Data Type"
+                :hide-details="true"
+                :disabled="
+                  !currentColumnConcept.conceptName ||
+                  doesColumnConceptAlreadyExists
+                "
+                :items="columnDataTypeItems"
+              >
+              </v-select>
+            </div>
+          </div>
+          <v-btn
+            variant="text"
+            class="icon-button--double"
+            :disabled="!isAddColumnConceptButtonEnabled"
+            @click.prevent="addColumnConceptToGraph"
+          >
+            <v-icon>mdi-plus</v-icon>
+          </v-btn>
+        </div>
+
+        <v-divider></v-divider>
+
+        <div class="d-flex">
+          <v-select v-model="currentClusteringOrderOptions.clusteringColumn"
+            variant="outlined"
+            style="margin-right: 1rem;"
+            label="Clustering Column"
+            :clearable="true"
+            :hide-details="true"
+            :items="clusteringColumnItems"
+            :disabled="!isClusteringSectionEnabled"
+            @click:clear="clearClusteringColumn">
+          </v-select>
+          <v-select v-model="currentClusteringOrderOptions.clusteringOrder"
+            variant="outlined"
+            label="Order"
+            :hide-details="true"
+            :items="clusteringOrderItems"
+            :disabled="!isClusteringSectionEnabled">
+          </v-select>
+        </div>
+
+      </v-card-text>
+    </v-card>
+
+    <!-- Actions section -->
+    <v-card
+      variant="outlined"
+      class="toolbox"
+      :class="{ 'toolbox-warning': !keyspace }"
+    >
+      <v-card-title class="d-flex justify-center">
+        Design Toolbox Actions
+      </v-card-title>
+      <v-card-text>
+        <div class="actions-row">
+          <v-btn
+            class="action-button"
+            variant="outlined"
+            :disabled="!isQueryGeneratorButtonEnabled"
+            @click.prevent="generateQuery(false)"
+          >
+            GENERATE CQL COMMAND
         </v-btn>
-      </div>
-
-      <v-divider></v-divider>
-
-      <div class="d-flex">
-        <v-select
-          variant="outlined"
-          style="margin-right: 1rem;"
-          label="Clustering Index"
-          :hide-details="true"
-          :items="[]"
-          :disabled="!currentTableConcept.conceptName || !isGraphRendered">
-        </v-select>
-        <v-select
-          variant="outlined"
-          label="Order"
-          :hide-details="true"
-          :items="clusteringOrderItems"
-          :disabled="!currentTableConcept.conceptName || !isGraphRendered">
-        </v-select>
-        <v-btn
-          variant="text"
-          class="icon-button"
-        >
-          <v-icon>mdi-plus</v-icon>
+        </div>
+        <div class="actions-row">
+          <v-btn
+            class="action-button"
+            variant="outlined"
+            :disabled="true"
+          >
+            SAVE CQL TABLE (TODO)
         </v-btn>
-      </div>
+        </div>
+      </v-card-text>
 
-    </v-card-text>
-  </v-card>
-
-  <!-- Actions section -->
-  <v-card
-    variant="outlined"
-    class="toolbox"
-    :class="{ 'toolbox-warning': !keyspace }"
-  >
-    <v-card-title class="d-flex justify-center">
-      Design Toolbox Actions
-    </v-card-title>
-    <v-card-text>
-      <div class="actions-row">
-        <v-btn
-          class="action-button"
-          variant="outlined"
-          :disabled="!isQueryGeneratorButtonEnabled"
-          @click.prevent="generateQuery(false)"
-        >
-          GENERATE CQL COMMAND
-      </v-btn>
-      </div>
-      <div class="actions-row">
-        <v-btn
-          class="action-button"
-          variant="outlined"
-          :disabled="true"
-        >
-          SAVE CQL TABLE (TODO)
-      </v-btn>
-      </div>
-    </v-card-text>
-
-  </v-card>
+    </v-card>
+  </div>
 </template>
 
 <script lang="js">
 import constants from "@/constants/constants";
 import designToolboxConstants from "./designToolboxConstants";
+import useNotificationStore from "../../stores/notification";
+import { mapActions } from "pinia";
 import { useQuery } from "../../composables/query";
+
 
 export default {
   name: "DesignToolbox",
   props: {
     keyspace: String
   },
+  emits: ["openTerminal", "render"],
   setup: () => {
    const { generateQueryAsCommands } = useQuery();
    return { generateQueryAsCommands };
@@ -174,6 +176,8 @@ export default {
     currentColumnConcept: null,
     currentDataTypeConcept: null,
     currentClusteringOrderOptions: null,
+    isClusteringSectionEnabled: false,
+    clusteringColumnItems: [],
     // This data is related to the rendering of the Conceptual Graph
     tableConcepts: [],
     columnConcepts: {},
@@ -181,6 +185,8 @@ export default {
     isGraphRendered: false
   }),
   methods: {
+    // These methods are actions mapped from the notification store
+    ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
     // These methods handle the clear events of components
     setupToolboxData: function () {
       this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
@@ -195,8 +201,12 @@ export default {
       this.dataTypeConcepts = {};
     },
     resetColumnConceptFields: function () {
-      this.currentColumnConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.column };
+      this.currentColumnConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.column, kind: constants.columnKinds.optional };
       this.currentDataTypeConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.dataType, relation: constants.relationTypes.hasType };
+      this.currentClusteringOrderOptions = { clusteringColumn: null, clusteringOrder: null };
+    },
+    clearClusteringColumn: function () {
+      this.currentClusteringOrderOptions = Object.assign({}, { clusteringColumn: null, clusteringOrder: null });
     },
     // These methods handle the rendering of the graph
     addTableConceptToGraph: function () {
@@ -236,8 +246,32 @@ export default {
     },
     // These methods handle the query generator
     generateQuery: function () {
-      const commands = this.generateQueryAsCommands(this.keyspace, this.tableConcepts, this.columnConcepts, this.dataTypeConcepts);
-      this.$emit("openTerminal", commands);
+      const [isConceptualGraphValid, errorMessage] = this.validateConceptualGraph();
+      if (isConceptualGraphValid) {
+        const commands = this.generateQueryAsCommands(this.keyspace, this.tableConcepts, this.columnConcepts, this.dataTypeConcepts, this.currentClusteringOrderOptions);
+        this.$emit("openTerminal", commands);
+      } else {
+        this.setUpSnackbarState(false, errorMessage);
+      }
+    },
+    // These methods handle some utilities
+    getPartitionAndClusteringColumnsCount: function () {
+      const initialCount = { partitionColumnsCount: 0, clusteringColumnCount: 0 };
+      return this.columnConcepts[this.currentTableConcept.conceptName].reduce((accumulator, currentValue = {}) => {
+        if (currentValue.kind === constants.columnKinds.partitionKey) {
+          accumulator.partitionColumnsCount += 1;
+        } else if (currentValue.kind === constants.columnKinds.clustering) {
+          accumulator.clusteringColumnCount += 1;
+        }
+        return accumulator;
+      }, initialCount);
+    },
+    validateConceptualGraph: function () {
+      // Primary key is mandatory 
+      // A primary key in Cassandra consists of one or more partition keys and zero or more clustering key components
+      const { partitionColumnsCount, _ } = this.getPartitionAndClusteringColumnsCount();
+      const errorMessage = partitionColumnsCount > 0 ? constants.inputValues.empty : "Cannot create primary key withoyt any partition keys";
+      return [partitionColumnsCount > 0, errorMessage];
     }
   },
   computed: {
@@ -272,6 +306,29 @@ export default {
     },
     isQueryGeneratorButtonEnabled: function () {
       return this.tableConcepts[0] && this.columnConcepts && this.columnConcepts[this.tableConcepts[0].conceptName].length > 0 && !this.doesColumnConceptAlreadyExists;
+    }
+  },
+  watch: {
+    columnConcepts: {
+      handler: function () {
+        if (!this.currentTableConcept || !this.columnConcepts || !this.columnConcepts[this.currentTableConcept.conceptName]) {
+          this.isClusteringSectionEnabled = false;
+        } else {
+          const { partitionColumnsCount, clusteringColumnCount} = this.getPartitionAndClusteringColumnsCount();
+          if (partitionColumnsCount > 1 || clusteringColumnCount > 0) {
+            this.isClusteringSectionEnabled = true;
+          } else {
+            this.isClusteringSectionEnabled = false;
+          }
+          if (clusteringColumnCount > 0) {
+            // this.clusteringColumnItems = JSON.parse(JSON.stringify(this.columnConcepts[this.currentTableConcept.conceptName].filter(concept => concept.kind === constants.columnKinds.clustering)));
+            this.clusteringColumnItems = this.columnConcepts[this.currentTableConcept.conceptName]
+              .filter(concept => concept.kind === constants.columnKinds.clustering)
+              .map(concept => concept.conceptName);
+          }
+        }
+      },
+      deep: true
     }
   },
   created() {

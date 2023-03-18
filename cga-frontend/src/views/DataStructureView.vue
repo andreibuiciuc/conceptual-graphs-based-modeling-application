@@ -33,7 +33,6 @@
       </SlideCard>
       <Transition name="swipe" mode="out-in">
         <DesignToolbox v-if="selectedCardIndex === slideContainers.FIRST && isCardOn && isAnimationFinished"
-                      class="design-toolbox"
                       :keyspace="currentKeyspace"
                       @openTerminal="openTerminal"
                       @render="renderConceptualGraph">
@@ -150,8 +149,8 @@ export default {
     isPlaceholderVisible: function () { return this.selectedCardIndex > -1 && this.isTransformTransitionFinished && !this.isGraphRendered; },
   },
   methods: {
-     // These methods are mapped from the notification store.
-     ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
+    // These methods are mapped from the notification store.
+    ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
     // These methods are related to the Slide Card components
     selectDesignCard: function (cardIndex) {
       this.isAnimationFinished = false;
@@ -238,9 +237,6 @@ $translate-percentage: 50%
   @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
   height: 100%
   padding: 40px 0
-
-  .design-toolbox
-    margin-top: 40px
 
 .conceptual-graph-container
   height: 100%

@@ -7,10 +7,20 @@ enum CassandraKeyType {
     CLUSTERING_KEY = "clustering"
 };
 
+enum ClusteringOrder {
+    ASCENDING = "ASC",
+    DESCENDING = "DESC"
+};
+
 interface Concept {
     conceptName: string,
     conceptType: string
 };
+
+interface ClusteringOptions {
+    clusteringColumn: string,
+    clusteringOrder: ClusteringOrder
+}
 
 interface Command {
     lineNumber: number,
@@ -22,13 +32,15 @@ export function useQuery() {
     let commands: Command[] = [];
     let currentLine: number = 0;
     let tableConceptName: string;
+    let clusteringOptions: ClusteringOptions;
 
-    const initializeQueryHelperData = (currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts) => {
+    const initializeQueryHelperData = (currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts, currentClusteringOptons) => {
         keyspace = currentKeyspace;
         
         tableConcepts = { ... currentTableConcepts};
         columnConcepts = { ... currentColumnConcepts };
         dataTypeConcepts = { ... currentDataTypeConcepts };
+        clusteringOptions = { ... currentClusteringOptons };
         
         tableConceptName = tableConcepts[0].conceptName;
         commands = [];
@@ -115,6 +127,12 @@ export function useQuery() {
         addCQLLineToCommandsArray(primaryKeyCommandSnippet);
     };
 
+    const computeCQLClusteringOptionsLines = (): void => {
+        addCQLLineToCommandsArray(designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(")"));
+        const clusteringOptionsLine = `WITH CLUSTERING ORDER BY (${clusteringOptions.clusteringColumn} ${clusteringOptions.clusteringOrder})`;
+        addCQLLineToCommandsArray(designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(clusteringOptionsLine));
+    }
+
     const computeCQLEndingLine = () => {
         const cqlEndingLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(");");
         addCQLLineToCommandsArray(cqlEndingLine);
@@ -123,14 +141,20 @@ export function useQuery() {
     const generateQueryAsCommands = (currentKeyspace: string, 
                                      currentTableConcepts: Concept[], 
                                      currentColumnConcepts: object, 
-                                     currentDataTypeConcepts: object): Command[] => {
+                                     currentDataTypeConcepts: object,
+                                     currentClusteringOptons: ClusteringOptions): Command[] => {
                                         
-        initializeQueryHelperData(currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts);
+        initializeQueryHelperData(currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts, currentClusteringOptons);
+        
         computeCQLStarterLine();
         computeCQLColumnDefinitionLines();
         computeCQLKeysDefinitionLines();
+        
+        if (currentClusteringOptons.clusteringColumn) {
+            computeCQLClusteringOptionsLines();
+        }
+        
         computeCQLEndingLine();
-
         return commands;
     }
 
