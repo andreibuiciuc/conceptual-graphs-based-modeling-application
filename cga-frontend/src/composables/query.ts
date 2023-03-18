@@ -23,6 +23,18 @@ export function useQuery() {
     let currentLine: number = 0;
     let tableConceptName: string;
 
+    const initializeQueryHelperData = (currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts) => {
+        keyspace = currentKeyspace;
+        
+        tableConcepts = { ... currentTableConcepts};
+        columnConcepts = { ... currentColumnConcepts };
+        dataTypeConcepts = { ... currentDataTypeConcepts };
+        
+        tableConceptName = tableConcepts[0].conceptName;
+        commands = [];
+        currentLine = 0;
+    }
+
     const addCQLLineToCommandsArray = (cqlLineContent: string): void => {
         commands.push({ lineNumber: currentLine, lineContent: cqlLineContent });
         currentLine = currentLine + 1;
@@ -64,6 +76,7 @@ export function useQuery() {
                     .concat(designToolboxConstants.CQL_PUNCTUATION.COMMA)
                     .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE);
             });
+            debugger
             snippet = snippet.slice(0, snippet.length - 2).concat(")");
         }
         return snippet;
@@ -87,36 +100,47 @@ export function useQuery() {
     const computeCQLKeysDefinitionLines = (): void => {
         let [partitionKeyTokens, clusteringTokens] = getTokensForCassandraKeys();
         let partitionKeysSnippet = computeKeysSnippetFromTokens(partitionKeyTokens);
-        const clusteringKeysSnippet = computeKeysSnippetFromTokens(clusteringTokens);
+        let clusteringKeysSnippet = computeKeysSnippetFromTokens(clusteringTokens);
         
-        if (partitionKeysSnippet !== constants.inputValues.empty) {
+        if (partitionKeysSnippet !== constants.inputValues.empty && clusteringKeysSnippet) {
             partitionKeysSnippet = partitionKeysSnippet.concat(designToolboxConstants.CQL_PUNCTUATION.COMMA).concat(designToolboxConstants.CQL_PUNCTUATION.SPACE);
         }
-        let primaryKeyCommandSnippet = `${designToolboxConstants.CQL_BASH_BLANK_COMMAND}PRIMARY KEY (${partitionKeysSnippet} ${clusteringKeysSnippet})`;
+        
+        if (clusteringKeysSnippet) {
+            clusteringKeysSnippet = designToolboxConstants.CQL_PUNCTUATION.SPACE
+                                    .concat(clusteringKeysSnippet);
+        }
+        let primaryKeyCommandSnippet = `${designToolboxConstants.CQL_BASH_BLANK_COMMAND}PRIMARY KEY (${partitionKeysSnippet}${clusteringKeysSnippet})`;
 
         addCQLLineToCommandsArray(primaryKeyCommandSnippet);
     };
+
+    const computeCQLEndingLine = () => {
+        const cqlEndingLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(");");
+        addCQLLineToCommandsArray(cqlEndingLine);
+    }
 
     const generateQueryAsCommands = (currentKeyspace: string, 
                                      currentTableConcepts: Concept[], 
                                      currentColumnConcepts: object, 
                                      currentDataTypeConcepts: object): Command[] => {
-        keyspace = currentKeyspace;
-        tableConcepts = { ... currentTableConcepts};
-        columnConcepts = { ... currentColumnConcepts };
-        dataTypeConcepts = { ... currentDataTypeConcepts };
-        tableConceptName = tableConcepts[0].conceptName;
-        commands = [];
-        currentLine = 0;
-
+                                        
+        initializeQueryHelperData(currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts);
         computeCQLStarterLine();
         computeCQLColumnDefinitionLines();
         computeCQLKeysDefinitionLines();
+        computeCQLEndingLine();
 
         return commands;
     }
 
+    const generateQueryAsString = (commands: Command[]) => {
+        const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);
+        return queryFromCommands.replace(designToolboxConstants.CQL_COMMAND_REGEX, constants.inputValues.empty);
+    }
+
     return {
-        generateQueryAsCommands
+        generateQueryAsCommands,
+        generateQueryAsString
     };
 }

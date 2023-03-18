@@ -166,7 +166,7 @@ export default {
   },
   setup: () => {
    const { generateQueryAsCommands } = useQuery();
-   return { generateQueryAsCommands }
+   return { generateQueryAsCommands };
   },
   data: () => ({
     // This data is related to the current configuration inside the Toolbox

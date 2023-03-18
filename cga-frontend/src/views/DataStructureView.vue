@@ -89,7 +89,6 @@
 </template>
 
 <script>
-import constants from "@/constants/constants";
 import designToolboxConstants from '../components/graphic/terminal/cassandraTerminalConstants';
 import useUserStore from "../stores/user";
 import useConnectionStore from "../stores/connection";
@@ -101,6 +100,7 @@ import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.
 import Placeholder from '../components/graphic/Placeholder.vue';
 import { useClipboard } from '../composables/clipboard';
 import { mapState, mapActions } from "pinia"
+import { useQuery } from '../composables/query';
 
 const slideContainers = {
   NONE: -1,
@@ -116,6 +116,11 @@ export default {
     ConceptualGraph,
     CassandraTerminal,
     Placeholder
+  },
+  setup: () => {
+    const { generateQueryAsString } = useQuery();
+    const { copyToClipboard } = useClipboard(); 
+    return { generateQueryAsString, copyToClipboard };
   },
   data: () => ({
     // This data is related to the Slide Card components
@@ -136,10 +141,6 @@ export default {
     dataTypeConcepts: {},
     isGraphRendered: false
   }),
-  setup() {
-    const { copyToClipboard } = useClipboard();
-    return { copyToClipboard }
-  },
   computed: {
     // These computed properties are mapped from the Cassandra Connection store
     ...mapState(useConnectionStore, ['currentKeyspace']),
@@ -180,7 +181,7 @@ export default {
     },
     closeTerminal: function () {
       this.isTerminalOpened = false;
-      const queryString = this.getQueryAsString(this.commands);
+      const queryString = this.generateQueryAsString(this.commands);
       this.copyToClipboard(queryString);
       this.setUpSnackbarState(true, designToolboxConstants.COPY_QUERY_CLIPBOARD_MESSAGE);
     },
@@ -206,10 +207,6 @@ export default {
           }
         }
       }
-    },
-    getQueryAsString: function (commands) {
-      const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);
-      return queryFromCommands.replace(designToolboxConstants.CQL_COMMAND_REGEX, constants.inputValues.empty);
     }
   },
   beforeRouteEnter: function (_from, _to, next) {
