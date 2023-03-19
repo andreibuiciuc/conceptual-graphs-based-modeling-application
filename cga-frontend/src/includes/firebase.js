@@ -16,5 +16,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.firestore();
 const usersCollection = database.collection("users");
+const conceptualGraphsCollection = database.collection("conceptual-graphs");
 
-export { auth, database, usersCollection };
+export { auth, database, usersCollection, conceptualGraphsCollection };

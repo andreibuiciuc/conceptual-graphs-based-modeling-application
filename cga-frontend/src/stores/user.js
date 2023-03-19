@@ -9,7 +9,6 @@ export default defineStore("user", {
   actions: {
     // Register the user by email and password using firebase sdk
     register: async function (registerCredentials) {
-      // TODO: Handle the request
       const userCredentials = await auth.createUserWithEmailAndPassword(
         registerCredentials.email,
         registerCredentials.password
@@ -23,7 +22,6 @@ export default defineStore("user", {
     },
     // Sign in the user by email and password using firebase sdk
     login: async function (loginCredentials) {
-      // TODO: Handle the request
       await auth.signInWithEmailAndPassword(
         loginCredentials.email,
         loginCredentials.password

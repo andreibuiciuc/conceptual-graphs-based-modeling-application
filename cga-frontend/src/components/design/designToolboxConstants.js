@@ -44,5 +44,7 @@ export default {
   COPY_QUERY_CLIPBOARD_MESSAGE:
     "CQL command was successfully copied to clipboard",
   NO_SELECTED_KEYSPACE_MESSAGE:
-    "No keyspace selected. Please select a keyspace"
+    "No keyspace selected. Please select a keyspace",
+  SUCCESSFUL_TABLE_GRAPH_SAVE:
+    "Conceptual Graph successfully saved"
 };

@@ -141,9 +141,10 @@
           <v-btn
             class="action-button"
             variant="outlined"
-            :disabled="true"
+            :disabled="!isQueryGeneratorButtonEnabled"
+            @click.prevent="saveTableConceptualGraph"
           >
-            SAVE CQL TABLE (TODO)
+            SAVE CQL TABLE CONCEPTUAL GRAPH
         </v-btn>
         </div>
       </v-card-text>
@@ -154,11 +155,12 @@
 
 <script lang="js">
 import constants from "@/constants/constants";
-import designToolboxConstants from "./designToolboxConstants";
+import designToolboxConstants from "../design/designToolboxConstants";
 import useNotificationStore from "../../stores/notification";
+import { conceptualGraphsCollection } from "../../includes/firebase";
 import { mapActions } from "pinia";
 import { useQuery } from "../../composables/query";
-
+import { useConfetti } from '../../composables/confetti';
 
 export default {
   name: "DesignToolbox",
@@ -168,7 +170,8 @@ export default {
   emits: ["openTerminal", "render"],
   setup: () => {
    const { generateQueryAsCommands } = useQuery();
-   return { generateQueryAsCommands };
+   const { createConfetti } = useConfetti();
+   return { generateQueryAsCommands, createConfetti };
   },
   data: () => ({
     // This data is related to the current configuration inside the Toolbox
@@ -254,6 +257,28 @@ export default {
         this.setUpSnackbarState(false, errorMessage);
       }
     },
+    // These methods handle the saving of the conceptual graph
+    saveTableConceptualGraph: async function () {
+      const [isConceptualGraphValid, errorMessage] = this.validateConceptualGraph();
+      
+      if (!isConceptualGraphValid) {
+        this.setUpSnackbarState(false, errorMessage);
+        return;
+      }
+      
+      try {
+        await conceptualGraphsCollection.add({
+          tableConcepts: this.tableConcepts,
+          columnConcepts: this.columnConcepts,
+          dataTypeConcepts: this.dataTypeConcepts
+        });
+      } catch (error) {
+        this.setUpSnackbarState(false, error.message);
+        return;
+      }
+      this.setUpSnackbarState(true, designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE);
+      this.createConfetti();
+    },
     // These methods handle some utilities
     getPartitionAndClusteringColumnsCount: function () {
       const initialCount = { partitionColumnsCount: 0, clusteringColumnCount: 0 };
@@ -270,7 +295,7 @@ export default {
       // Primary key is mandatory 
       // A primary key in Cassandra consists of one or more partition keys and zero or more clustering key components
       const { partitionColumnsCount, _ } = this.getPartitionAndClusteringColumnsCount();
-      const errorMessage = partitionColumnsCount > 0 ? constants.inputValues.empty : "Cannot create primary key withoyt any partition keys";
+      const errorMessage = partitionColumnsCount > 0 ? constants.inputValues.empty : "Cannot create primary key without any partition keys";
       return [partitionColumnsCount > 0, errorMessage];
     }
   },

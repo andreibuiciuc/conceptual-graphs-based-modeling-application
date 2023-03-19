@@ -100,7 +100,6 @@ import Placeholder from '../components/graphic/Placeholder.vue';
 import { useClipboard } from '../composables/clipboard';
 import { mapState, mapActions } from "pinia"
 import { useQuery } from '../composables/query';
-import { useConfetti } from '../composables/confetti';
 
 const slideContainers = {
   NONE: -1,
@@ -120,8 +119,7 @@ export default {
   setup: () => {
     const { generateQueryAsString } = useQuery();
     const { copyToClipboard } = useClipboard(); 
-    const { createConfetti } = useConfetti();
-    return { generateQueryAsString, copyToClipboard, createConfetti };
+    return { generateQueryAsString, copyToClipboard };
   },
   data: () => ({
     // This data is related to the Slide Card components
@@ -185,7 +183,6 @@ export default {
       const queryString = this.generateQueryAsString(this.commands);
       this.copyToClipboard(queryString);
       this.setUpSnackbarState(true, designToolboxConstants.COPY_QUERY_CLIPBOARD_MESSAGE);
-      this.createConfetti();
     },
     // These methods handle the rendering og the Conceptual Graph
     renderConceptualGraph: function (conceptualGraphData) {
