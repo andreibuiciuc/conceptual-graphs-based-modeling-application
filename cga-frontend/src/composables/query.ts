@@ -88,7 +88,6 @@ export function useQuery() {
                     .concat(designToolboxConstants.CQL_PUNCTUATION.COMMA)
                     .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE);
             });
-            debugger
             snippet = snippet.slice(0, snippet.length - 2).concat(")");
         }
         return snippet;
@@ -113,17 +112,29 @@ export function useQuery() {
         let [partitionKeyTokens, clusteringTokens] = getTokensForCassandraKeys();
         let partitionKeysSnippet = computeKeysSnippetFromTokens(partitionKeyTokens);
         let clusteringKeysSnippet = computeKeysSnippetFromTokens(clusteringTokens);
+        let primaryKeyCommandSnippet = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat("PRIMARY KEY (");
         
-        if (partitionKeysSnippet !== constants.inputValues.empty && clusteringKeysSnippet) {
-            partitionKeysSnippet = partitionKeysSnippet.concat(designToolboxConstants.CQL_PUNCTUATION.COMMA).concat(designToolboxConstants.CQL_PUNCTUATION.SPACE);
+        if (partitionKeysSnippet !== constants.inputValues.empty && !clusteringKeysSnippet) {
+            // This is the case when the primary key is built with no explicit clustering columns, only partition keys.
+            // In this case, the first column in the primary key is the partition key, and the others become clustering columns.
+            // We will remove the starting and ending paranthesis from the newly created snipppet if there are multiple partition keys declared.
+            if (partitionKeyTokens.length > 1) {
+                partitionKeysSnippet = partitionKeysSnippet.substring(1, partitionKeysSnippet.length - 1);
+            }
+            primaryKeyCommandSnippet = primaryKeyCommandSnippet.concat(partitionKeysSnippet).concat(")");
         }
-        
-        if (clusteringKeysSnippet) {
-            clusteringKeysSnippet = designToolboxConstants.CQL_PUNCTUATION.SPACE
-                                    .concat(clusteringKeysSnippet);
-        }
-        let primaryKeyCommandSnippet = `${designToolboxConstants.CQL_BASH_BLANK_COMMAND}PRIMARY KEY (${partitionKeysSnippet}${clusteringKeysSnippet})`;
 
+        if (partitionKeysSnippet !== constants.inputValues.empty && clusteringKeysSnippet) {
+            // This is the case when the primary key is built with both explicit partition and clustering columns.
+            // In this case, the primary key snippet is 
+            partitionKeysSnippet = partitionKeysSnippet.concat(designToolboxConstants.CQL_PUNCTUATION.COMMA).concat(designToolboxConstants.CQL_PUNCTUATION.SPACE);
+            primaryKeyCommandSnippet = primaryKeyCommandSnippet
+                .concat(partitionKeysSnippet)
+                .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE)
+                .concat(clusteringKeysSnippet)
+                .concat(")");
+        }
+        
         addCQLLineToCommandsArray(primaryKeyCommandSnippet);
     };
 
