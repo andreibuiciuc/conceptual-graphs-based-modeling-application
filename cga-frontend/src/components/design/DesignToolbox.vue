@@ -1,6 +1,5 @@
 <template>
   <div>
-  <!-- Table concepts section -->
     <v-card
       variant="outlined"
       class="toolbox"
@@ -12,11 +11,11 @@
           <v-icon v-if="!keyspace">mdi-alert-box-outline</v-icon>
         </div>
       </v-card-title>
+     
       <v-card-text>
-        <!-- Table concept section -->
+
         <div class="d-flex">
-          <v-text-field
-            v-model="currentTableConcept.conceptName"
+          <v-text-field v-model="currentTableConcept.conceptName"
             variant="outlined"
             label="Table name"
             :clearable="true"
@@ -40,11 +39,9 @@
         
         <v-divider></v-divider>
 
-        <!-- Column concepts section -->
         <div class="column-concept-container">
           <div class="column-concept-config">
-            <v-text-field
-              v-model="currentColumnConcept.conceptName"
+            <v-text-field v-model="currentColumnConcept.conceptName"
               variant="outlined"
               label="New column name"
               :hide-details="true"
@@ -54,8 +51,7 @@
             </v-text-field>
             <span class="error-message">{{ getErrorMessage }}</span>
             <div class="column-selects">
-              <v-select
-                v-model="currentColumnConcept.kind"
+              <v-select v-model="currentColumnConcept.kind"
                 variant="outlined"
                 class="data-type-select"
                 label="Column Option"
@@ -67,8 +63,7 @@
                 :items="columnOptionsItems"
               >
               </v-select>
-              <v-select
-                v-model="currentDataTypeConcept.conceptName"
+              <v-select v-model="currentDataTypeConcept.conceptName"
                 variant="outlined"
                 class="data-type-select"
                 label="Data Type"
@@ -91,10 +86,10 @@
             <v-icon>mdi-plus</v-icon>
           </v-btn>
         </div>
-
+       
         <v-divider></v-divider>
-
-        <div class="d-flex">
+        
+        <div class="clustering-options-container">
           <v-select v-model="currentClusteringOrderOptions.clusteringColumn"
             variant="outlined"
             style="margin-right: 1rem;"
@@ -110,45 +105,47 @@
             label="Order"
             :hide-details="true"
             :items="clusteringOrderItems"
-            :disabled="!isClusteringSectionEnabled">
+            :disabled="!isClusteringSectionEnabled"
+            :loading="isSaveTriggered">
           </v-select>
         </div>
-
+      
       </v-card-text>
     </v-card>
 
-    <!-- Actions section -->
     <v-card
       variant="outlined"
       class="toolbox"
       :class="{ 'toolbox-warning': !keyspace }"
     >
-      <v-card-title class="d-flex justify-center">
-        Design Toolbox Actions
-      </v-card-title>
-      <v-card-text>
-        <div class="actions-row">
-          <v-btn
-            class="action-button"
-            variant="outlined"
-            :disabled="!isQueryGeneratorButtonEnabled"
-            @click.prevent="generateQuery(false)"
-          >
-            GENERATE CQL COMMAND
+      <v-card-title class="d-flex justify-center">Design Toolbox Actions</v-card-title>
+      <v-card-text class="action-row">
+        <v-btn
+          class="action-button"
+          variant="outlined"
+          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered"
+          @click.prevent="generateQuery(false)"
+        >
+          COMMAND
         </v-btn>
-        </div>
-        <div class="actions-row">
-          <v-btn
-            class="action-button"
-            variant="outlined"
-            :disabled="!isQueryGeneratorButtonEnabled"
-            @click.prevent="saveTableConceptualGraph"
-          >
-            SAVE CQL TABLE CONCEPTUAL GRAPH
+        <v-btn
+          class="action-button"
+          variant="outlined"
+          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered"
+          :loading="isSaveTriggered"
+          @click.prevent="saveTableConceptualGraph"
+        >
+          SAVE
         </v-btn>
-        </div>
+        <v-btn
+          class="action-button"
+          variant="outlined"
+          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered"
+          :loading="isProcessTriggered"
+          @click.prevent="generateTable">
+          GENERATE
+        </v-btn>
       </v-card-text>
-
     </v-card>
   </div>
 </template>
@@ -185,7 +182,10 @@ export default {
     tableConcepts: [],
     columnConcepts: {},
     dataTypeConcepts: {},
-    isGraphRendered: false
+    isGraphRendered: false,
+    //
+    isSaveTriggered: false,
+    isProcessTriggered: false
   }),
   methods: {
     // These methods are actions mapped from the notification store
@@ -259,13 +259,14 @@ export default {
     },
     // These methods handle the saving of the conceptual graph
     saveTableConceptualGraph: async function () {
+      // TODO: Validate the table in order to not save tables with the same name
+      this.isSaveTriggered = true;
       const [isConceptualGraphValid, errorMessage] = this.validateConceptualGraph();
-      
       if (!isConceptualGraphValid) {
         this.setUpSnackbarState(false, errorMessage);
+        this.isSaveTriggered = false;
         return;
       }
-      
       try {
         await conceptualGraphsCollection.add({
           tableConcepts: this.tableConcepts,
@@ -273,11 +274,18 @@ export default {
           dataTypeConcepts: this.dataTypeConcepts
         });
       } catch (error) {
+        this.isSaveTriggered = false;
         this.setUpSnackbarState(false, error.message);
         return;
       }
+      this.isSaveTriggered = false;
       this.setUpSnackbarState(true, designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE);
       this.createConfetti();
+    },
+    generateTable: function () {
+      // TODO
+      this.isProcessTriggered = true;
+      this.isProcessTriggered = false;
     },
     // These methods handle some utilities
     getPartitionAndClusteringColumnsCount: function () {
@@ -292,7 +300,7 @@ export default {
       }, initialCount);
     },
     validateConceptualGraph: function () {
-      // Primary key is mandatory 
+      // Partition key is mandatory 
       // A primary key in Cassandra consists of one or more partition keys and zero or more clustering key components
       const { partitionColumnsCount, _ } = this.getPartitionAndClusteringColumnsCount();
       const errorMessage = partitionColumnsCount > 0 ? constants.inputValues.empty : "Cannot create primary key without any partition keys";
@@ -346,7 +354,6 @@ export default {
             this.isClusteringSectionEnabled = false;
           }
           if (clusteringColumnCount > 0) {
-            // this.clusteringColumnItems = JSON.parse(JSON.stringify(this.columnConcepts[this.currentTableConcept.conceptName].filter(concept => concept.kind === constants.columnKinds.clustering)));
             this.clusteringColumnItems = this.columnConcepts[this.currentTableConcept.conceptName]
               .filter(concept => concept.kind === constants.columnKinds.clustering)
               .map(concept => concept.conceptName);
@@ -391,18 +398,16 @@ export default {
       height: 56px
 
   .v-btn.icon-button, .v-btn.icon-button--double
+    border: 1px solid variables.$cassandra-black
     height: 56px
     width: 56px
     margin-left: 1rem
 
   .v-btn.icon-button--double
-    height: calc(112px + 1rem)
+    height: calc(112px + 1.5rem)
 
   .v-btn.icon-button--disabled
     opacity: none
-
-  .v-btn.icon-button:hover
-    border: 1px solid variables.$cassandra-blue
 
   .v-divider
     margin-bottom: 1rem
@@ -421,13 +426,24 @@ export default {
   .column-selects > .v-text-field:first-of-type
     margin-right: 1rem
 
-  .column-selects .v-input
+  .column-selects > .v-input, .clustering-options-container > .v-input
     width: 50% !important
+
+  .clustering-options-container
+    @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
 
   .error-message
     color: variables.$cassandra-red
     margin-bottom: 1rem
     margin-top: 0.5rem
+
+.action-row > .action-button
+  width: 30%
+  height: 100px
+  margin-right: 1rem
+
+.action-row > .action-button:last-of-type
+  margin-right: 0
 
 @media (max-width: variables.$cga-mac-width)
   .toolbox

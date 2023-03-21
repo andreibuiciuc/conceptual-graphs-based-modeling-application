@@ -20,31 +20,29 @@
       <div v-if="selectedCardIndex !== slideContainers.SECOND" class="design-toolbox-container" 
          :class="{ 'design-toolbox-container-slide-left': selectedCardIndex === slideContainers.FIRST }"
          @transitionend="onTransitionEnd">
-      <SlideCard :disabled="!currentKeyspace"
-               class="slide-card"
-               icon="mdi-pencil" 
-               card-title="Design by form"
-               :is-card-grayed="currentActiveCardIndex === slideContainers.SECOND"
-               :is-card-selected="selectedCardIndex === slideContainers.FIRST"
-               :is-card-on="isCardOn"
-               @hovered="currentActiveCardIndex = slideContainers.FIRST"
-               @leave="currentActiveCardIndex = slideContainers.NONE"
-               @selected="selectDesignCard(slideContainers.FIRST)">
-      </SlideCard>
-      <Transition name="swipe" mode="out-in">
+        <SlideCard :disabled="!currentKeyspace"
+                class="slide-card"
+                icon="mdi-pencil" 
+                card-title="Design by form"
+                :is-card-grayed="currentActiveCardIndex === slideContainers.SECOND"
+                :is-card-selected="selectedCardIndex === slideContainers.FIRST"
+                :is-card-on="isCardOn"
+                @hovered="currentActiveCardIndex = slideContainers.FIRST"
+                @leave="currentActiveCardIndex = slideContainers.NONE"
+                @selected="selectDesignCard(slideContainers.FIRST)">
+        </SlideCard>
         <DesignToolbox v-if="selectedCardIndex === slideContainers.FIRST && isCardOn && isAnimationFinished"
                       :keyspace="currentKeyspace"
                       @openTerminal="openTerminal"
                       @render="renderConceptualGraph">
         </DesignToolbox>
-      </Transition>
-    </div>
+      </div>
     </Transition>
 
     <Transition name="fade" mode="out-in">
       <div v-if="selectedCardIndex !== slideContainers.FIRST" class="design-toolbox-container"
          :class="{ 'design-toolbox-container-slide-right': selectedCardIndex === slideContainers.SECOND }"
-         @transitionend="isAnimationFinished = true">
+         @transitionend="isTransformTransitionFinished = true">
       <SlideCard :disabled="true"
                class="slide-card"
                icon="mdi-cursor-move"
@@ -61,16 +59,16 @@
 
     <Transition name="fade" mode="out-in">
       <div v-if="selectedCardIndex === slideContainers.FIRST && !isPlaceholderVisible" class="conceptual-graph-container">
-      <ConceptualGraph 
-                  :table-concepts="tableConcepts"
-                  :column-concepts="columnConcepts"
-                  :data-type-concepts="dataTypeConcepts"
-                  :no-keyspace="true"
-                  :are-column-concepts-deletable="true"
-                  :apply-border="false"
-                  @remove="removeColumnConcept">
-      </ConceptualGraph>
-    </div>
+        <ConceptualGraph 
+                    :table-concepts="tableConcepts"
+                    :column-concepts="columnConcepts"
+                    :data-type-concepts="dataTypeConcepts"
+                    :no-keyspace="true"
+                    :are-column-concepts-deletable="true"
+                    :apply-border="false"
+                    @remove="removeColumnConcept">
+        </ConceptualGraph>
+      </div>
       <Placeholder v-else-if="isPlaceholderVisible" :in-loading-state="true" />
     </Transition>
   </div>
@@ -128,7 +126,6 @@ export default {
     hideCardIndex: -1,
     isCardOn: false,
     isAnimationFinished: false,
-    isCardInvisible: false,
     //
     isTransformTransitionFinished: false,
     // This data is related to the Cassandra Terminal component
@@ -147,6 +144,7 @@ export default {
     slideContainers: () => { return slideContainers; },
     // These computed properties are related to the animations
     isPlaceholderVisible: function () { return this.selectedCardIndex > -1 && this.isTransformTransitionFinished && !this.isGraphRendered; },
+    isTransitionFinished: function () { return this.isTransformTransitionFinished; }
   },
   methods: {
     // These methods are mapped from the notification store.
@@ -155,15 +153,15 @@ export default {
     selectDesignCard: function (cardIndex) {
       this.isAnimationFinished = false;
       if (this.isCardOn) {
-        this.selectedCardIndex = -1;
+        this.selectedCardIndex = cardIndex;
         this.isCardOn = false;
-        this.isCardInvisible = false;
-        this.isTransformTransitionFinished = false;
+        this.isTransformTransitionFinished = true;
       } else {
         if (this.selectedCardIndex === cardIndex) {
           this.isCardOn = true;
         }
         this.selectedCardIndex = cardIndex;
+        this.isTransformTransitionFinished = true;
       }
     },
     onTransitionEnd: function (transitionEvent) {
@@ -222,6 +220,7 @@ export default {
 <style scoped lang="sass">
 @use "@/assets/styles/_containers.sass"
 @use "@/assets/styles/_variables.sass"
+@use "@/assets/styles/_transitions.sass"
 
 // Shared Sass vatriables for transitions
 $transition-all-time: 0.5s
@@ -268,31 +267,5 @@ $translate-percentage: 50%
     
       .slide-card
         max-height: 800px
-
-.swipe-enter-active, .swipe-leave-active
-  opacity: 0
-  transition: transform 0.25s, opacity 0.10s linear
-
-.swipe-leave-from
-  opacity: 1
-
-.swipe-enter-to
-  opacity: 1
-
-.swipe-leave-to
-  opacity: 0
-
-.fade-enter-active, .fade-leave-active
-  opacity: 0
-  transition: opacity 0.25s linear
-
-.fade-leave-active
-  opacity: 1
-
-.fade-leave-from
-  opacity: 1
-
-.fade-leave-to
-  opacity: 0
 
 </style>
