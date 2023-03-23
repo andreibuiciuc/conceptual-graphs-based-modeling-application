@@ -1,6 +1,6 @@
 <template>
-  <topbar-navigation />
   <router-view />
+  <topbar-navigation />
   <custom-snackbar />
 </template>
 

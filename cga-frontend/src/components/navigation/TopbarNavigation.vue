@@ -1,7 +1,6 @@
 <template>
-  <v-card>
     <v-layout>
-      <v-app-bar elevation="1" height="88">
+      <v-app-bar :elevation="currentScrollYPosition > 0 ? 1 : 0" height="88" :class="currentScrollYPosition > 0 ? 'app-bar--transparent' : ''">
         <template #prepend>
           <RouterLink :to="{ name: navigationHeader.pathTo }">
             <v-list-item class="navigation-item"
@@ -39,7 +38,6 @@
         </template>
       </v-app-bar>
     </v-layout>
-  </v-card>
 </template>
 
 <script>
@@ -48,19 +46,26 @@ import navigationConstants from './navigationConstants.js';
 import { mapActions, mapState, mapWritableState, } from 'pinia';
 import useUserStore from '@/stores/user';
 import useConnectionStore from "@/stores/connection";
+import useAuthModalStore from "@/stores/authModal";
 
 export default {
     name: "TopbarNavigation",
-    data: () => ({
-      title: "CGA",
-      subtitle: "Cassandra",
-      navigationHeader: null,
-      navigationItems: null,
-      currentNavigationIndex: 0
-    }),
+    props: {
+      scrollYPosition: Number
+    },
+    data: function () {
+      return {
+        title: "CGA",
+        subtitle: "Cassandra",
+        navigationHeader: null,
+        navigationItems: null,
+        currentNavigationIndex: 0,
+      };
+    },
     computed: {
       ...mapState(useConnectionStore, ["cassandraServerCredentials"]),
       ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
+      ...mapState(useAuthModalStore, ["currentScrollYPosition"])
     },  
     methods: {
       // These methods are mapped from the user store.
@@ -107,9 +112,6 @@ export default {
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
 
-.v-card 
-  z-index: 9999
-
 .navigation-items-list 
   @include containers.flex-container($flex-direction: row)
 
@@ -118,5 +120,9 @@ export default {
 
 .navigation-item--active 
   color: variables.$cassandra-blue
+
+.app-bar--transparent
+  background-color: hsla(0,0%,100%,.8)
+  backdrop-filter: saturate(180%) blur(5px)
 
 </style>
