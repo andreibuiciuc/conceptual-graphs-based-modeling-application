@@ -17,27 +17,52 @@
             <span class="landing-title-text">The interface for modeling and querying Cassandra databases</span>
             <span class="landing-title-text">based on the simplicity of Conceptual Graphs</span>
           </h2>
-          <h2>
-            Start exploring Cassandra databases and move from blipping consoles to a friendlier
-            Visual Query System.
-          </h2>
         </div>
-        <cassandra-terminal />
       </div>
     </section>
-    <!-- TODO: Summary section -->
-    <section class="summary-section">
+    <section class="homepage-section">
+      <div class="landing-section-content">
+        <span class="landing-section-pre-symbol"></span>
+        <span class="landing-section-symbol">1</span>
+        <div class="landing-section-text">
+          <h2 class="landing-subtitle">
+            <span class="landing-gradient-text">Move from blipping consoles to a friendlier Visual Query System.</span>
+          </h2>
+        </div>
+        <div class="landing-section-container">
+          <cassandra-terminal />
+          <div class="landing-cards-container">
+            <div class="landing-card">
+              <div class="landing-card-title">
+                <div class="landing-card-icon-wrapper">
+                  <v-icon>mdi-magnify</v-icon>
+                </div>
+                <div class="landing-card-title-text">
+                  Connect And Start Exploring
+                </div>
+              </div>
+              <div class="landing-card-text">
+                <span>Connect to your Cassandra server, locally or on the cloud, or play around with the one provided by us.</span>
+                <span>We use Astra DB for hosting the mock database.</span>
+              </div>
+            </div>
+            <div class="landing-card"></div>
+            <div class="landing-card"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="homepage-section">
       <div class="summary-container">
-        <h1>Conceptual Graphs are a great visualization tool</h1>
-        <conceptual-graph :inverted="true"
-                          :keyspaceConcept="getDummyCG.keyspaceConcept"
-                          :tableConcepts="getDummyCG.tableConcepts"
-                          :columnConcepts="getDummyCG.columnConcepts"
-                          :dataTypeConcepts="getDummyCG.dataTypeConcepts" />
+        <conceptual-graph 
+          :keyspaceConcept="getDummyCG.keyspaceConcept"
+          :tableConcepts="getDummyCG.tableConcepts"
+          :columnConcepts="getDummyCG.columnConcepts"
+          :dataTypeConcepts="getDummyCG.dataTypeConcepts" />
       </div>
     </section>
     <!-- TODO: Authentication section -->
-    <section class="authentication-section" id="auth">
+    <section class="homepage-section homepage-section__last" id="auth">
       <div class="landing-page-final-block">
         <div class="authentication-container">
         <h1>Start exploring databases by <br />
@@ -118,10 +143,11 @@ export default {
   margin: 0
   margin-top: variables.$cga-topbar-height
   height: calc(100vh - variables.$cga-topbar-height)
-
+  
   .homepage-section
     max-width: 100%
     padding: 0 24px
+    height: calc(100vh - variables.$cga-topbar-height)
 
     .landing-animation-wrapper
       position: absolute
@@ -144,7 +170,7 @@ export default {
         height: 800px
         top: 40%
         left: 60%
-        background-color: #7928ca
+        background-color: #0D41E1
         opacity: 0.4
         animation-name: floating-oval-animation__first
 
@@ -154,7 +180,7 @@ export default {
         height: 600px
         top: 0%
         left: 40%
-        background-color: #ff0080
+        background-color: #0A85ED
         opacity: 0.4
         animation-name: floating-oval-animation__second
 
@@ -164,7 +190,7 @@ export default {
         height: 500px
         top: 50%
         left: 50%
-        background-color: variables.$cassandra-light-blue
+        background-color: #07C8F9
         opacity: 0.3
         animation-name: floating-oval-animation__third
 
@@ -177,6 +203,7 @@ export default {
 
         .landing-title
           @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+          margin-bottom: 20px
 
           .landing-title-text
             color: variables.$cassandra-black
@@ -186,12 +213,72 @@ export default {
         
         .landing-subtitle
           @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+          margin-bottom: 40px
 
           .landing-title-text
             color: variables.$cassandra-black
             font-size: 2.5rem
             font-weight: 400
             line-height: 3rem
+
+          .landing-gradient-text
+            font-size: 2rem
+            font-weight: 400
+            line-height: 2rem
+            background-image: linear-gradient(variables.$cassandra-light-blue, variables.$cassandra-blue)
+            -webkit-background-clip: text
+            -webkit-text-fill-color: transparent
+    
+      .landing-section-pre-symbol
+        height: 100px
+        width: 1px
+        background: linear-gradient(variables.$cassandra-white, variables.$cassandra-light-blue)
+
+      .landing-section-symbol
+        @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+        background: linear-gradient(90deg, variables.$cassandra-light-blue, variables.$cassandra-blue)
+        color: variables.$cassandra-white
+        border-radius: 100%
+        margin-bottom: 20px
+        font-size: 1.5rem
+        font-weight: 400
+        height: 50px
+        width: 50px
+    
+      .landing-section-container
+        @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+
+        .landing-cards-container
+          @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+          margin-left: 40px
+          width: 100%
+
+          .landing-card
+            @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
+    
+            .landing-card-title
+              @include containers.flex-container($flex-direction: row, $justify-content: flex-start, $align-items: center)
+              margin-bottom: 10px
+
+              .landing-card-icon-wrapper
+                @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+                background-color: variables.$cassandra-light-gray
+                border: 1px solid variables.$cassandra-gray
+                border-radius: 20%
+                margin-right: 10px
+                padding: 5px
+
+                .v-icon
+                  font-size: 24px
+
+              .landing-card-title-text
+                font-size: 1.25rem
+
+            .landing-card-text
+              @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
+  .homepage-section__last
+    @include containers.flex-container($flex-direction: column, $justify-content: flex-end, $align-items: center)
+    padding: 0
 
 .console-section
   @include containers.flex-container($flex-direction: column)
