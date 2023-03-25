@@ -22,43 +22,41 @@
     </section>
     <section class="homepage-section">
       <div class="landing-section-content">
-        <span class="landing-section-pre-symbol"></span>
-        <span class="landing-section-symbol">1</span>
-        <div class="landing-section-text">
-          <h2 class="landing-subtitle">
-            <span class="landing-gradient-text">Move from blipping consoles to a friendlier Visual Query System.</span>
-          </h2>
-        </div>
+        <cga-delimiter label="1" text="Move from blipping consoles to a friendlier Visual Query System" :gradientType="0" />
         <div class="landing-section-container">
           <cassandra-terminal />
           <div class="landing-cards-container">
-            <div class="landing-card">
-              <div class="landing-card-title">
-                <div class="landing-card-icon-wrapper">
-                  <v-icon>mdi-magnify</v-icon>
-                </div>
-                <div class="landing-card-title-text">
-                  Connect And Start Exploring
-                </div>
-              </div>
-              <div class="landing-card-text">
-                <span>Connect to your Cassandra server, locally or on the cloud, or play around with the one provided by us.</span>
-                <span>We use Astra DB for hosting the mock database.</span>
-              </div>
-            </div>
-            <div class="landing-card"></div>
-            <div class="landing-card"></div>
+            <cga-card icon="mdi-magnify" title="Connect And Start Exploring">
+              <span>Connect to your Cassandra server, locally or on the cloud, or play around with the one provided by us.</span>
+              <span>We use Astra DB for hosting the mock database.</span>
+            </cga-card>
+            <cga-card icon="mdi-family-tree" title="Create Cassandra Data Structures">
+              <span>Visualise and create Cassandra data structures by building conceptual graphs.</span>
+              <span>Conceptual Graphs are a fast and easy way of data visualisation.</span>  
+            </cga-card>
+            <cga-card icon="mdi-database-search" title="Query Cassandra Tables">
+              <span>Query your database tables and get results in real time, without touching your Cassandra bash terminal.</span>
+              <span>We provide an interface for you in order to facilitate the process of selecting data.</span>
+              <span></span>
+            </cga-card>
           </div>
         </div>
       </div>
     </section>
     <section class="homepage-section">
-      <div class="summary-container">
-        <conceptual-graph 
+      <cga-banner-card title="Conceptual Graphs">
+        <span class="banner-card-text">"With their direct mapping to language, conceptual graphs can serve as an</span>
+        <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
+      </cga-banner-card>
+      <div class="landing-page-content">
+        <cga-delimiter label="2" :gradientType="1" text="Leverage the simplicity of the Conceptual Graphs" />
+        <cga-banner-card>
+          <conceptual-graph 
           :keyspaceConcept="getDummyCG.keyspaceConcept"
           :tableConcepts="getDummyCG.tableConcepts"
           :columnConcepts="getDummyCG.columnConcepts"
           :dataTypeConcepts="getDummyCG.dataTypeConcepts" />
+        </cga-banner-card>
       </div>
     </section>
     <!-- TODO: Authentication section -->
@@ -95,6 +93,9 @@ import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
 
 import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
+import CgaCard from '../components/graphic/cards/CgaCard.vue';
+import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
+import CgaDelimiter from '../components/graphic/delimiters/CgaDelimiter.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
 import Dashboard from '../components/dashboard/Dashboard.vue';
 import ConceptualGraph from '../components/utilities/ConceptualGraph.vue';
@@ -102,6 +103,9 @@ import ConceptualGraph from '../components/utilities/ConceptualGraph.vue';
 export default {
   name: "HomeView",
   components: {
+    CgaCard,
+    CgaBannerCard,
+    CgaDelimiter,
     CassandraTerminal,
     AuthenticationModal,
     Dashboard,
@@ -200,6 +204,7 @@ export default {
 
       .landing-section-text
         @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+        margin-bottom: 80px
 
         .landing-title
           @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
@@ -213,7 +218,6 @@ export default {
         
         .landing-subtitle
           @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-          margin-bottom: 40px
 
           .landing-title-text
             color: variables.$cassandra-black
@@ -221,14 +225,6 @@ export default {
             font-weight: 400
             line-height: 3rem
 
-          .landing-gradient-text
-            font-size: 2rem
-            font-weight: 400
-            line-height: 2rem
-            background-image: linear-gradient(variables.$cassandra-light-blue, variables.$cassandra-blue)
-            -webkit-background-clip: text
-            -webkit-text-fill-color: transparent
-    
       .landing-section-pre-symbol
         height: 100px
         width: 1px
@@ -246,10 +242,10 @@ export default {
         width: 50px
     
       .landing-section-container
-        @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+        @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: flex-start)
 
         .landing-cards-container
-          @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+          @include containers.flex-container($flex-direction: column)
           margin-left: 40px
           width: 100%
 
@@ -276,6 +272,14 @@ export default {
 
             .landing-card-text
               @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
+  
+  .homepage-section:nth-of-type(2)
+    height: 120vh
+
+  .homepage-section:nth-of-type(3)
+    height: 120vh
+    background-color: variables.$cassandra-black
+
   .homepage-section__last
     @include containers.flex-container($flex-direction: column, $justify-content: flex-end, $align-items: center)
     padding: 0
