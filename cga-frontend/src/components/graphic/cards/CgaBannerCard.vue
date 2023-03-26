@@ -47,7 +47,7 @@ const props = defineProps<Props>();
             margin-bottom: 10px
 
         .banner-card-content
-            @include containers.flex-container($flex-direction: row, $justify-content: center)
+            @include containers.flex-container($flex-direction: row, $justify-content: flex-start)
 
             .banner-card-content-text
                 @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: flex-start)
