@@ -1,11 +1,11 @@
 <template>
-  <div class="flex"> 
+  <div class="flex">
     <h1>Query Conceptual Graph Design</h1>
   </div>
 </template>
 
 <script>
-import useUserStore from '@/stores/user'
+import useUserStore from "@/stores/user";
 
 export default {
   name: "QueryView",
@@ -16,15 +16,14 @@ export default {
     } else {
       next({ name: "home" });
     }
-  }
-}
+  },
+};
 </script>
 
 <style scoped lang="sass">
 @use "@/assets/styles/_containers.sass"
 
-.flex 
+.flex
   @include containers.flex-container($justify-content: center, $align-items: center)
   height: 100vh
-
 </style>

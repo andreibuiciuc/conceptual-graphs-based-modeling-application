@@ -28,6 +28,17 @@ h2
     color: variables.$cassandra-black
 
 // Custom global SASS classes are defined here.
+.flex-start
+    justify-content: flex-start !important
+    padding-right: 0 !important
+
+.flex-end
+    justify-content: flex-end !important
+    padding-left: 0 !important
+
+.flex-center
+    justify-content: center
+
 .action-button
     border-color: variables.$cassandra-blue
     background-color: variables.$cassandra-white
@@ -56,8 +67,12 @@ h2
 .text--cassandra-blue
     color: variables.$cassandra-blue
 
-// Vuetify component classes are overwritten here.
+.error-message
+    color: variables.$cassandra-red
+    margin-bottom: 1rem
+    margin-top: 0.5rem
 
+// Vuetify component classes are overwritten here.
 .v-overlay__content
     @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
@@ -81,3 +96,12 @@ h2
 .v-expansion-panel-title:hover > .v-expansion-panel-title__overlay,
 .v-expansion-panel-title__overlay 
     background-color: variables.$cassandra-blue
+
+.v-btn__overlay
+    border-radius: 0px
+
+.v-overlay__content.v-select__content
+    max-height: 400px !important
+
+.elevation-1
+    box-shadow: 0px 0px 0px 0px var(--v-shadow-key-umbra-opacity, rgba(0, 0, 0, 0.2)), 0px 1px 0px 0px var(--v-shadow-key-penumbra-opacity, rgba(0, 0, 0, 0.14)), 0px 1px 0px 0px var(--v-shadow-key-penumbra-opacity, rgba(0, 0, 0, 0.12)) !important

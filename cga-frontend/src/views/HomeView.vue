@@ -24,7 +24,7 @@
       <div class="landing-section-content">
         <cga-delimiter label="1" text="Move from blipping consoles to a friendlier Visual Query System" :gradientType="0" />
         <div class="landing-section-container">
-          <cassandra-terminal />
+          <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" />
           <div class="landing-cards-container">
             <cga-card icon="mdi-magnify" title="Connect And Start Exploring">
               <span>Connect to your Cassandra server, locally or on the cloud, or play around with the one provided by us.</span>
@@ -68,12 +68,18 @@
         </h1>
         <v-card variant="outlined" class="auth-activator">
           <v-card-text>
-            <v-btn variant="text" class="auth-button" @click.prevent="isModalOpened = true">
-              Create a new account <br /> or <br /> sign in 
+            <v-btn
+              variant="text"
+              class="auth-button"
+              @click.prevent="isModalOpened = true"
+            >
+              Create a new account <br />
+              or <br />
+              sign in
             </v-btn>
           </v-card-text>
         </v-card>
-        <authentication-modal />
+        <AuthenticationModal />
       </div>
       </div>
     </section>
@@ -81,24 +87,25 @@
 
   <div v-else>
     <section class="console-section">
-      <dashboard />
+      <ConnectionDashboard />
     </section>
   </div>
 </template>
 
-<script>
+<script lang="js">
 import dummyCG from '@/constants/dummyCG';
+import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
 import { mapWritableState } from 'pinia';
 import useAuthModalStore from '@/stores/authModal';
 import useUserStore from '@/stores/user';
 
-import CassandraTerminal from '../components/graphic/CassandraTerminal.vue';
+import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
 import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
 import CgaDelimiter from '../components/graphic/delimiters/CgaDelimiter.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
-import Dashboard from '../components/dashboard/Dashboard.vue';
-import ConceptualGraph from '../components/utilities/ConceptualGraph.vue';
+import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
+import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 
 export default {
   name: "HomeView",
@@ -108,7 +115,7 @@ export default {
     CgaDelimiter,
     CassandraTerminal,
     AuthenticationModal,
-    Dashboard,
+    ConnectionDashboard,
     ConceptualGraph
   },
   data: function () {
@@ -121,6 +128,9 @@ export default {
     ...mapWritableState(useAuthModalStore, ['isModalOpened', "currentScrollYPosition"]),
     getDummyCG: function () {
       return dummyCG;
+    },
+    getDummyCommands: function () {
+      return cassandraTerminalConstants.dummyCQL;
     }
   },
   methods: {
@@ -301,12 +311,12 @@ export default {
     h1
       font-size: 7rem
 
-.summary-section 
+.summary-section
   color: variables.$cassandra-white
   background-color: variables.$cassandra-blue
   min-height: 100vh
-  
-  .summary-container 
+
+  .summary-container
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
     h1
@@ -318,7 +328,7 @@ export default {
   justify-content: flex-end
   padding: 0
 
-  .authentication-container 
+  .authentication-container
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
     .auth-activator .v-card-text
