@@ -1,72 +1,22 @@
 <template>
-  
-  <div class="slide-cards-container" 
-       :class="{ 'flex-start': isTransformTransitionFinished && selectedCardIndex === slideContainers.FIRST, 
-                   'flex-end': selectedCardIndex === slideContainers.SECOND && isAnimationFinished }">
-   
-    <div v-if="selectedCardIndex === slideContainers.SECOND && isGraphRendered" class="conceptual-graph-container">
-      <ConceptualGraph
-                    :table-concepts="tableConcepts"
-                    :column-concepts="columnConcepts"
-                    :data-type-concepts="dataTypeConcepts"
-                    :no-keyspace="true"
-                    :are-column-concepts-deletable="true"
-                    :apply-border="isCardOn"
-                    @remove="removeColumnConcept">
-      </ConceptualGraph>
+  <div class="design-container">
+    <div class="design-toolbox-container">
+      <DesignToolbox
+        :keyspace="currentKeyspace"
+        @openTerminal="openTerminal"
+        @render="renderConceptualGraph">
+      </DesignToolbox>
     </div>
-
     <Transition name="fade" mode="out-in">
-      <div v-if="selectedCardIndex !== slideContainers.SECOND" class="design-toolbox-container" 
-         :class="{ 'design-toolbox-container-slide-left': selectedCardIndex === slideContainers.FIRST }"
-         @transitionend="onTransitionEnd">
-        <SlideCard :disabled="!currentKeyspace"
-                class="slide-card"
-                icon="mdi-pencil" 
-                card-title="Design by form"
-                :is-card-grayed="currentActiveCardIndex === slideContainers.SECOND"
-                :is-card-selected="selectedCardIndex === slideContainers.FIRST"
-                :is-card-on="isCardOn"
-                @hovered="currentActiveCardIndex = slideContainers.FIRST"
-                @leave="currentActiveCardIndex = slideContainers.NONE"
-                @selected="selectDesignCard(slideContainers.FIRST)">
-        </SlideCard>
-        <DesignToolbox v-if="selectedCardIndex === slideContainers.FIRST && isCardOn && isAnimationFinished"
-                      :keyspace="currentKeyspace"
-                      @openTerminal="openTerminal"
-                      @render="renderConceptualGraph">
-        </DesignToolbox>
-      </div>
-    </Transition>
-
-    <Transition name="fade" mode="out-in">
-      <div v-if="selectedCardIndex !== slideContainers.FIRST" class="design-toolbox-container"
-         :class="{ 'design-toolbox-container-slide-right': selectedCardIndex === slideContainers.SECOND }"
-         @transitionend="isTransformTransitionFinished = true">
-      <SlideCard :disabled="true"
-               class="slide-card"
-               icon="mdi-cursor-move"
-               card-title="Design by drag and drop" 
-               :is-card-grayed="currentActiveCardIndex === slideContainers.FIRST"
-               :is-card-selected="selectedCardIndex === slideContainers.SECOND"
-               :is-card-on="isCardOn"
-               @hovered="currentActiveCardIndex = slideContainers.SECOND"
-               @leave="currentActiveCardIndex = slideContainers.NONE"
-               @selected="selectDesignCard(slideContainers.SECOND)">
-      </SlideCard>
-      </div>
-    </Transition>
-
-    <Transition name="fade" mode="out-in">
-      <div v-if="selectedCardIndex === slideContainers.FIRST && !isPlaceholderVisible" class="conceptual-graph-container">
+      <div v-if="!isPlaceholderVisible" class="conceptual-graph-container">
         <ConceptualGraph 
-                    :table-concepts="tableConcepts"
-                    :column-concepts="columnConcepts"
-                    :data-type-concepts="dataTypeConcepts"
-                    :no-keyspace="true"
-                    :are-column-concepts-deletable="true"
-                    :apply-border="false"
-                    @remove="removeColumnConcept">
+          :table-concepts="tableConcepts"
+          :column-concepts="columnConcepts"
+          :data-type-concepts="dataTypeConcepts"
+          :no-keyspace="true"
+          :are-column-concepts-deletable="true"
+          :apply-border="false"
+          @remove="removeColumnConcept">
         </ConceptualGraph>
       </div>
       <Placeholder v-else-if="isPlaceholderVisible" :in-loading-state="true" />
@@ -90,7 +40,6 @@ import designToolboxConstants from '../components/design/designToolboxConstants'
 import useUserStore from "../stores/user";
 import useConnectionStore from "../stores/connection";
 import useNotificationStore from "../stores/notification";
-import SlideCard from "../components/graphic/cards/SlideCard.vue";
 import DesignToolbox from "../components/design/DesignToolbox.vue";
 import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";
 import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.vue";
@@ -99,16 +48,9 @@ import { useClipboard } from '../composables/clipboard';
 import { mapState, mapActions } from "pinia"
 import { useQuery } from '../composables/query';
 
-const slideContainers = {
-  NONE: -1,
-  FIRST: 0,
-  SECOND: 1
-};
-
 export default {
   name: "DataStructureView",
   components: {
-    SlideCard,
     DesignToolbox,
     ConceptualGraph,
     CassandraTerminal,
@@ -121,10 +63,8 @@ export default {
   },
   data: () => ({
     // This data is related to the Slide Card components
-    currentActiveCardIndex: -1,
-    selectedCardIndex: -1,
+    isCardSelected: false,
     hideCardIndex: -1,
-    isCardOn: false,
     isAnimationFinished: false,
     //
     isTransformTransitionFinished: false,
@@ -143,33 +83,19 @@ export default {
     // These computed properties are related to the usage of constants
     slideContainers: () => { return slideContainers; },
     // These computed properties are related to the animations
-    isPlaceholderVisible: function () { return this.selectedCardIndex > -1 && this.isTransformTransitionFinished && !this.isGraphRendered; },
+    isPlaceholderVisible: function () { return !this.isGraphRendered; },
     isTransitionFinished: function () { return this.isTransformTransitionFinished; }
   },
   methods: {
     // These methods are mapped from the notification store.
     ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
     // These methods are related to the Slide Card components
-    selectDesignCard: function (cardIndex) {
-      this.isAnimationFinished = false;
-      if (this.isCardOn) {
-        this.selectedCardIndex = cardIndex;
-        this.isCardOn = false;
-        this.isTransformTransitionFinished = true;
-      } else {
-        if (this.selectedCardIndex === cardIndex) {
-          this.isCardOn = true;
-        }
-        this.selectedCardIndex = cardIndex;
-        this.isTransformTransitionFinished = true;
+    selectDesignCard: function () {
+        if (this.isCardSelected) {
+          this.isCardSelected = false;
+        } else {
+          this.isCardSelected = true;
       }
-    },
-    onTransitionEnd: function (transitionEvent) {
-      if (transitionEvent.propertyName === "transform") {
-        this.isTransformTransitionFinished = true;
-      }
-      this.showGraphPlaceholder = true;
-      this.isAnimationFinished = true;
     },
     // These methods handle events of components
     openTerminal: function (commands) {
@@ -224,48 +150,23 @@ export default {
 
 // Shared Sass vatriables for transitions
 $transition-all-time: 0.5s
-$translate-percentage: 50%
 
 // Shared Sass classes between media
-.slide-cards-container
+.design-container
   @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
+  padding: variables.$cga-topbar-height 40px 0
   height: 100vh
-  padding-top: variables.$cga-topbar-height
 
 .design-toolbox-container
   @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
+  transition: all $transition-all-time
   height: 100%
   padding: 40px 0
-
+  
 .conceptual-graph-container
   height: 100%
   width: 100%
   padding: 40px
   overflow: auto
-  transform: translate(-25%)
-
-@media (min-width: variables.$cga-ipad-width) and (max-width: variables.$cga-mac-width)
-  .slide-cards-container
-    height: 100vh
-    @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
-
-@media (min-width: calc(variables.$cga-mac-width))
-  .slide-cards-container
-    padding: variables.$cga-topbar-height 20% 2.5rem
-
-    .design-toolbox-container
-      @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
-      height: 100%
-
-    .design-toolbox-container-slide-left
-      transition: all $transition-all-time
-      transform: translateX(-$translate-percentage)
-
-    .design-toolbox-container-slide-right
-      transition: all $transition-all-time
-      transform: translate($translate-percentage)
-    
-      .slide-card
-        max-height: 800px
 
 </style>

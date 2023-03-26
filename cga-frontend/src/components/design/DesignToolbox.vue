@@ -30,7 +30,7 @@
             class="icon-button"
             :class="{ 'icon-button--disabled': isGraphRendered }"
             :disabled="!isAddTableConceptButtonEnabled"
-            @click.prevent="addTableConceptToGraph"
+            @click.prevent="validateTableName"
           >
             <v-icon v-if="isGraphRendered">mdi-check</v-icon>
             <v-icon v-else>mdi-plus</v-icon>
@@ -116,6 +116,7 @@
     <v-card
       variant="outlined"
       class="toolbox"
+      style="margin-top: 40px;"
       :class="{ 'toolbox-warning': !keyspace }"
     >
       <v-card-title class="d-flex justify-center">Design Toolbox Actions</v-card-title>
@@ -140,10 +141,10 @@
         <v-btn
           class="action-button"
           variant="outlined"
-          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered"
+          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered || true"
           :loading="isProcessTriggered"
           @click.prevent="generateTable">
-          GENERATE
+          COMING SOON
         </v-btn>
       </v-card-text>
     </v-card>
@@ -154,8 +155,10 @@
 import constants from "@/constants/constants";
 import designToolboxConstants from "../design/designToolboxConstants";
 import useNotificationStore from "../../stores/notification";
+import useConnectionStore from '../../stores/connection';
+import { manageRequest } from "@/includes/requests";
 import { conceptualGraphsCollection } from "../../includes/firebase";
-import { mapActions } from "pinia";
+import { mapActions, mapWritableState } from "pinia";
 import { useQuery } from "../../composables/query";
 import { useConfetti } from '../../composables/confetti';
 
@@ -183,6 +186,7 @@ export default {
     columnConcepts: {},
     dataTypeConcepts: {},
     isGraphRendered: false,
+    isTableNameDuplicated: false,
     //
     isSaveTriggered: false,
     isProcessTriggered: false
@@ -210,6 +214,33 @@ export default {
     },
     clearClusteringColumn: function () {
       this.currentClusteringOrderOptions = Object.assign({}, { clusteringColumn: null, clusteringOrder: null });
+    },
+    validateTableName: function () {
+      manageRequest(constants.requestTypes.GET, "table", {
+        table_name: this.currentTableConcept.conceptName,
+        keyspace_name: this.currentKeyspace
+      })
+      .then((response) => {
+        if (response) {
+          if (response.data.flag) {
+            this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} already exists in the current keyspace`);
+            this.isTableNameDuplicated = true;
+          } else {
+            this.addTableConceptToGraph();
+          }
+        }
+      });
+    },
+    checkIfTableExistsInSavedCGs: async function () {
+      try {
+        const snapshot = await conceptualGraphsCollection.where("tableName", "==", this.currentTableConcept.conceptName).get();
+        if (!snapshot.empty) {
+          this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} is already saved in your CGs`);
+          return true;
+        }
+      } catch (error) {
+        this.setUpSnackbarState(false, error.message);
+      }
     },
     // These methods handle the rendering of the graph
     addTableConceptToGraph: function () {
@@ -259,7 +290,6 @@ export default {
     },
     // These methods handle the saving of the conceptual graph
     saveTableConceptualGraph: async function () {
-      // TODO: Validate the table in order to not save tables with the same name
       this.isSaveTriggered = true;
       const [isConceptualGraphValid, errorMessage] = this.validateConceptualGraph();
       if (!isConceptualGraphValid) {
@@ -267,8 +297,14 @@ export default {
         this.isSaveTriggered = false;
         return;
       }
+      const isInvalid = await this.checkIfTableExistsInSavedCGs();
+      if (isInvalid) {
+        this.isSaveTriggered = false;
+        return;
+      }
       try {
         await conceptualGraphsCollection.add({
+          tableName: this.currentTableConcept.conceptName,
           tableConcepts: this.tableConcepts,
           columnConcepts: this.columnConcepts,
           dataTypeConcepts: this.dataTypeConcepts
@@ -308,6 +344,8 @@ export default {
     }
   },
   computed: {
+    // These computed properties are mapped from the Connection Store
+    ...mapWritableState(useConnectionStore, ['currentKeyspace']),
     // These computed properties are related to the Design Toolbox
     areColumnConceptFieldsCompleted: function () {
       return this.currentColumnConcept && this.currentColumnConcept.conceptName && this.currentColumnConcept.kind &&
@@ -378,7 +416,6 @@ export default {
 
 .toolbox
   border-color: variables.$cassandra-blue
-  margin-top: 40px
 
   .v-card-title
     margin-bottom: 1rem

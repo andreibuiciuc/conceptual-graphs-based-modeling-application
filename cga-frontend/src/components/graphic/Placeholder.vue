@@ -28,10 +28,9 @@ const props = defineProps<PlaceholderProps>();
 
 .placeholder-wrapper
     position: sticky
-    transform: translateX(-25%)
     width: 100%
     height: 100%
-    padding: 40px
+    padding: 40px 0 40px 40px
 
 .placeholder
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
@@ -71,8 +70,8 @@ const props = defineProps<PlaceholderProps>();
 .placeholder::before
     content: ''
     position: absolute
-    width: 150%
-    height: 150%
+    width: 200%
+    height: 200%
     background-image: conic-gradient(transparent, transparent, transparent, variables.$cassandra-blue)
     animation: border-animation 3s linear infinite
 
