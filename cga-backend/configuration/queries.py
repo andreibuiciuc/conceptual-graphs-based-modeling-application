@@ -94,9 +94,10 @@ def does_table_exists(table_name: str, keyspace_name: str) -> dict[str, str]:
     try:
         query = session.prepare(TABLE_BY_NAME)
         query_bound = query.bind([table_name, keyspace_name])
+
+        result_set: ResultSet
         result_set = session.execute(query_bound)
-        print(result_set)
-        return {"status": SUCCESS, "flag": len(result_set) == 1}
+        return {"status": SUCCESS, "flag": result_set.one() is not None }
 
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}
