@@ -215,21 +215,23 @@ export default {
     clearClusteringColumn: function () {
       this.currentClusteringOrderOptions = Object.assign({}, { clusteringColumn: null, clusteringOrder: null });
     },
-    validateTableName: function () {
-      manageRequest(constants.requestTypes.GET, "table", {
+    validateTableName: async function () {
+      const doesTableAlreadyExistAsCG = await this.checkIfTableExistsInSavedCGs();
+      if (!doesTableAlreadyExistAsCG) {
+        this.checkIfTableExistsInTheCurrentKeyspace();
+      }
+    },
+    checkIfTableExistsInTheCurrentKeyspace: async function () {
+      const response = await manageRequest(constants.requestTypes.GET, "table", {
         table_name: this.currentTableConcept.conceptName,
         keyspace_name: this.currentKeyspace
-      })
-      .then((response) => {
-        if (response) {
-          if (response.data.flag) {
-            this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} already exists in the current keyspace`);
-            this.isTableNameDuplicated = true;
-          } else {
-            this.addTableConceptToGraph();
-          }
-        }
       });
+      if (response.data.flag) {
+        this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} already exists in the current keyspace`);
+        this.isTableNameDuplicated = true;
+      } else {
+        this.addTableConceptToGraph();
+      }
     },
     checkIfTableExistsInSavedCGs: async function () {
       try {
