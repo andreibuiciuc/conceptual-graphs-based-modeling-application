@@ -8,10 +8,10 @@ export default defineStore("connection", {
     cassandraServerCredentials: {
       ipAddress: constants.inputValues.empty,
       port: constants.inputValues.empty,
-      isCassandraServerConnected: false
+      isCassandraServerConnected: false,
     },
     currentKeyspace: null,
-    availableKeyspaces: []
+    availableKeyspaces: [],
   }),
   actions: {
     connect: function () {
@@ -19,12 +19,15 @@ export default defineStore("connection", {
       this.isConnectionButtonTriggered = true;
       manageRequest(constants.requestTypes.GET, "connection/on", {
         host: this.cassandraServerCredentials.ipAddress,
-        port: this.cassandraServerCredentials.port
+        port: this.cassandraServerCredentials.port,
       })
         .then((response) => {
           if (response) {
             if (response.data) {
-              const status = response.data.status === constants.requestStatus.SUCCESS ? true : false;
+              const status =
+                response.data.status === constants.requestStatus.SUCCESS
+                  ? true
+                  : false;
               let message = response.data.message;
               if (status) {
                 this.cassandraServerCredentials.isCassandraServerConnected = true;
@@ -40,7 +43,7 @@ export default defineStore("connection", {
         })
         .finally(() => {
           this.isConnectionButtonTriggered = false;
-        })
+        });
     },
     disconnect: function () {
       const notificationStore = useNotificationStore();
@@ -48,10 +51,16 @@ export default defineStore("connection", {
       manageRequest(constants.requestTypes.POST, "connection/off")
         .then((response) => {
           if (response) {
-            const status = response.data.status === constants.requestStatus.SUCCESS ? true : false;
+            const status =
+              response.data.status === constants.requestStatus.SUCCESS
+                ? true
+                : false;
             let message = response.data.message;
             if (status) {
-              this.cassandraServerCredentials = Object.assign({}, constants.defaultServerConnectionCredentials);
+              this.cassandraServerCredentials = Object.assign(
+                {},
+                constants.defaultServerConnectionCredentials
+              );
               this.currentKeyspace = null;
               message = `Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} discarded.`;
             }
@@ -67,17 +76,24 @@ export default defineStore("connection", {
     },
     retrieveKeyspaces: function () {
       const notificationStore = useNotificationStore();
-      manageRequest(constants.requestTypes.GET, "keyspaces")
-        .then((response) => {
+      manageRequest(constants.requestTypes.GET, "keyspaces").then(
+        (response) => {
           if (response) {
-            const status = response.data.status === constants.requestStatus.SUCCESS ? true: false;
+            const status =
+              response.data.status === constants.requestStatus.SUCCESS
+                ? true
+                : false;
             if (status) {
               this.availableKeyspaces = response.data.keyspaces;
             } else {
-              notificationStore.setUpSnackbarState(false, response.data.message);
+              notificationStore.setUpSnackbarState(
+                false,
+                response.data.message
+              );
             }
           }
-        });
-    }
-  }
+        }
+      );
+    },
+  },
 });

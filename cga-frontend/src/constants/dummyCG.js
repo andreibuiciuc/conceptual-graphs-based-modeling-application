@@ -1,60 +1,60 @@
 export default {
   keyspaceConcept: {
     conceptType: "R",
-    conceptName: "store"
+    conceptName: "store",
   },
   tableConcepts: [
     {
       conceptType: "TB",
-      conceptName: "products"
+      conceptName: "products",
     },
     {
       conceptType: "TB",
-      conceptName: "vendors"
-    }
+      conceptName: "vendors",
+    },
   ],
   columnConcepts: {
     products: [
       {
         conceptType: "CL",
         conceptName: "productID",
-        relation: "partitionKey"
+        relation: "partitionKey",
       },
       {
         conceptType: "CL",
         conceptName: "productName",
-        relation: "isOptional"
-      }
+        relation: "isOptional",
+      },
     ],
     vendors: [
       {
         conceptType: "CL",
         conceptName: "vendorID",
-        relation: "partitionKey"
+        relation: "partitionKey",
       },
       {
         conceptType: "CL",
         conceptName: "vendorName",
-        relation: "isOptional"
-      }
-    ]
+        relation: "isOptional",
+      },
+    ],
   },
   dataTypeConcepts: {
     productID: {
       conceptType: "T",
-      conceptName: "int"
+      conceptName: "int",
     },
     productName: {
       conceptType: "T",
-      conceptName: "text"
+      conceptName: "text",
     },
     vendorID: {
       conceptType: "T",
-      conceptName: "int"
+      conceptName: "int",
     },
     vendorName: {
       conceptType: "T",
-      conceptName: "text"
-    }
-  }
+      conceptName: "text",
+    },
+  },
 };

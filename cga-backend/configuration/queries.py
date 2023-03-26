@@ -1,7 +1,7 @@
 from typing import Union, List
 from cassandra.cluster import Cluster, ResultSet
-from configuration.constants import SUCCESS, ERROR
-from configuration.constants import ALL_KEYSPACES, ALL_TABLES_FROM_KEYSPACE, ALL_COLUMNS_FROM_TABLE
+from configuration.constants import SUCCESS, ERROR, EXCLUDED_KEYSPACES
+from configuration.constants import ALL_KEYSPACES, ALL_TABLES_FROM_KEYSPACE, ALL_COLUMNS_FROM_TABLE, TABLE_BY_NAME
 
 global session, cluster
 
@@ -44,7 +44,8 @@ def retrieve_all_keyspaces() -> Union[dict[str, str, List[str]], dict[str, str]]
     try:
         keyspaces: ResultSet
         keyspaces = session.execute(ALL_KEYSPACES)
-        keyspaces_list = [keyspace.keyspace_name for keyspace in keyspaces]
+        keyspaces_list = [keyspace.keyspace_name for keyspace in keyspaces
+                          if keyspace.keyspace_name not in EXCLUDED_KEYSPACES]
         return {"status": SUCCESS, "message": "", "keyspaces": keyspaces_list}
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}
@@ -83,6 +84,20 @@ def retrieve_keyspace_metadata(keyspace_name: str):
             keyspace_metadata["tables"].append(table_metadata)
 
         return {"status": SUCCESS, "message": "", "keyspace_metadata": keyspace_metadata}
+
+    except Exception as exception:
+        return {"status": ERROR, "message": str(exception)}
+
+
+def does_table_exists(table_name: str, keyspace_name: str) -> dict[str, str]:
+    global session
+    try:
+        query = session.prepare(TABLE_BY_NAME)
+        query_bound = query.bind([table_name, keyspace_name])
+
+        result_set: ResultSet
+        result_set = session.execute(query_bound)
+        return {"status": SUCCESS, "flag": result_set.one() is not None }
 
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}

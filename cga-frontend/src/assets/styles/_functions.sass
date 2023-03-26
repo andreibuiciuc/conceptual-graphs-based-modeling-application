@@ -1,0 +1,13 @@
+@use '@/assets/styles/_variables.sass'
+
+@function getCassandraColorByState($currentState)
+    @if $currentState == variables.$cassandra-disabled-state
+        @return variables.$cassandra-light-gray
+   
+    @else if $currentState == variables.$cassandra-warning-state
+        @return variables.$cassandra-yellow
+   
+    @else if $currentState == variables.$cassandra-error-state
+        @return variables.$cassandra-red
+
+    @return variables.$cassandra-light-blue

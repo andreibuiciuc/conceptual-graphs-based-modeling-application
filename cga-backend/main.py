@@ -4,7 +4,7 @@ import uvicorn
 
 from configuration.queries import *
 
-app = FastAPI()
+app = FastAPI() 
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +36,12 @@ def get_keyspaces():
 @app.get("/keyspace")
 def get_keyspace_metadata(keyspace_name: str):
     result = retrieve_keyspace_metadata(keyspace_name)
+    return result
+
+
+@app.get("/table")
+def check_if_table_exists(table_name: str, keyspace_name):
+    result = does_table_exists(table_name, keyspace_name)
     return result
 
 
