@@ -73,8 +73,8 @@ const textGradientClass = computed(() => {
         margin-bottom: 20px
         font-size: 1.5rem
         font-weight: 400
-        height: 50px
-        width: 50px
+        height: 40px
+        width: 40px
 
     .landing-gradient-text
         font-size: 2rem
