@@ -44,7 +44,7 @@
       </div>
     </section>
     <section class="homepage-section">
-      <cga-banner-card title="Conceptual Graphs">
+      <cga-banner-card title="Conceptual Graphs" id="banner">
         <span class="banner-card-text">"With their direct mapping to language, conceptual graphs can serve as an</span>
         <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
       </cga-banner-card>
@@ -121,27 +121,35 @@ export default {
   data: function () {
     return {
       homepageElement: null,
+      bannerElement: null,
+      bannerElementYPosition: 0
     }
   },
   computed: {
+    // These computed properties are mapped from the User store.
     ...mapWritableState(useUserStore, ['isUserLoggedIn']),
+    // These computed properties are mapped from the AuthModal store.
     ...mapWritableState(useAuthModalStore, ['isModalOpened', "currentScrollYPosition"]),
-    getDummyCG: function () {
-      return dummyCG;
-    },
-    getDummyCommands: function () {
-      return cassandraTerminalConstants.dummyCQL;
-    }
+    // These computed properties are related to the Cassandra Terminal component
+    getDummyCG: function () { return dummyCG; },
+    getDummyCommands: function () { return cassandraTerminalConstants.dummyCQL; }
   },
   methods: {
     handleScrollEvent: function () {
       this.currentScrollYPosition = this.homepageElement.scrollTop;
+      if (this.currentScrollYPosition >= this.bannerElementYPosition - 3 * window.innerHeight / 4) {
+        this.bannerElement.classList.add("banner-card--fade-in")
+      }
     }
   },
   mounted: function () {
     this.homepageElement = document.getElementById("homepage");
+    this.bannerElement = document.getElementById("banner");
     if (this.homepageElement) {
       this.homepageElement.addEventListener("scroll", this.handleScrollEvent);
+      if (this.bannerElement) {
+        this.bannerElementYPosition = this.homepageElement.scrollTop + this.bannerElement.getBoundingClientRect().top;
+      }
     }
   }
 }

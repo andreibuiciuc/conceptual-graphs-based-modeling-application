@@ -29,6 +29,7 @@ const props = defineProps<Props>();
 @use "@/assets/styles/_containers.sass"
 
 .banner-card-wrapper
+    visibility: hidden
     position: relative
     top: -10%
     width: 100%
@@ -53,5 +54,18 @@ const props = defineProps<Props>();
                 @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: flex-start)
                 font-style: italic
                 font-size: 1.25rem
+
+
+.banner-card--fade-in
+    visibility: visible
+    animation: banner-card-fade-in 0.5s cubic-bezier(0.390, 0.575, 0.565, 1.000) both
+
+@keyframes banner-card-fade-in
+    0% 
+        opacity: 0
+        transform: translateY(40px)
+    100%
+        opacity: 1
+        transform: translateY(0)
 
 </style>

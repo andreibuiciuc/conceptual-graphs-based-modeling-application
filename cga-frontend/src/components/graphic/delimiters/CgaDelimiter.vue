@@ -41,13 +41,13 @@ const textGradientClass = computed(() => {
 @use "@/assets/styles/_containers.sass"
 
 .gradient__white-blue
-    background-image: linear-gradient(variables.$cassandra-white, variables.$cassandra-light-blue)
+    background-image: linear-gradient(variables.$cassandra-white, #0D41E1)
 
 .gradient__light-dark-blue
-    background-image: linear-gradient(variables.$cassandra-light-blue, variables.$cassandra-blue)
+    background-image: linear-gradient(#0D41E1, #07C8F9)
 
 .gradient__light-dark-blue--horizontal
-    background-image: linear-gradient(90deg, variables.$cassandra-light-blue, variables.$cassandra-blue)    
+    background-image: linear-gradient(90deg, #07C8F9, #0D41E1)    
 
 .gradient__black-yellow
     background: linear-gradient(variables.$cassandra-black, variables.$cassandra-yellow)
@@ -65,11 +65,9 @@ const textGradientClass = computed(() => {
     .landing-section-pre-symbol
         height: 100px
         width: 1px
-        // background: linear-gradient(variables.$cassandra-white, variables.$cassandra-light-blue)
 
     .landing-section-symbol
         @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-        // background: linear-gradient(90deg, variables.$cassandra-light-blue, variables.$cassandra-blue)
         color: variables.$cassandra-white
         border-radius: 100%
         margin-bottom: 20px
@@ -82,7 +80,6 @@ const textGradientClass = computed(() => {
         font-size: 2rem
         font-weight: 400
         line-height: 2rem
-        // background-image: linear-gradient(variables.$cassandra-light-blue, variables.$cassandra-blue)
         -webkit-background-clip: text
         -webkit-text-fill-color: transparent
 
