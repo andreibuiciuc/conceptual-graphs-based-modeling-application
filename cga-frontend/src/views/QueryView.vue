@@ -5,22 +5,24 @@
         <span>Query Design</span>
       </div>
       <div class="query-header-actions">
-        <v-btn variant="outline">
+        <v-select variant="text"
+          :disabled="!currentKeyspace"
+          :hide-details="true"
+          :items="availableTables"
+        >
+        </v-select>
+        <v-btn variant="text">
           Save
         </v-btn>
-        <v-btn variant="outline">
+        <v-btn variant="text">
           Generate Query
         </v-btn>
       </div>
     </div>
     <div class="query-canvas-wrapper">
       <div class="query-canvas">
-        <div class="query-graph-container">
-
-        </div>
-        <div class="query-graph-container">
-
-        </div>
+      </div>
+      <div class="query-canvas">
       </div>
     </div>
     <div class="query-toolbox">
@@ -35,10 +37,42 @@
 </template>
 
 <script>
+import constants from '../constants/constants';
 import useUserStore from "@/stores/user";
+import useConnectionStore from '../stores/connection';
+import useNotificationStore from '../stores/notification';
+import { mapState, mapActions } from 'pinia';
+import { manageRequest } from "@/includes/requests";
 
 export default {
   name: "QueryView",
+  data: () => ({
+    availableTables: []
+  }),
+  computed: {
+    // These computed properties are mapped from the Connection Store
+    ...mapState(useConnectionStore, ['currentKeyspace'])
+  },
+  methods: {
+    // These methods are mapped from the Notification Store
+    ...mapActions(useNotificationStore, ['setUpSnackbarState']),
+    // These methods handle the retrieve of entities
+    retrieveAvailableTables: async function () {
+      const response = await manageRequest(constants.requestTypes.GET, "tables", { 
+        keyspace_name: this.currentKeyspace
+      });
+      if (response) {
+        if (response.data.status === constants.requestStatus.SUCCESS) {
+          this.availableTables = JSON.parse(JSON.stringify(response.data.tables));
+        }
+      }
+    }
+  },
+  created: function () {
+    if (this.currentKeyspace) {
+      this.retrieveAvailableTables();
+    }
+  },
   beforeRouteEnter: function (_from, _to, next) {
     const store = useUserStore();
     if (store.isUserLoggedIn) {
@@ -69,15 +103,25 @@ export default {
     .query-header-actions
       @include containers.flex-container($flex-direction: row, $justify-content: flex-end, $align-items: center)
 
+      & > *:not(:last-child)
+        margin-right: 10px
+
   .query-canvas-wrapper
+    @include containers.flex-container($flex-direction: row)
     padding: 10px
     height: 100%
     width: 100%
 
     .query-canvas
-      @include containers.flex-container($flex-direction: row)
+      position: relative
       border: 1px solid variables.$cassandra-light-gray
       height: 100%
+      width: 50%
+      resize: horizontal
+      overflow: auto
+
+      &:first-of-type
+        margin-right: 20px
 
   .query-toolbox
     width: 100%
