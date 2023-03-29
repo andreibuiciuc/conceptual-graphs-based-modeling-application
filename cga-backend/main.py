@@ -45,5 +45,11 @@ def check_if_table_exists(table_name: str, keyspace_name):
     return result
 
 
+@app.get("/tables")
+def get_tables(keyspace_name: str):
+    result = retrieve_all_tables(keyspace_name)
+    return result
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8001, log_level="info", reload=True)

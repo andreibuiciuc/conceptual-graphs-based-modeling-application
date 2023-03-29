@@ -101,3 +101,19 @@ def does_table_exists(table_name: str, keyspace_name: str) -> dict[str, str]:
 
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}
+
+
+def retrieve_all_tables(keyspace_name: str):
+    global session
+    try:
+        query = session.prepare(ALL_TABLES_FROM_KEYSPACE)
+        query_bound = query.bind([keyspace_name])
+
+        result_set: ResultSet
+        result_set = session.execute(query_bound)
+
+        tables_list: list[str]
+        tables_list = [table.table_name for table in result_set]
+        return {"status": SUCCESS, "tables": tables_list }
+    except Exception as exception:
+        return {"status": ERROR, "message": str(exception)}
