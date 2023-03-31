@@ -1,6 +1,6 @@
 <template>
   <div
-    class="tf-tree conceptual-graph" ref="conceptualGraph"
+    class="tf-tree conceptual-graph" ref="conceptualGraph" id="conceptualGraph"
     :class="{ 'conceptual-graph-inverted': inverted, 'conceptual-graph-with-border': applyBorder }"
   >
     <ul class="conceptual-graph-root">
@@ -41,7 +41,12 @@
                 <div class="tf-nc conceptual-graph-relation" :ref="`${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`">
                   <span class="concept-name">{{ columnConcept.relation }}</span>
                 </div>
-                <div class="tf-nc" :ref="`${tableConcept.conceptName}_columnConcept_${columnIndex}`">
+                <div 
+                  class="tf-nc" :class="{ 'column-concept--selectable': areColumnsSelectable }"
+                  :style="{ backgroundColor: columnConcept.color }" 
+                  :ref="`${tableConcept.conceptName}_columnConcept_${columnIndex}`"
+                  @click.prevent="selectColumn(tableConcept, columnConcept)"
+                  >
                   <span class="concept-type"
                     >{{ columnConcept.conceptType }}:</span
                   >
@@ -99,7 +104,7 @@ export default {
     applyBorder: Boolean,
     noKeyspace: Boolean,
     areColumnConceptsDeletable: Boolean,
-    leftLimit: Number
+    areColumnsSelectable: Boolean
   },
   data: () => ({
     arrows: []
@@ -118,7 +123,8 @@ export default {
       });
       arrow.relatedNode = relatedNode;
       this.arrows.push(arrow);
-      document.body.append(arrow.node);
+      const elementRef = document.getElementById("conceptualGraph");
+      elementRef.append(arrow.node);
     },
     doesGraphHaveOnlyTableConcept: function (tableConcept) {
       return tableConcept && this.columnConcepts && this.columnConcepts[tableConcept.conceptName].length === 0;
@@ -157,6 +163,9 @@ export default {
         });
         this.removeArrows(columnConcept);
       }
+    },
+    selectColumn: function (tableConcept, columnConcept) {
+      this.$emit("select", columnConcept);
     }
   },
   computed: {
@@ -178,6 +187,9 @@ export default {
   },
   watch: {
     keyspaceConcept: function () {
+      this.removeArrows();
+    },
+    tableConcepts: function () {
       this.removeArrows();
     }
   }
@@ -254,8 +266,8 @@ export default {
   border-top: none
 
 .arrow 
-  position: absolute
-  pointer-events: none
+  position: fixed !important
+  overflow: auto
 
 .arrow__path 
   stroke: #000
@@ -265,5 +277,9 @@ export default {
 .arrow__head line
   stroke: #000
   stroke-width: 1px
+
+.column-concept--selectable:hover
+  border-radius: 10px
+  cursor: pointer
 
 </style>

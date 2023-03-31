@@ -5,10 +5,13 @@
         <span>Query Design</span>
       </div>
       <div class="query-header-actions">
-        <v-select variant="text"
+        <v-select
+          variant="text"
+          v-model="selectedTable"
           :disabled="!currentKeyspace"
           :hide-details="true"
           :items="availableTables"
+          @update:modelValue="changeTable"
         >
         </v-select>
         <v-btn variant="text">
@@ -21,6 +24,13 @@
     </div>
     <div class="query-canvas-wrapper">
       <div class="query-canvas">
+        <conceptual-graph v-if="selectedTable"
+          :are-columns-selectable="true"
+          :no-keyspace="true"
+          :table-concepts="metadata.tables"
+          :column-concepts="metadata.columns"
+          :data-type-concepts="metadata.dataTypes"
+          @select="addColumnToQuery"  />
       </div>
       <div class="query-canvas">
       </div>
@@ -44,11 +54,18 @@ import useNotificationStore from '../stores/notification';
 import { mapState, mapActions } from 'pinia';
 import { manageRequest } from "@/includes/requests";
 
+import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
+
 export default {
   name: "QueryView",
   data: () => ({
-    availableTables: []
+    availableTables: [],
+    tableMetadata: null,
+    selectedTable: constants.inputValues.empty
   }),
+  components: {
+    ConceptualGraph
+  },
   computed: {
     // These computed properties are mapped from the Connection Store
     ...mapState(useConnectionStore, ['currentKeyspace'])
@@ -56,7 +73,28 @@ export default {
   methods: {
     // These methods are mapped from the Notification Store
     ...mapActions(useNotificationStore, ['setUpSnackbarState']),
+    // These methods handle events of components
+    addColumnToQuery: function (column) {
+      console.log(column);
+    },
+    changeTable: function (newTable) {
+      this.selectedTable = newTable;
+      this.retrieveTableMetadata();
+    },
     // These methods handle the retrieve of entities
+    parseTableMetadata: function (metadata) {
+      const tables = [{ conceptName: this.selectedTable, conceptType: constants.conceptTypes.table }];
+      let columns = { [this.selectedTable]: [] };
+      let dataTypes = {};
+
+      metadata.forEach(columnData => {
+        const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column };
+        columns[this.selectedTable].push(columnConcept);
+        dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
+      })
+      
+      this.metadata = Object.assign({}, { tables, columns, dataTypes });
+    },
     retrieveAvailableTables: async function () {
       const response = await manageRequest(constants.requestTypes.GET, "tables", { 
         keyspace_name: this.currentKeyspace
@@ -66,9 +104,19 @@ export default {
           this.availableTables = JSON.parse(JSON.stringify(response.data.tables));
         }
       }
+    },
+    retrieveTableMetadata: async function () {
+      const response = await manageRequest(constants.requestTypes.GET, "table_metadata", {
+        keyspace_name: this.currentKeyspace,
+        table_name: this.selectedTable
+      });
+      if (response && response.data && response.data.status === constants.requestStatus.SUCCESS) {
+        this.parseTableMetadata(response.data.table_metadata);
+      }
     }
   },
   created: function () {
+    this.tableMetadata = { tables: [], columns: {}, dataTypes: {} };
     if (this.currentKeyspace) {
       this.retrieveAvailableTables();
     }
@@ -113,12 +161,12 @@ export default {
     width: 100%
 
     .query-canvas
-      position: relative
       border: 1px solid variables.$cassandra-light-gray
-      height: 100%
-      width: 50%
+      position: relative
       resize: horizontal
       overflow: auto
+      height: 100%
+      width: 50%
 
       &:first-of-type
         margin-right: 20px
