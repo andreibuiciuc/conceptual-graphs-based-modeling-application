@@ -45,7 +45,7 @@
                   class="tf-nc" :class="{ 'column-concept--selectable': areColumnsSelectable }"
                   :style="{ backgroundColor: columnConcept.color }" 
                   :ref="`${tableConcept.conceptName}_columnConcept_${columnIndex}`"
-                  @click.prevent="selectColumn(tableConcept, columnConcept)"
+                  @click.prevent="selectColumn(columnConcept)"
                   >
                   <span class="concept-type"
                     >{{ columnConcept.conceptType }}:</span
@@ -63,7 +63,7 @@
                 </div>
                 <ul>
                   <!-- Type level -->
-                  <li>
+                  <li v-if="dataTypeConcepts">
                     <div class="tf-nc conceptual-graph-relation" :ref="`${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`">
                       <span class="concept-name">hasType</span>
                     </div>
@@ -139,8 +139,10 @@ export default {
           const currentColumnConcept = this.columnConcepts[currentTableConcept.conceptName][parseInt(columnIndex, 10)];
           this.createArrow(this.$refs[`tableConcept_${tableIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_columnConceptRelation_${columnIndex}`][0], currentColumnConcept);
           this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConceptRelation_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`][0], currentColumnConcept);
-          this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], currentColumnConcept);
-          this.createArrow(this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConcept_${columnIndex}`][0], currentColumnConcept);
+          if (this.dataTypeConcepts) {
+            this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], currentColumnConcept);
+            this.createArrow(this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConcept_${columnIndex}`][0], currentColumnConcept);
+          }
         }
       }
     },
@@ -157,14 +159,11 @@ export default {
     },
     removeColumnConcept: function (tableConcept, columnConcept) {
       if (columnConcept) {
-        this.$emit('remove', {
-          tableConcept,
-          columnConcept
-        });
+        this.$emit('remove', { tableConcept, columnConcept });
         this.removeArrows(columnConcept);
       }
     },
-    selectColumn: function (tableConcept, columnConcept) {
+    selectColumn: function (columnConcept) {
       this.$emit("select", columnConcept);
     }
   },
@@ -186,6 +185,10 @@ export default {
     this.removeArrows();
   },
   watch: {
+    tableConcepts: function () {
+      this.removeArrows();
+      this.drawArrowsForConcepts();
+    },
     keyspaceConcept: function () {
       this.removeArrows();
     },

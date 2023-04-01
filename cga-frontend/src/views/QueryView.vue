@@ -23,15 +23,24 @@
     </div>
     <div class="query-canvas-wrapper">
       <div class="query-canvas">
-        <conceptual-graph v-if="isTableGraphReady"
+        <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress"
           :are-columns-selectable="true"
           :no-keyspace="true"
           :table-concepts="tableMetadata.tables"
           :column-concepts="tableMetadata.columns"
           :data-type-concepts="tableMetadata.dataTypes"
-          @select="addColumnToQuery"  />
+          @select="addColumnToQuery" />
+        <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
       </div>
       <div class="query-canvas">
+        <conceptual-graph
+          :are-columns-selectable="false"
+          :areColumnConceptsDeletable="true"
+          :no-keyspace="true"
+          :table-concepts="queryMetadata.tables"
+          :column-concepts="queryMetadata.columns"
+          :data-type-concepts="queryMetadata.dataTypes"
+          @remove="removeColumnFromQuery" />
       </div>
     </div>
     <div class="query-toolbox">
@@ -65,7 +74,8 @@
                 </v-btn>
                 <v-btn 
                   :disabled="isQueryActionDisabled"
-                  variant="text">
+                  variant="text"
+                  @click.prevent="setConceptualGraphMetadata('queryMetadata')">
                   Clear
                 </v-btn>
                 <v-divider vertical></v-divider>
@@ -103,7 +113,10 @@ export default {
     selectedTable: constants.inputValues.empty,
     //
     tableMetadata: null,
-    isTableGraphReady: false
+    isTableRetrieveInProgress: false,
+    isTableGraphReady: false,
+    //
+    queryMetadata: null
   }),
   components: {
     ConceptualGraph
@@ -118,28 +131,36 @@ export default {
     // These methods are mapped from the Notification Store
     ...mapActions(useNotificationStore, ['setUpSnackbarState']),
     // These methods handle events of components
-    addColumnToQuery: function (column) {
-      console.log(column);
+    addColumnToQuery: function (columnConcept) {
+      const isColumnAlreadyAdded = this.checkIfColumnIsAlreadyAdded(columnConcept);
+      if (!isColumnAlreadyAdded) {
+        this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName].push(columnConcept);
+      } else {
+        this.setUpSnackbarState(false, "Column already added to the query");
+      }
     },
     changeTable: function (newTable) {
       this.selectedTable = newTable;
       this.retrieveTableMetadata();
     },
+    removeColumnFromQuery: function (columnMetadata) {
+      if (columnMetadata) {
+        const tableConceptName = this.queryMetadata.tables[0].conceptName;
+        const columnConceptIndex = this.queryMetadata.columns[tableConceptName].findIndex(x => x.conceptName === columnMetadata.columnConcept.conceptName);
+        if (columnConceptIndex > -1) {
+          this.queryMetadata.columns[tableConceptName].splice(columnConceptIndex, 1);
+        }
+      }
+    },
     // These methods handle the retrieve of entities
     parseTableMetadata: function (metadata) {
       const tables = [{ conceptName: this.selectedTable, conceptType: constants.conceptTypes.table }];
-      let columns = { [this.selectedTable]: [] };
-      let dataTypes = {};
+      const {columns, dataTypes } = this.getColumnsMetadataForTableGraph(metadata);
 
-      metadata.forEach(columnData => {
-        const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column };
-        columns[this.selectedTable].push(columnConcept);
-        dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
-      })
+      this.setConceptualGraphMetadata("tableMetadata", tables, columns, dataTypes);
+      this.setConceptualGraphMetadata("queryMetadata", tables, {[this.selectedTable]: [] });
       
-      this.tableMetadata.tables = tables;
-      this.tableMetadata.columns = columns;
-      this.tableMetadata.dataTypes = dataTypes;
+      this.isTableGraphReady = true;
     },
     retrieveAvailableTables: async function () {
       const response = await manageRequest(constants.requestTypes.GET, "tables", { 
@@ -152,6 +173,7 @@ export default {
       }
     },
     retrieveTableMetadata: async function () {
+      this.isTableRetrieveInProgress = true;
       const response = await manageRequest(constants.requestTypes.GET, "table_metadata", {
         keyspace_name: this.currentKeyspace,
         table_name: this.selectedTable
@@ -159,11 +181,38 @@ export default {
       if (response && response.data && response.data.status === constants.requestStatus.SUCCESS) {
         this.parseTableMetadata(response.data.table_metadata);
       }
-      this.isTableGraphReady = true;
+      this.isTableRetrieveInProgress = false;
+    },
+    // These methods handle some utilities
+    checkIfColumnIsAlreadyAdded: function (columnConcept) {
+      return this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName].some(column => column.conceptName === columnConcept.conceptName);
+    },
+    getColumnsMetadataForTableGraph: function (metadata) {
+      let columns = { [this.selectedTable]: [] };
+      let dataTypes = {};
+      
+      // TODO: Complete this with concept relations
+      metadata.forEach(columnData => {
+        const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column };
+        columns[this.selectedTable].push(columnConcept);
+        dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
+      });
+
+      return { columns, dataTypes };
+    },
+    setConceptualGraphMetadata: function (conceptualGraphProperty, tables = [], columns = {}, dataTypes = {}) {
+        this[conceptualGraphProperty].tables = JSON.parse(JSON.stringify(tables));
+        this[conceptualGraphProperty].columns = { ... columns };
+        if (conceptualGraphProperty === "tableMetadata") {
+          this[conceptualGraphProperty].dataTypes = { ... dataTypes };
+        } else {
+          this[conceptualGraphProperty].dataTypes = null;
+        }
     }
   },
   created: function () {
     this.tableMetadata = { tables: [], columns: {}, dataTypes: {} };
+    this.queryMetadata = { tables: [], columns: {}, dataTypes: {} };
     if (this.currentKeyspace) {
       this.retrieveAvailableTables();
     } else {
@@ -210,6 +259,7 @@ export default {
     width: 100%
 
     .query-canvas
+      @include containers.flex-container($justify-content: center, $align-items: center)
       border: 1px solid variables.$cassandra-light-gray
       position: relative
       resize: horizontal
@@ -219,6 +269,9 @@ export default {
 
       &:first-of-type
         margin-right: 20px
+
+      .v-progress-circular
+        color: variables.$cassandra-blue
 
   .query-toolbox
     width: 100%
