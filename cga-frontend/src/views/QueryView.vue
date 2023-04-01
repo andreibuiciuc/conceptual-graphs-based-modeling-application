@@ -26,6 +26,7 @@
         <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress"
           :are-columns-selectable="true"
           :no-keyspace="true"
+          :keyspace-concept="queryMetadata.keyspace"
           :table-concepts="tableMetadata.tables"
           :column-concepts="tableMetadata.columns"
           :data-type-concepts="tableMetadata.dataTypes"
@@ -36,7 +37,7 @@
         <conceptual-graph
           :are-columns-selectable="false"
           :areColumnConceptsDeletable="true"
-          :no-keyspace="true"
+          :keyspace-concept="queryMetadata.keyspace"
           :table-concepts="queryMetadata.tables"
           :column-concepts="queryMetadata.columns"
           :data-type-concepts="queryMetadata.dataTypes"
@@ -101,7 +102,7 @@ import constants from '../constants/constants';
 import useUserStore from "@/stores/user";
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
-import { mapState, mapActions } from 'pinia';
+import { mapActions, mapState } from 'pinia';
 import { manageRequest } from "@/includes/requests";
 
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
@@ -201,6 +202,7 @@ export default {
       return { columns, dataTypes };
     },
     setConceptualGraphMetadata: function (conceptualGraphProperty, tables = [], columns = {}, dataTypes = {}) {
+        this[conceptualGraphProperty].keyspace = { conceptName: this.currentKeyspace, conceptType: constants.conceptTypes.keyspace };
         this[conceptualGraphProperty].tables = JSON.parse(JSON.stringify(tables));
         this[conceptualGraphProperty].columns = { ... columns };
         if (conceptualGraphProperty === "tableMetadata") {
@@ -211,12 +213,17 @@ export default {
     }
   },
   created: function () {
-    this.tableMetadata = { tables: [], columns: {}, dataTypes: {} };
-    this.queryMetadata = { tables: [], columns: {}, dataTypes: {} };
+    this.tableMetadata = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
+    this.queryMetadata = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
     if (this.currentKeyspace) {
       this.retrieveAvailableTables();
     } else {
       this.setUpSnackbarState(false, "No selected keyspace.");
+    }
+  },
+  watch: {
+    currentKeyspace: function (newValue) {
+      this.queryMetadata.keyspace = newValue;
     }
   },
   beforeRouteEnter: function (_from, _to, next) {

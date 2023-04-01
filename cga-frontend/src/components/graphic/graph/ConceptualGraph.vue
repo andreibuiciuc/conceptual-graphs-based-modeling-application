@@ -176,10 +176,10 @@ export default {
     },
   },
   updated: function () {
-      if (!this.noKeyspace && this.keyspaceConcept) {
-        this.createArrow(this.$refs.keyspaceConcept, this.$refs.keyspaceRelationConcept);
-      }
-      this.drawArrowsForConcepts();
+    if (!this.noKeyspace && this.keyspaceConcept) {
+      this.createArrow(this.$refs.keyspaceConcept, this.$refs.keyspaceRelationConcept);
+    }
+    this.drawArrowsForConcepts();
   },
   unmounted: function () {
     this.removeArrows();
