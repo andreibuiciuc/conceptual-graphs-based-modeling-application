@@ -78,8 +78,6 @@ section
     margin-bottom: 1rem
     margin-top: 0.5rem
 
-
-
 // Vuetify component classes are overwritten here.
 .v-overlay__content
     @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
@@ -103,7 +101,14 @@ section
 .v-expansion-panel-title--active:hover > .v-expansion-panel-title__overlay,
 .v-expansion-panel-title:hover > .v-expansion-panel-title__overlay,
 .v-expansion-panel-title__overlay 
-    background-color: variables.$cassandra-blue
+    background-color: variables.$cassandra-white
+
+.v-expansion-panel--active > .v-expansion-panel-title
+    border-bottom: 1px solid variables.$cassandra-light-gray
+    min-height: 48px !important
+
+.v-expansion-panel-text__wrapper
+    padding: 20px
 
 .v-btn__overlay
     border-radius: 0px

@@ -5,9 +5,8 @@
         <span>Query Design</span>
       </div>
       <div class="query-header-actions">
-        <v-select
-          variant="text"
-          v-model="selectedTable"
+        <v-select v-model="selectedTable"
+          variant="plain"
           :disabled="!currentKeyspace"
           :hide-details="true"
           :items="availableTables"
@@ -24,12 +23,12 @@
     </div>
     <div class="query-canvas-wrapper">
       <div class="query-canvas">
-        <conceptual-graph v-if="selectedTable"
+        <conceptual-graph v-if="isTableGraphReady"
           :are-columns-selectable="true"
           :no-keyspace="true"
-          :table-concepts="metadata.tables"
-          :column-concepts="metadata.columns"
-          :data-type-concepts="metadata.dataTypes"
+          :table-concepts="tableMetadata.tables"
+          :column-concepts="tableMetadata.columns"
+          :data-type-concepts="tableMetadata.dataTypes"
           @select="addColumnToQuery"  />
       </div>
       <div class="query-canvas">
@@ -37,10 +36,51 @@
     </div>
     <div class="query-toolbox">
       <v-expansion-panels variant="accordion">
-        <v-expansion-panel
-          title="Item"
-          text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-        ></v-expansion-panel>
+        <v-expansion-panel title="Query Console">
+          <v-expansion-panel-text>
+            <div class="query-panel-header">
+              <div class="query-panel-header-info">
+                <div class="info-block">
+                  <span>Keyspace:</span>
+                  <span v-if="currentKeyspace">{{ currentKeyspace }}</span>
+                  <template v-else>
+                    <v-icon color="red">mdi-alert-box</v-icon>
+                    <span>No keyspace selected</span>
+                  </template>
+                </div>
+                <div class="info-block">
+                  <span>Table:</span>
+                  <span v-if="isTableGraphReady">{{ tableMetadata.tables[0].conceptName }}</span>
+                  <template v-else>
+                    <v-icon color="red">mdi-alert-box</v-icon>
+                    <span>No table concept selected</span>
+                  </template>
+                </div>
+              </div>
+              <div class="query-panel-header-actions">
+                <v-btn
+                  :disabled="isQueryActionDisabled" 
+                  variant="outlined">
+                  Run
+                </v-btn>
+                <v-btn 
+                  :disabled="isQueryActionDisabled"
+                  variant="text">
+                  Clear
+                </v-btn>
+                <v-divider vertical></v-divider>
+                <v-btn 
+                  :disabled="isQueryActionDisabled"
+                  variant="outlined">
+                  Command  
+                </v-btn>
+              </div>
+            </div>
+            <v-divider></v-divider>
+            <div class="query-panel-container">
+            </div>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
       </v-expansion-panels>
     </div>
   </div>
@@ -60,15 +100,19 @@ export default {
   name: "QueryView",
   data: () => ({
     availableTables: [],
+    selectedTable: constants.inputValues.empty,
+    //
     tableMetadata: null,
-    selectedTable: constants.inputValues.empty
+    isTableGraphReady: false
   }),
   components: {
     ConceptualGraph
   },
   computed: {
     // These computed properties are mapped from the Connection Store
-    ...mapState(useConnectionStore, ['currentKeyspace'])
+    ...mapState(useConnectionStore, ['currentKeyspace']),
+    // These computed properties are related to the Query Panel actions
+    isQueryActionDisabled: function () { return !this.currentKeyspace || !this.tableMetadata.tables.length; }
   },
   methods: {
     // These methods are mapped from the Notification Store
@@ -93,7 +137,9 @@ export default {
         dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
       })
       
-      this.metadata = Object.assign({}, { tables, columns, dataTypes });
+      this.tableMetadata.tables = tables;
+      this.tableMetadata.columns = columns;
+      this.tableMetadata.dataTypes = dataTypes;
     },
     retrieveAvailableTables: async function () {
       const response = await manageRequest(constants.requestTypes.GET, "tables", { 
@@ -113,12 +159,15 @@ export default {
       if (response && response.data && response.data.status === constants.requestStatus.SUCCESS) {
         this.parseTableMetadata(response.data.table_metadata);
       }
+      this.isTableGraphReady = true;
     }
   },
   created: function () {
     this.tableMetadata = { tables: [], columns: {}, dataTypes: {} };
     if (this.currentKeyspace) {
       this.retrieveAvailableTables();
+    } else {
+      this.setUpSnackbarState(false, "No selected keyspace.");
     }
   },
   beforeRouteEnter: function (_from, _to, next) {
@@ -175,4 +224,29 @@ export default {
     width: 100%
     padding: 10px
 
+    .query-panel-header
+      @include containers.flex-container($justify-content: space-between, $align-items: center)
+      padding: 10px 0
+
+      .query-panel-header-info
+        @include containers.flex-container
+      
+        & > .info-block
+          @include containers.flex-container
+          margin-right: 20px
+
+          & > span:first-of-type
+            margin-right: 5px
+
+          & > span:last-of-type
+            color: variables.$cassandra-blue
+
+          & > .v-icon + span
+            color: variables.$cassandra-black
+      
+      .query-panel-header-actions
+        @include containers.flex-container()
+
+        & > .v-btn, & > .v-divider
+          margin-left: 10px      
 </style>
