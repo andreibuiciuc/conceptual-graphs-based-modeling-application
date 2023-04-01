@@ -22,7 +22,7 @@
     </section>
     <section class="homepage-section">
       <div class="landing-section-content">
-        <cga-delimiter label="1" text="Move from blipping consoles to a friendlier Visual Query System" :gradientType="0" />
+        <!-- <cga-delimiter label="1" text="Move from blipping consoles to a friendlier Visual Query System" :gradientType="0" /> -->
         <div class="landing-section-container">
           <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" />
           <div class="landing-cards-container">
@@ -49,7 +49,7 @@
         <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
       </cga-banner-card>
       <div class="landing-page-content">
-        <cga-delimiter label="2" :gradientType="1" text="Leverage the simplicity of the Conceptual Graphs" />
+        <!-- <cga-delimiter label="2" :gradientType="1" text="Leverage the simplicity of the Conceptual Graphs" /> -->
         <cga-banner-card>
           <conceptual-graph 
           :keyspaceConcept="getDummyCG.keyspaceConcept"
@@ -260,15 +260,28 @@ export default {
         width: 50px
     
       .landing-section-container
-        @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: flex-start)
+        @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
         .landing-cards-container
-          @include containers.flex-container($flex-direction: column)
-          margin-left: 40px
-          width: 100%
+          // @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+          display: grid
+          width: 70%
+          grid-template-columns: repeat(2, 1fr)
+          gap: 3.2rem
+          grid-template-areas: "first second" "first third"
 
           .landing-card
-            @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
+            // @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
+            grid-area: first / first / first / first
+            height: 56.8rem
+
+            &:nth-of-type(2)
+              grid-area: second / second / second / second
+              height: 20rem
+
+            &:nth-of-type(3)
+              grid-area: third / third / third / third
+              height: 20rem
     
             .landing-card-title
               @include containers.flex-container($flex-direction: row, $justify-content: flex-start, $align-items: center)
@@ -290,13 +303,9 @@ export default {
 
             .landing-card-text
               @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
-  
-  .homepage-section:nth-of-type(2)
-    height: 120vh
 
-  .homepage-section:nth-of-type(3)
+  .homepage-section:nth-of-type(2), .homepage-section:nth-of-type(3)
     height: 120vh
-    background-color: variables.$cassandra-black
 
   .homepage-section__last
     @include containers.flex-container($flex-direction: column, $justify-content: flex-end, $align-items: center)
@@ -345,22 +354,22 @@ export default {
     .auth-button
       height: auto
 
-.landing-page-final-block
-  @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-  background-color: variables.$cassandra-black
-  color: variables.$cassandra-white !important
-  border-top-left-radius: 10%
-  border-top-right-radius: 25%
-  padding: 50px 0
-  width: 100%
-  height: 75%
+// .landing-page-final-block
+//   @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+//   background-color: variables.$cassandra-black
+//   color: variables.$cassandra-white !important
+//   border-top-left-radius: 10%
+//   border-top-right-radius: 25%
+//   padding: 50px 0
+//   width: 100%
+//   height: 75%
 
-.landing-page-final-block h1
-  font-size: 64px
-  color: variables.$cassandra-white
+// .landing-page-final-block h1
+//   font-size: 64px
+//   color: variables.$cassandra-white
 
-  span
-    color: variables.$cassandra-yellow !important
+//   span
+//     color: variables.$cassandra-yellow !important
 
 @keyframes floating-oval-animation__first
   0%
