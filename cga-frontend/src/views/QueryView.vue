@@ -1,5 +1,6 @@
 <template>
-  <div class="query-section">
+  <div class="query-page">
+    <div class="query-section">
     <div class="query-header-container elevation-1">
       <div>
         <span>Query Design</span>
@@ -44,57 +45,96 @@
           @remove="removeColumnFromQuery" />
       </div>
     </div>
-    <div class="query-toolbox">
-      <v-expansion-panels variant="accordion">
-        <v-expansion-panel title="Query Console">
-          <v-expansion-panel-text>
-            <div class="query-panel-header">
-              <div class="query-panel-header-info">
-                <div class="info-block">
-                  <span>Keyspace:</span>
-                  <span v-if="currentKeyspace">{{ currentKeyspace }}</span>
-                  <template v-else>
-                    <v-icon color="red">mdi-alert-box</v-icon>
-                    <span>No keyspace selected</span>
-                  </template>
-                </div>
-                <div class="info-block">
-                  <span>Table:</span>
-                  <span v-if="isTableGraphReady">{{ tableMetadata.tables[0].conceptName }}</span>
-                  <template v-else>
-                    <v-icon color="red">mdi-alert-box</v-icon>
-                    <span>No table concept selected</span>
-                  </template>
-                </div>
-              </div>
-              <div class="query-panel-header-actions">
-                <v-btn
-                  :disabled="isQueryActionDisabled" 
-                  variant="outlined">
-                  Run
-                </v-btn>
-                <v-btn 
-                  :disabled="isQueryActionDisabled"
-                  variant="text"
-                  @click.prevent="setConceptualGraphMetadata('queryMetadata')">
-                  Clear
-                </v-btn>
-                <v-divider vertical></v-divider>
-                <v-btn 
-                  :disabled="isQueryActionDisabled"
-                  variant="outlined">
-                  Command  
-                </v-btn>
-              </div>
-            </div>
-            <v-divider></v-divider>
-            <div class="query-panel-container">
-            </div>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
     </div>
+    <div class="query-toolbox">
+      <div class="query-panel-header">
+        <div class="query-panel-header-info">
+          <div class="info-block">
+            <span>Keyspace:</span>
+            <span v-if="currentKeyspace">{{ currentKeyspace }}</span>
+            <template v-else>
+              <v-icon color="red">mdi-alert-box</v-icon>
+              <span>No keyspace selected</span>
+            </template>
+          </div>
+          <div class="info-block">
+            <span>Table:</span>
+            <span v-if="isTableGraphReady">{{ tableMetadata.tables[0].conceptName }}</span>
+            <template v-else>
+              <v-icon color="red">mdi-alert-box</v-icon>
+              <span>No table concept selected</span>
+            </template>
+          </div>
+        </div>
+        <div class="query-panel-header-actions">
+          <v-btn
+            :disabled="isQueryActionDisabled" 
+            variant="outlined">
+            Run
+          </v-btn>
+          <v-btn 
+            :disabled="isQueryActionDisabled"
+            variant="text"
+            @click.prevent="setConceptualGraphMetadata('queryMetadata')">
+            Clear
+          </v-btn>
+          <v-divider vertical></v-divider>
+          <v-btn 
+            :disabled="isQueryActionDisabled"
+            variant="outlined">
+            Command  
+          </v-btn>
+        </div>
+      </div>
+      <v-divider></v-divider>
+      <div class="query-panel-container">
+        <div class="query-panel-item">
+          <div v-for="(clause, index) in whereClauses" class="query-panel-item-clause">
+            <v-icon color="red" @click.prevent="removeClause('where', index)">mdi-close</v-icon>
+            <span class="item-clause-label">{{ index === 0 ? 'where' : 'and' }}</span>
+            <v-select 
+              :hide-details="true"
+              variant="outlined">
+            </v-select>
+            <v-select v-model="clause.relation"
+              :hide-details="true"
+              variant="outlined">
+            </v-select>
+            <v-text-field 
+              :hide-details="true"
+              variant="outlined"> 
+            </v-text-field>
+          </div>
+        </div>
+        <div class="query-panel-item">
+          <v-btn 
+            :disabled="isQueryActionDisabled"
+            variant="text"
+            prepend-icon="mdi-plus"
+            @click.prevent="isQueryOptionsListOpened = true">
+            Add to query
+          </v-btn>
+          <v-dialog v-model="isQueryOptionsListOpened"
+            contained
+            absolute
+            width="100px"
+            class="query-options-list-card"
+            elevation="4"
+            >
+            <v-card>
+              <v-list>
+                <v-list-item @click.prevent="addWhereClauseToQuery">Where</v-list-item>
+                <v-list-item>Group</v-list-item>
+                <v-list-item>Order</v-list-item>
+                <v-list-item>Count</v-list-item>
+              </v-list>
+            </v-card>
+          </v-dialog>
+        </div>
+      </div>
   </div>
+  </div>
+  
 </template>
 
 <script>
@@ -117,7 +157,10 @@ export default {
     isTableRetrieveInProgress: false,
     isTableGraphReady: false,
     //
-    queryMetadata: null
+    queryMetadata: null,
+    //
+    isQueryOptionsListOpened: false,
+    whereClauses: []
   }),
   components: {
     ConceptualGraph
@@ -184,6 +227,15 @@ export default {
       }
       this.isTableRetrieveInProgress = false;
     },
+    // These methods handle the design of the query graph
+    addWhereClauseToQuery: function () {
+      this.whereClauses.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
+    },
+    removeClause: function (clauseType, index) {
+      if (clauseType === "where") {
+        this.whereClauses.splice(index, 1);
+      }
+    },
     // These methods handle some utilities
     checkIfColumnIsAlreadyAdded: function (columnConcept) {
       return this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName].some(column => column.conceptName === columnConcept.conceptName);
@@ -202,6 +254,7 @@ export default {
       return { columns, dataTypes };
     },
     setConceptualGraphMetadata: function (conceptualGraphProperty, tables = [], columns = {}, dataTypes = {}) {
+        this.whereClauses = [];
         this[conceptualGraphProperty].keyspace = { conceptName: this.currentKeyspace, conceptType: constants.conceptTypes.keyspace };
         this[conceptualGraphProperty].tables = JSON.parse(JSON.stringify(tables));
         this[conceptualGraphProperty].columns = { ... columns };
@@ -241,48 +294,59 @@ export default {
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
 
-.query-section
-  @include containers.flex-container($flex-direction: column)
+
+.query-page
+  overflow-y: auto
   height: calc(100vh - variables.$cga-topbar-height)
-  margin-top: variables.$cga-topbar-height
+  margin: variables.$cga-topbar-height 0 0 0
+  padding: 0
 
-  .query-header-container
-    @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
-    height: variables.$cga-header-height
-    min-height: variables.$cga-header-height
-    width: 100%
-    padding: 10px 26px
+  .query-section
+    @include containers.flex-container($flex-direction: column)
+    height: calc(100vh - variables.$cga-topbar-height)
 
-    .query-header-actions
-      @include containers.flex-container($flex-direction: row, $justify-content: flex-end, $align-items: center)
+    .query-header-container
+      @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
+      height: variables.$cga-header-height
+      min-height: variables.$cga-header-height
+      width: 100%
+      padding: 10px 26px
 
-      & > *:not(:last-child)
-        margin-right: 10px
+      .query-header-actions
+        @include containers.flex-container($flex-direction: row, $justify-content: flex-end, $align-items: center)
 
-  .query-canvas-wrapper
-    @include containers.flex-container($flex-direction: row)
-    padding: 10px
-    height: 100%
-    width: 100%
+        & > *:not(:last-child)
+          margin-right: 10px
 
-    .query-canvas
-      @include containers.flex-container($justify-content: center, $align-items: center)
-      border: 1px solid variables.$cassandra-light-gray
-      position: relative
-      resize: horizontal
-      overflow: auto
+    .query-canvas-wrapper
+      @include containers.flex-container($flex-direction: row)
+      padding: 10px
       height: 100%
-      width: 50%
+      width: 100%
 
-      &:first-of-type
-        margin-right: 20px
+      .query-canvas
+        @include containers.flex-container($justify-content: center, $align-items: center)
+        border: 1px solid variables.$cassandra-light-gray
+        position: relative
+        resize: horizontal
+        overflow: auto
+        height: 100%
+        width: 50%
 
-      .v-progress-circular
-        color: variables.$cassandra-blue
+        &:first-of-type
+          margin-right: 20px
+
+        .v-progress-circular
+          color: variables.$cassandra-blue
 
   .query-toolbox
+    height: calc(100% - variables.$cga-topbar-height)
     width: 100%
-    padding: 10px
+    padding: 40px
+
+    .v-exansion-panels
+      width: 100%
+      padding: 10px
 
     .query-panel-header
       @include containers.flex-container($justify-content: space-between, $align-items: center)
@@ -308,5 +372,40 @@ export default {
         @include containers.flex-container()
 
         & > .v-btn, & > .v-divider
-          margin-left: 10px      
+          margin-left: 10px
+
+    .query-panel-container
+      @include containers.flex-container($flex-direction: column, $align-items: flex-start)
+      padding: 10px 0
+
+      .query-panel-item
+        @include containers.flex-container($flex-direction: column)  
+        position: relative
+        margin: 10px 0
+        width: 100%
+
+        .query-panel-item-clause
+          @include containers.flex-container($align-items: center)
+
+          .v-icon
+            cursor: pointer
+
+          .item-clause-label
+            text-align: end
+            width: 80px
+
+          .v-select:first-of-type
+            width: 240px
+
+          & > *:not(.v-icon)
+            margin-right: 20px
+
+        .v-dialog
+          position: absolute
+          top: -180px
+          left: 180px
+
+          .v-overlay__scrim
+            display: none !important
+
 </style>
