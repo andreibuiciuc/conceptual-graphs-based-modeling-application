@@ -24,7 +24,7 @@
       <div class="landing-section-content">
         <!-- <cga-delimiter label="1" text="Move from blipping consoles to a friendlier Visual Query System" :gradientType="0" /> -->
         <div class="landing-section-container">
-          <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" />
+          <!-- <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" /> -->
           <div class="landing-cards-container">
             <cga-card icon="mdi-magnify" title="Connect And Start Exploring">
               <span>Connect to your Cassandra server, locally or on the cloud, or play around with the one provided by us.</span>
@@ -44,19 +44,19 @@
       </div>
     </section>
     <section class="homepage-section">
-      <cga-banner-card title="Conceptual Graphs" id="banner">
+      <!-- <cga-banner-card title="Conceptual Graphs" id="banner">
         <span class="banner-card-text">"With their direct mapping to language, conceptual graphs can serve as an</span>
         <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
-      </cga-banner-card>
+      </cga-banner-card> -->
       <div class="landing-page-content">
         <!-- <cga-delimiter label="2" :gradientType="1" text="Leverage the simplicity of the Conceptual Graphs" /> -->
-        <cga-banner-card>
+        <!-- <cga-banner-card>
           <conceptual-graph 
           :keyspaceConcept="getDummyCG.keyspaceConcept"
           :tableConcepts="getDummyCG.tableConcepts"
           :columnConcepts="getDummyCG.columnConcepts"
           :dataTypeConcepts="getDummyCG.dataTypeConcepts" />
-        </cga-banner-card>
+        </cga-banner-card> -->
       </div>
     </section>
     <!-- TODO: Authentication section -->
@@ -192,7 +192,7 @@ export default {
         height: 800px
         top: 40%
         left: 60%
-        background-color: #0D41E1
+        background-color: variables.$cassandra-gradient-blue
         opacity: 0.4
         animation-name: floating-oval-animation__first
 
@@ -202,8 +202,8 @@ export default {
         height: 600px
         top: 0%
         left: 40%
-        background-color: #0A85ED
-        opacity: 0.4
+        background-color: variables.$cassandra-gradient-blue-darken
+        opacity: 0.6
         animation-name: floating-oval-animation__second
 
       .landing-animated-oval:nth-of-type(3)
@@ -212,8 +212,8 @@ export default {
         height: 500px
         top: 50%
         left: 50%
-        background-color: #07C8F9
-        opacity: 0.3
+        background-color: variables.$cassandra-gradient-blue-darkest
+        opacity: 0.5
         animation-name: floating-oval-animation__third
 
     .landing-section-content
@@ -263,25 +263,33 @@ export default {
         @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
 
         .landing-cards-container
-          // @include containers.flex-container($flex-direction: row, $justify-content: center, $align-items: center)
+          margin: 0 256px
           display: grid
-          width: 70%
           grid-template-columns: repeat(2, 1fr)
           gap: 3.2rem
           grid-template-areas: "first second" "first third"
 
           .landing-card
-            // @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
             grid-area: first / first / first / first
-            height: 56.8rem
+            height: 40rem
+            transition: all 0.5s ease-in-out 0s
+            
+            &:nth-of-type(1)
+              background: linear-gradient(135deg, variables.$cassandra-light-blue, variables.$cassandra-gradient-blue, variables.$cassandra-gradient-blue-darken, variables.$cassandra-gradient-blue-darkest)
+              background-size: 200% 200%
+              color: variables.$cassandra-white
+              animation: gradient-changing-animation 8s ease infinite
 
             &:nth-of-type(2)
               grid-area: second / second / second / second
-              height: 20rem
+              height: 18.4rem
 
             &:nth-of-type(3)
               grid-area: third / third / third / third
-              height: 20rem
+              height: 18.4rem
+
+            &:hover
+              transform: scale(1.015)
     
             .landing-card-title
               @include containers.flex-container($flex-direction: row, $justify-content: flex-start, $align-items: center)
@@ -297,10 +305,6 @@ export default {
 
                 .v-icon
                   font-size: 24px
-
-              .landing-card-title-text
-                font-size: 1.25rem
-
             .landing-card-text
               @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
 
@@ -407,4 +411,12 @@ export default {
   100%
     transform: translateY(-50%) translateX(-50%) translateX(-15%) translateY(10%)
     
+@keyframes gradient-changing-animation
+  0% 
+    background-position: 0% 50%
+  50% 
+    background-position: 100% 50%
+  100% 
+    background-position: 0% 50%
+
 </style>

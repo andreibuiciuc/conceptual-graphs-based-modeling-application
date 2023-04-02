@@ -31,8 +31,7 @@ const props = defineProps<Props>();
 
 .landing-card
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
-    // display: grid
-    background: url(https://cdn.auth0.com/website/new-homepage/resources/bg-1.svg) right bottom no-repeat, linear-gradient(76.81deg, variables.$cassandra-light-blue 0%, variables.$cassandra-blue)
+    background-color: variables.$cassandra-light-gray
     padding: 2.5rem
     height: 40rem
     border-radius: 1.5rem
@@ -54,7 +53,8 @@ const props = defineProps<Props>();
                 font-size: 24px
 
         .landing-card-title-text
-            font-size: 1.25rem
+            color: variables.$cassandra-white
+            font-size: 3rem
 
     .landing-card-text
         @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
