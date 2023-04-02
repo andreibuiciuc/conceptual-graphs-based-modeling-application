@@ -30,7 +30,6 @@ const props = defineProps<PlaceholderProps>();
     position: sticky
     width: 100%
     height: 100%
-    padding: 40px 0 40px 40px
 
 .placeholder
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)

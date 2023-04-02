@@ -1,11 +1,11 @@
 <template>
   <div class="query-page">
     <div class="query-section">
-    <div class="query-header-container elevation-1">
+    <div class="header-container elevation-1">
       <div>
         <span>Query Design</span>
       </div>
-      <div class="query-header-actions">
+      <div class="header-actions">
         <v-select v-model="selectedTable"
           variant="plain"
           :disabled="!currentKeyspace"

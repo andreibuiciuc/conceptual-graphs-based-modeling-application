@@ -32,6 +32,18 @@ section
     position: relative
     padding: 0 10vw
 
+.header-container
+    @include flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
+    height: variables.$cga-header-height
+    min-height: variables.$cga-header-height
+    width: 100%
+    padding: 10px 26px
+
+    .header-actions
+        @include flex-container($flex-direction: row, $justify-content: flex-end, $align-items: center)
+
+        & > *:not(:last-child)
+            margin-right: 10px
 
 // Custom global SASS classes are defined here.
 .flex-start

@@ -4,7 +4,7 @@
     :timeout="timeout"
     :color="statusVariant"
     :variant="variant"
-    location="bottom right"
+    :location="notificationLocation"
   >
     <div class="snackbar-content">
       <v-icon class="pr-3" large>{{ icon }}</v-icon>
@@ -34,6 +34,7 @@ export default {
     ...mapState(useNotificationStore, [
       "notificationStatus",
       "notificationMessage",
+      "notificationLocation"
     ]),
     ...mapWritableState(useNotificationStore, ["isNotificationTriggered"]),
     // These properties are component level based.
