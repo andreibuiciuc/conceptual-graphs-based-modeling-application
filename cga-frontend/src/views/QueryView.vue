@@ -26,7 +26,6 @@
       <div class="query-canvas">
         <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress"
           :are-columns-selectable="true"
-          :no-keyspace="true"
           :keyspace-concept="queryMetadata.keyspace"
           :table-concepts="tableMetadata.tables"
           :column-concepts="tableMetadata.columns"
@@ -89,22 +88,7 @@
       <v-divider></v-divider>
       <div class="query-panel-container">
         <div class="query-panel-item">
-          <div v-for="(clause, index) in whereClauses" class="query-panel-item-clause">
-            <v-icon color="red" @click.prevent="removeClause('where', index)">mdi-close</v-icon>
-            <span class="item-clause-label">{{ index === 0 ? 'where' : 'and' }}</span>
-            <v-select 
-              :hide-details="true"
-              variant="outlined">
-            </v-select>
-            <v-select v-model="clause.relation"
-              :hide-details="true"
-              variant="outlined">
-            </v-select>
-            <v-text-field 
-              :hide-details="true"
-              variant="outlined"> 
-            </v-text-field>
-          </div>
+          <query-items v-if="queryMetadata.columns" :clause="0" :items="whereClauses" :columns="columnConcepts" @remove="removeClause"></query-items>
         </div>
         <div class="query-panel-item">
           <v-btn 
@@ -142,10 +126,12 @@ import constants from '../constants/constants';
 import useUserStore from "@/stores/user";
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
+import { useMetadata } from '../composables/metadata';
 import { mapActions, mapState } from 'pinia';
 import { manageRequest } from "@/includes/requests";
 
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
+import QueryItems from '../components/design/QueryItems.vue';
 
 export default {
   name: "QueryView",
@@ -163,12 +149,20 @@ export default {
     whereClauses: []
   }),
   components: {
-    ConceptualGraph
+    ConceptualGraph,
+    QueryItems
+  },
+  setup: () => {
+    const { getRelationTypeForColumnConcept } = useMetadata();
+    return { getRelationTypeForColumnConcept };
   },
   computed: {
     // These computed properties are mapped from the Connection Store
     ...mapState(useConnectionStore, ['currentKeyspace']),
     // These computed properties are related to the Query Panel actions
+    columnConcepts: function () {
+      return this.queryMetadata.tables.length > 0  && this.queryMetadata.tables[0] && this.queryMetadata.columns && this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName];
+    },
     isQueryActionDisabled: function () { return !this.currentKeyspace || !this.tableMetadata.tables.length; }
   },
   methods: {
@@ -231,9 +225,12 @@ export default {
     addWhereClauseToQuery: function () {
       this.whereClauses.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
     },
-    removeClause: function (clauseType, index) {
-      if (clauseType === "where") {
-        this.whereClauses.splice(index, 1);
+    removeClause: function (clauseObject) {
+      if (clauseObject.clause === 0) {
+        const index = this.whereClauses.findIndex(x => x.column === clauseObject.item.column);
+        if (index > -1) {
+          this.whereClauses.splice(index, 1);
+        }
       }
     },
     // These methods handle some utilities
@@ -246,14 +243,16 @@ export default {
       
       // TODO: Complete this with concept relations
       metadata.forEach(columnData => {
-        const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column };
+        const relation = this.getRelationTypeForColumnConcept(columnData.column_kind, columnData.clustering_order);
+        console.log(relation);
+        const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation };
         columns[this.selectedTable].push(columnConcept);
         dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
       });
 
       return { columns, dataTypes };
     },
-    setConceptualGraphMetadata: function (conceptualGraphProperty, tables = [], columns = {}, dataTypes = {}) {
+    setConceptualGraphMetadata: function (conceptualGraphProperty, tables = [], columns = null, dataTypes = null) {
         this.whereClauses = [];
         this[conceptualGraphProperty].keyspace = { conceptName: this.currentKeyspace, conceptType: constants.conceptTypes.keyspace };
         this[conceptualGraphProperty].tables = JSON.parse(JSON.stringify(tables));
@@ -293,7 +292,6 @@ export default {
 <style scoped lang="sass">
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
-
 
 .query-page
   overflow-y: auto
@@ -383,22 +381,6 @@ export default {
         position: relative
         margin: 10px 0
         width: 100%
-
-        .query-panel-item-clause
-          @include containers.flex-container($align-items: center)
-
-          .v-icon
-            cursor: pointer
-
-          .item-clause-label
-            text-align: end
-            width: 80px
-
-          .v-select:first-of-type
-            width: 240px
-
-          & > *:not(.v-icon)
-            margin-right: 20px
 
         .v-dialog
           position: absolute

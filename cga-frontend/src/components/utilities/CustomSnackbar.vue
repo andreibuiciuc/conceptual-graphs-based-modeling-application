@@ -33,10 +33,9 @@ export default {
     // These properties are mapped from the notification store.
     ...mapState(useNotificationStore, [
       "notificationStatus",
-      "notificationMessage",
-      "notificationLocation"
+      "notificationMessage"
     ]),
-    ...mapWritableState(useNotificationStore, ["isNotificationTriggered"]),
+    ...mapWritableState(useNotificationStore, ["isNotificationTriggered", "notificationLocation"]),
     // These properties are component level based.
     icon: function () {
       return this.notificationStatus === constants.snackbarStatuses.success

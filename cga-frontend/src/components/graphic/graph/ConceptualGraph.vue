@@ -32,7 +32,7 @@
             </div>
             <ul>
               <!-- Column level -->
-              <li
+              <li :class="{ 'column-concept-hoverable': areColumnsSelectable }"
                 v-for="(columnConcept, columnIndex) in columnConcepts[
                   tableConcept.conceptName
                 ]"
@@ -146,6 +146,12 @@ export default {
         }
       }
     },
+    drawInitialArrows: function () {
+      if (!this.noKeyspace && this.keyspaceConcept) {
+        this.createArrow(this.$refs.keyspaceConcept, this.$refs.keyspaceRelationConcept);
+      } 
+      this.drawArrowsForConcepts();
+    },
     removeArrows: function (relatedNode = null) {
       if (!relatedNode) {
         this.arrows.forEach(arrow => arrow.clear());
@@ -176,10 +182,11 @@ export default {
     },
   },
   updated: function () {
-    if (!this.noKeyspace && this.keyspaceConcept) {
-      this.createArrow(this.$refs.keyspaceConcept, this.$refs.keyspaceRelationConcept);
-    }
-    this.drawArrowsForConcepts();
+    this.removeArrows();
+    this.drawInitialArrows();
+  },
+  mounted: function () {
+    this.drawInitialArrows();
   },
   unmounted: function () {
     this.removeArrows();
@@ -218,6 +225,9 @@ export default {
 
     &:hover > .v-btn__overlay
       opacity: 0
+
+li.column-concept-hoverable:hover .tf-nc
+    background-color: variables.$cassandra-light-blue
 
 .tf-tree li ul
   margin: 0.5em 0
