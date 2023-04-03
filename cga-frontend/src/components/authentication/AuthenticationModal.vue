@@ -47,45 +47,28 @@
   </v-dialog>
 </template>
 
-<script>
-import constants from "@/constants/constants";
+<script setup lang="ts">
+import useAuthModalStore from '../../stores/authModal';
+import { storeToRefs } from "pinia";
 
-import { mapWritableState } from "pinia";
-import useAuthModalStore from "@/stores/authModal";
-import useUserStore from "@/stores/user";
+import RegisterForm from './RegisterForm.vue';
+import LoginForm from "./LoginForm.vue";
 
-import RegisterForm from "@/components/authentication/RegisterForm.vue";
-import LoginForm from "@/components/authentication/LoginForm.vue";
 
-export default {
-  name: "AuthenticationModal",
-  components: {
-    RegisterForm,
-    LoginForm,
-  },
-  data: () => ({
-    snackbar: {
-      message: constants.inputValues.empty,
-      variant: constants.inputValues.empty,
-    },
-  }),
-  computed: {
-    ...mapWritableState(useAuthModalStore, [
-      "isModalOpened",
-      "isRegisterModalActive",
-    ]),
-    ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
-  },
-  methods: {
-    closeAuthModal: function () {
-      this.isRegisterModalActive = true;
-      this.isModalOpened = false;
-    },
-    switchAuthModal: function (isRegisterModalActive = false) {
-      this.isRegisterModalActive = isRegisterModalActive;
-    },
-  },
+// Store state mappings
+const authModalStore = useAuthModalStore();
+const { isModalOpened, isRegisterModalActive } = storeToRefs(authModalStore);
+
+// Functions related to the Authentication Modal
+const closeAuthModal = (): void => {
+  isRegisterModalActive.value = true;
+  isModalOpened.value = false;
 };
+
+const switchAuthModal = (isRegister: boolean = false): void => {
+  isRegisterModalActive.value = isRegister;
+};
+
 </script>
 
 <style lang="sass">
