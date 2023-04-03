@@ -88,7 +88,13 @@
       <v-divider></v-divider>
       <div class="query-panel-container">
         <div class="query-panel-item">
-          <query-items v-if="queryMetadata.columns" :clause="0" :items="whereClauses" :columns="columnConcepts" @remove="removeClause"></query-items>
+          <query-items 
+            v-if="queryMetadata.columns" 
+            :clause="0" :items="whereClauses" 
+            :columns="columnConcepts" 
+            :operators="cqlOperators" 
+            @remove="removeClause">
+          </query-items>
         </div>
         <div class="query-panel-item">
           <v-btn 
@@ -132,6 +138,7 @@ import { manageRequest } from "@/includes/requests";
 
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
+import { toHandlers } from 'vue';
 
 export default {
   name: "QueryView",
@@ -161,9 +168,14 @@ export default {
     ...mapState(useConnectionStore, ['currentKeyspace']),
     // These computed properties are related to the Query Panel actions
     columnConcepts: function () {
-      return this.queryMetadata.tables.length > 0  && this.queryMetadata.tables[0] && this.queryMetadata.columns && this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName];
+      return this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName];
     },
-    isQueryActionDisabled: function () { return !this.currentKeyspace || !this.tableMetadata.tables.length; }
+    isQueryActionDisabled: function () { 
+      return !this.currentKeyspace || !this.tableMetadata.tables.length || !this.tableMetadata.columns[this.tableMetadata.tables[0].conceptName].length; 
+    },
+    cqlOperators: function () {
+      return constants.cqlOperators;
+    }
   },
   methods: {
     // These methods are mapped from the Notification Store
@@ -266,7 +278,7 @@ export default {
   },
   created: function () {
     this.tableMetadata = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
-    this.queryMetadata = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
+    this.queryMetadata = { keyspace: {}, tables: [], columns: null, dataTypes: null };
     if (this.currentKeyspace) {
       this.retrieveAvailableTables();
     } else {

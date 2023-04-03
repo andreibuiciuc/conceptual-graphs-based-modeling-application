@@ -6,7 +6,6 @@
       :class="{ 'toolbox-warning': !keyspace }"
     >
       <v-card-text>
-
         <div class="d-flex">
           <v-text-field v-model="currentTableConcept.conceptName"
             variant="outlined"
@@ -29,9 +28,7 @@
             <v-icon v-else>mdi-plus</v-icon>
           </v-btn>
         </div>
-        
         <v-divider></v-divider>
-
         <div class="column-concept-container">
           <div class="column-concept-config">
             <v-text-field v-model="currentColumnConcept.conceptName"
@@ -79,9 +76,7 @@
             <v-icon>mdi-plus</v-icon>
           </v-btn>
         </div>
-       
         <v-divider></v-divider>
-        
         <div class="clustering-options-container">
           <v-select v-model="currentClusteringOrderOptions.clusteringColumn"
             variant="outlined"
@@ -102,7 +97,6 @@
             :loading="isSaveTriggered">
           </v-select>
         </div>
-      
       </v-card-text>
     </v-card>
     <v-card

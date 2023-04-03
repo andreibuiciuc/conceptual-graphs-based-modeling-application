@@ -73,4 +73,7 @@ export default {
     ascending: "asc",
     descending: "desc",
   },
+  cqlOperators: [
+    "<", "<=", ">", ">=", "==", "!=", "IN", "NOT IN", "CONTAINS", "DOES NOT CONTAIN"
+  ],
 };

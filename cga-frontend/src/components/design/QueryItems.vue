@@ -2,19 +2,21 @@
     <div v-for="(item, index) in props.items" class="query-panel-item-clause">
         <v-icon color="red" @click.prevent="removeItem(props.clause, item)">mdi-close</v-icon>
         <span class="item-clause-label">{{ index === 0 ? 'where' : 'and' }}</span>
-        <v-select 
+        <v-select v-model="item.column"
             density="compact"
             :hide-details="true"
+            :items="props.columns"
+            item-title="conceptName"
             item-value="conceptName"
-            item-text="conceptName"
             variant="outlined">
         </v-select>
         <v-select v-model="item.relation"
             density="compact"
             :hide-details="true"
+            :items="props.operators"
             variant="outlined">
         </v-select>
-        <v-text-field 
+        <v-text-field v-model="item.value"
             density="compact"
             :hide-details="true"
             variant="outlined"> 
@@ -43,8 +45,10 @@ interface ColumnConcept {
 interface Props {
     clause: QueryClause
     columns?: ColumnConcept[]
-    items: QueryItem[]
+    items: QueryItem[],
+    operators?: string[]
 };
+
 
 const props = defineProps<Props>();
 const emit = defineEmits(['remove']);
@@ -71,6 +75,12 @@ const removeItem = (clause: QueryClause, item: QueryItem): void => {
         width: 80px
 
     .v-select:first-of-type
+        width: 240px
+
+    .v-select:second-of-type
+        width: 160px
+
+    .v-text-field
         width: 240px
 
     & > *:not(.v-icon)
