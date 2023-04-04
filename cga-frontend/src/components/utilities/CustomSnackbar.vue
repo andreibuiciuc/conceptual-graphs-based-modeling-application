@@ -27,7 +27,7 @@ import { computed } from '@vue/reactivity';
 type variant = 'flat' | 'outlined' | 'text';
 
 const TIMEOUT = 3500;
-const VARIANT: variant = 'outlined';
+const VARIANT: variant = 'flat';
 
 // Store state and action mappings
 const notificationStore = useNotificationStore();
@@ -52,11 +52,12 @@ const title = computed(() => {
 @use '@/assets/styles/_containers.sass'
 
 .v-snackbar
-    z-index: 99999999
+  z-index: 99999999
 
-    .snackbar-content
-        @include containers.flex-container($align-items: center)
+  .snackbar-content
+    @include containers.flex-container($align-items: center)
 
     .snackbar-message
-        @include containers.flex-container($flex-direction: column)
+      @include containers.flex-container($flex-direction: column)
+
 </style>
