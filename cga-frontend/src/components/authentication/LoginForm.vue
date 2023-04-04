@@ -57,7 +57,6 @@ const loginValidationSchema = {
   email: 'required|min:3|max:50|email',
   password: 'required|min:3|max:50|'
 };
-
 const loginCredentials: Ref<LoginCredentials> = ref({ ... constants.defaultLoginCredentials });
 const showPassword: Ref<boolean> = ref(false);
 const isLoginInSubmission: Ref<boolean> = ref(false);
@@ -68,17 +67,17 @@ const userStore = useUserStore();
 const authModalStore = useAuthModalStore();
 const { isModalOpened } = storeToRefs(authModalStore);
 
+// Functions related to the Login flow
 const login = async (): Promise<void> => {
   isLoginInSubmission.value = true;
 
   try {
     await userStore.login(loginCredentials.value);
-  } catch (error) {
+    handleSuccessfulLogin();
+  } catch (error: Error) {
     handleUnsuccessfulLogin(error);
-    return;
   }
 
-  handleSuccessfulLogin();
 };
 
 const handleSuccessfulLogin = (): void => {
