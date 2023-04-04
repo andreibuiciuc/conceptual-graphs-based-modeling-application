@@ -1,16 +1,16 @@
 <template>
   <v-snackbar
     v-model="isNotificationTriggered"
-    :timeout="timeout"
+    :timeout="TIMEOUT"
     :color="statusVariant"
-    :variant="variant"
+    :variant="VARIANT"
     :location="notificationLocation"
   >
     <div class="snackbar-content">
       <v-icon class="pr-3" large>{{ icon }}</v-icon>
       <div class="snackbar-message">
         <div>
-          <strong>{{ notificationTitle }}</strong>
+          <strong>{{ title }}</strong>
         </div>
         <div>{{ notificationMessage }}</div>
       </div>
@@ -18,46 +18,39 @@
   </v-snackbar>
 </template>
 
-<script>
-import constants from "@/constants/constants";
-import { mapState, mapWritableState } from "pinia";
-import useNotificationStore from "@/stores/notification";
+<script setup lang="ts">
+import constants from '../../constants/constants';
+import useNotificationStore from '../../stores/notification';
+import { storeToRefs } from 'pinia';
+import { computed } from '@vue/reactivity';
 
-export default {
-  name: "CustomSnackbar",
-  data: () => ({
-    timeout: 3500,
-    variant: "flat",
-  }),
-  computed: {
-    // These properties are mapped from the notification store.
-    ...mapState(useNotificationStore, [
-      "notificationStatus",
-      "notificationMessage"
-    ]),
-    ...mapWritableState(useNotificationStore, ["isNotificationTriggered", "notificationLocation"]),
-    // These properties are component level based.
-    icon: function () {
-      return this.notificationStatus === constants.snackbarStatuses.success
-        ? "mdi-check-circle"
-        : "mdi-alert-circle";
-    },
-    statusVariant: function () {
-      return this.notificationStatus === constants.snackbarStatuses.success
-        ? constants.snackbarVariants.success
-        : constants.snackbarVariants.error;
-    },
-    notificationTitle: function () {
-      return this.notificationStatus === constants.snackbarStatuses.success
-        ? "Success"
-        : "Error";
-    },
-  },
-};
+type variant = 'flat' | 'outlined' | 'text';
+
+const TIMEOUT = 3500;
+const VARIANT: variant = 'outlined';
+
+// Store state and action mappings
+const notificationStore = useNotificationStore();
+const { notificationStatus, notificationMessage, notificationLocation, isNotificationTriggered } = storeToRefs(notificationStore);
+
+// Computed properties
+const icon = computed(() => {
+  return notificationStatus.value === constants.snackbarStatuses.success ? 'mdi-check-circle' : 'mdi-alert-circle';
+});
+
+const statusVariant = computed(() => {
+  return notificationStatus.value === constants.snackbarStatuses.success ? constants.snackbarVariants.success : constants.snackbarVariants.error;
+});
+
+const title = computed(() => {
+  return notificationStatus.value === constants.snackbarStatuses.success ? 'Success' : 'Error';
+});
+
 </script>
 
 <style lang="sass">
 @use '@/assets/styles/_containers.sass'
+
 .v-snackbar
     z-index: 99999999
 
