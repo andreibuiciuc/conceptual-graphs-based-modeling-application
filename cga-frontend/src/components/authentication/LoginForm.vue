@@ -74,7 +74,7 @@ const login = async (): Promise<void> => {
   try {
     await userStore.login(loginCredentials.value);
     handleSuccessfulLogin();
-  } catch (error: Error) {
+  } catch (error: Error | any) {
     handleUnsuccessfulLogin(error);
   }
 
