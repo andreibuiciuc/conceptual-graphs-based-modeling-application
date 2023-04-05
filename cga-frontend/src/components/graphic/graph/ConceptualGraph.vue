@@ -61,9 +61,9 @@
                     <v-icon>mdi-close</v-icon>
                   </v-btn>
                 </div>
-                <ul>
+                <ul v-if="dataTypeConcepts">
                   <!-- Type level -->
-                  <li v-if="dataTypeConcepts">
+                  <li>
                     <div class="tf-nc conceptual-graph-relation" :ref="`${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`">
                       <span class="concept-name">hasType</span>
                     </div>
@@ -77,6 +77,14 @@
                       <span class="concept-name">{{
                         dataTypeConcepts[columnConcept.conceptName].conceptName
                       }}</span>
+                    </div>
+                  </li>
+                </ul>
+                <ul v-if="isQueryGraph && queryConcepts && queryConcepts[columnConcept.conceptName]">
+                  <!-- Query level: 1 -->
+                  <li>
+                    <div class="tf-nc conceptual-graph-relation">
+                      <span>{{ queryConcepts[columnConcept.conceptName] }}</span>
                     </div>
                   </li>
                 </ul>
@@ -103,6 +111,8 @@ export default {
     inverted: Boolean,
     applyBorder: Boolean,
     noKeyspace: Boolean,
+    isQueryGraph: Boolean,
+    queryConcepts: Object,
     areColumnConceptsDeletable: Boolean,
     areColumnsSelectable: Boolean
   },

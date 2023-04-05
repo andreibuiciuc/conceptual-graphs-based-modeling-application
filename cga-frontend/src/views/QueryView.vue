@@ -11,6 +11,7 @@
           :disabled="!currentKeyspace"
           :hide-details="true"
           :items="availableTables"
+          :loading="isTableRetrieveInProgress"
           @update:modelValue="changeTable"
         >
         </v-select>
@@ -34,13 +35,15 @@
         <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
       </div>
       <div class="query-canvas">
-        <conceptual-graph
+        <conceptual-graph v-if="queryMetadata && queryMetadata.columns"
           :are-columns-selectable="false"
           :areColumnConceptsDeletable="true"
           :keyspace-concept="queryMetadata.keyspace"
           :table-concepts="queryMetadata.tables"
           :column-concepts="queryMetadata.columns"
           :data-type-concepts="queryMetadata.dataTypes"
+          :query-concepts="queryConcepts"
+          :is-query-graph="true"
           @remove="removeColumnFromQuery" />
       </div>
     </div>
@@ -74,7 +77,7 @@
           <v-btn 
             :disabled="isQueryActionDisabled"
             variant="text"
-            @click.prevent="setConceptualGraphMetadata('queryMetadata')">
+            @click.prevent="clearQueryMetadata">
             Clear
           </v-btn>
           <v-divider vertical></v-divider>
@@ -92,7 +95,8 @@
             v-if="queryMetadata.columns" 
             :clause="0" :items="whereClauses" 
             :columns="columnConcepts" 
-            :operators="cqlOperators" 
+            :operators="cqlOperators"
+            @add="addQueryConcept"
             @remove="removeClause">
           </query-items>
         </div>
@@ -138,7 +142,6 @@ import { manageRequest } from "@/includes/requests";
 
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
-import { toHandlers } from 'vue';
 
 export default {
   name: "QueryView",
@@ -151,9 +154,11 @@ export default {
     isTableGraphReady: false,
     //
     queryMetadata: null,
-    //
+    // where -> group by -> order by
     isQueryOptionsListOpened: false,
-    whereClauses: []
+    whereClauses: [],
+    // 
+    queryConcepts: null
   }),
   components: {
     ConceptualGraph,
@@ -189,9 +194,17 @@ export default {
         this.setUpSnackbarState(false, "Column already added to the query");
       }
     },
+    addQueryConcept: function (queryConcept) {
+      if (queryConcept.clause === 0) {
+        this.queryConcepts[queryConcept.item.column] = "filter";
+      }
+    },
     changeTable: function (newTable) {
       this.selectedTable = newTable;
       this.retrieveTableMetadata();
+    },
+    clearQueryMetadata: function () {
+      this.queryMetadata = { keyspace: {}, tables: [], columns: null, dataTypes: null };
     },
     removeColumnFromQuery: function (columnMetadata) {
       if (columnMetadata) {
@@ -199,6 +212,7 @@ export default {
         const columnConceptIndex = this.queryMetadata.columns[tableConceptName].findIndex(x => x.conceptName === columnMetadata.columnConcept.conceptName);
         if (columnConceptIndex > -1) {
           this.queryMetadata.columns[tableConceptName].splice(columnConceptIndex, 1);
+          delete this.queryConcepts[columnMetadata.columnConcept.conceptName];
         }
       }
     },
@@ -235,13 +249,15 @@ export default {
     },
     // These methods handle the design of the query graph
     addWhereClauseToQuery: function () {
-      this.whereClauses.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
+      this.whereClauses.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty, toQuery: false });
     },
     removeClause: function (clauseObject) {
       if (clauseObject.clause === 0) {
         const index = this.whereClauses.findIndex(x => x.column === clauseObject.item.column);
-        if (index > -1) {
+        const clause = this.whereClauses.find(x => x.column === clauseObject.item.column);
+        if (index > -1 && clause) {
           this.whereClauses.splice(index, 1);
+          delete this.queryConcepts[clause.column];
         }
       }
     },
@@ -253,10 +269,8 @@ export default {
       let columns = { [this.selectedTable]: [] };
       let dataTypes = {};
       
-      // TODO: Complete this with concept relations
       metadata.forEach(columnData => {
         const relation = this.getRelationTypeForColumnConcept(columnData.column_kind, columnData.clustering_order);
-        console.log(relation);
         const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation };
         columns[this.selectedTable].push(columnConcept);
         dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
@@ -279,6 +293,7 @@ export default {
   created: function () {
     this.tableMetadata = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
     this.queryMetadata = { keyspace: {}, tables: [], columns: null, dataTypes: null };
+    this.queryConcepts = {};
     if (this.currentKeyspace) {
       this.retrieveAvailableTables();
     } else {

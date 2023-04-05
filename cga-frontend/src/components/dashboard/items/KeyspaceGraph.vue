@@ -5,8 +5,8 @@
     :table-concepts="tableConcepts"
     :column-concepts="columnConcepts"
     :data-type-concepts="dataTypeConcepts"
-    :left-limit="leftLimit"
-  />
+    :left-limit="leftLimit">
+  </conceptual-graph>
 </template>
 
 <script lang="js">
@@ -103,6 +103,7 @@ export default {
         this.resetKeyspaceMetadata();
       }
     },
+    
   },
   watch: {
     'selectedKeyspace': function() {

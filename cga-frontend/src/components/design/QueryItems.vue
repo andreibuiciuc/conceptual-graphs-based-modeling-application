@@ -1,5 +1,7 @@
 <template>
-    <div v-for="(item, index) in props.items" class="query-panel-item-clause">
+    <div class="query-panel">
+        <div class="query-panel-title">{{ panelTitle }}</div>
+        <div v-for="(item, index) in props.items" class="query-panel-item-clause">
         <v-icon color="red" @click.prevent="removeItem(props.clause, item)">mdi-close</v-icon>
         <span class="item-clause-label">{{ index === 0 ? 'where' : 'and' }}</span>
         <v-select v-model="item.column"
@@ -21,10 +23,14 @@
             :hide-details="true"
             variant="outlined"> 
         </v-text-field>
+        <v-icon v-if="!item.toQuery" :color="item.toQuery ? 'gray' : 'green'" @click.prevent="addToQuery(props.clause, item)">mdi-check</v-icon>
+    </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from '@vue/reactivity';
+
 
 enum QueryClause {
     WHERE
@@ -34,6 +40,7 @@ interface QueryItem {
     column: string,
     relation?: string,
     value?: string 
+    toQuery: boolean
 };
 
 interface ColumnConcept {
@@ -49,13 +56,25 @@ interface Props {
     operators?: string[]
 };
 
-
 const props = defineProps<Props>();
-const emit = defineEmits(['remove']);
+const emit = defineEmits(['remove', 'add']);
+
+const panelTitle = computed(() => {
+    return (props.clause === QueryClause.WHERE ? 'where' : 'TBA').concat(' clause');
+});
+
+const addToQuery = (clause: QueryClause, item: QueryItem): void => {
+    console.log(item);
+    if (!item.toQuery) {
+        item.toQuery = true;
+    }
+    emit('add', { clause, item });
+};
 
 const removeItem = (clause: QueryClause, item: QueryItem): void => {
     emit('remove', { clause, item });
 };
+
 
 </script>
 
@@ -63,27 +82,33 @@ const removeItem = (clause: QueryClause, item: QueryItem): void => {
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
 
-.query-panel-item-clause
-    @include containers.flex-container($align-items: center)
-    padding: 8px 0
+.query-panel
+    @include containers.flex-container($flex-direction: column)
 
-    .v-icon
-        cursor: pointer
+    .query-panel-title
+        color: variables.$cassandra-black
 
-    .item-clause-label
-        text-align: end
-        width: 80px
+    .query-panel-item-clause
+        @include containers.flex-container($align-items: center)
+        padding: 8px 0
 
-    .v-select:first-of-type
-        width: 240px
+        .v-icon
+            cursor: pointer
 
-    .v-select:second-of-type
-        width: 160px
+        .item-clause-label
+            text-align: end
+            width: 80px
 
-    .v-text-field
-        width: 240px
+        .v-select:first-of-type
+            width: 240px
 
-    & > *:not(.v-icon)
-        margin-right: 20px
+        .v-select:second-of-type
+            width: 160px
+
+        .v-text-field
+            width: 240px
+
+        & > *:not(.v-icon)
+            margin-right: 20px
 
 </style>
