@@ -82,6 +82,7 @@ const registerValidationSchema = {
   email: "required|min:3|max:50|email",
   password: "required|min:6|max:50",
 };
+
 const registerCredentials: Ref<RegisterCredentials> = ref({ ... constants.defaultRegisterCredentials });
 const showPassword: Ref<boolean> = ref(false);
 const isRegistrationInSubmission: Ref<boolean> = ref(false);
