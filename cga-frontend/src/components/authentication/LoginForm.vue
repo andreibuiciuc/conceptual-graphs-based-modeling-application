@@ -40,6 +40,7 @@
 
 <script setup lang="ts">
 import constants from '../../constants/constants';
+import { LoginCredentials } from '../../types/types';
 
 import useAuthModalStore from '../../stores/authModal';
 import useUserStore from '../../stores/user';
@@ -47,12 +48,6 @@ import useNotificationStore from '../../stores/notification';
 import { Ref, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
-interface LoginCredentials {
-  email: string,
-  password: string
-};
-
-// Data
 const loginValidationSchema = {
   email: 'required|min:3|max:50|email',
   password: 'required|min:3|max:50|'

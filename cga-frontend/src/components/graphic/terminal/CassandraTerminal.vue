@@ -23,12 +23,8 @@
 </template>
 
 <script setup lang="ts">
+import { Command } from '../../../types/types';
 import { computed } from '@vue/reactivity';
-
-interface Command {
-  lineContent: string,
-  lineNumber: number
-};
 
 interface Props {
   isTerminalOpened: boolean,

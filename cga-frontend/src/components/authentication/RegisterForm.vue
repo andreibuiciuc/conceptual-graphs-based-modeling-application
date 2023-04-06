@@ -62,18 +62,13 @@
 
 <script setup lang="ts">
 import constants from "../../constants/constants";
+import { RegisterCredentials } from "../../types/types";
+
 import useAuthModalStore from "../../stores/authModal";
 import useUserStore from "../../stores/user";
 import useNotificationStore from "../../stores/notification";
 import { Ref, ref } from "vue";
 import { storeToRefs } from "pinia";
-
-interface RegisterCredentials {
-  firstname: string,
-  lastname: string,
-  email: string,
-  password: string
-};
 
 // Data
 const registerValidationSchema = {

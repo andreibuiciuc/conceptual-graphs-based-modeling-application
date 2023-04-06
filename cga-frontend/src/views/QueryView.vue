@@ -133,7 +133,8 @@
 
 <script setup lang="ts">
 import constants from '../constants/constants';
-import useUserStore from '../stores/user';
+import { Concept } from '../types/types';
+
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
 import { useMetadata } from '../composables/metadata';
@@ -144,10 +145,6 @@ import QueryItems from '../components/design/QueryItems.vue';
 import { Ref, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
 
-interface Concept {
-  conceptName: string,
-  conceptType: string
-};
 
 interface QueryItem {
     column: string,
