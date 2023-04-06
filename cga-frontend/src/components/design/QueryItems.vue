@@ -30,27 +30,11 @@
 
 <script setup lang="ts">
 import { computed } from '@vue/reactivity';
-
-enum QueryClause {
-    WHERE
-};
-
-interface QueryItem {
-    column: string,
-    relation?: string,
-    value?: string 
-    toQuery?: boolean
-};
-
-interface ColumnConcept {
-    conceptName: string,
-    conceptType: string,
-    relation: string
-};
+import { QueryClause, QueryItem, Concept } from '../../types/types';
 
 interface Props {
     clause: QueryClause
-    columns?: ColumnConcept[]
+    columns?: Concept[]
     items: QueryItem[],
     operators?: string[]
 };
@@ -63,7 +47,6 @@ const panelTitle = computed(() => {
 });
 
 const addToQuery = (clause: QueryClause, item: QueryItem): void => {
-    console.log(item);
     if (!item.toQuery) {
         item.toQuery = true;
     }
@@ -73,7 +56,6 @@ const addToQuery = (clause: QueryClause, item: QueryItem): void => {
 const removeItem = (clause: QueryClause, item: QueryItem): void => {
     emit('remove', { clause, item });
 };
-
 
 </script>
 

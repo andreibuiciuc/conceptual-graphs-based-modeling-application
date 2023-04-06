@@ -35,7 +35,8 @@
         <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
       </div>
       <div class="query-canvas">
-        <conceptual-graph v-if="queryMetadata && queryMetadata.columns"
+        <conceptual-graph ref="queryGraph"
+          v-if="queryMetadata && queryMetadata.columns"
           :are-columns-selectable="false"
           :areColumnConceptsDeletable="true"
           :keyspace-concept="queryMetadata.keyspace"
@@ -93,7 +94,7 @@
         <div class="query-panel-item">
           <query-items 
             v-if="queryMetadata.columns" 
-            :clause="0" :items="whereClauseItems" 
+            :clause="QueryClause.WHERE" :items="whereClauseItems" 
             :columns="columnConcepts" 
             :operators="constants.cqlOperators"
             @add="addQueryConcept"
@@ -133,7 +134,7 @@
 
 <script setup lang="ts">
 import constants from '../constants/constants';
-import { Concept } from '../types/types';
+import { Concept, QueryClause, QueryItem, QueryConcepts } from '../types/types';
 
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
@@ -145,15 +146,9 @@ import QueryItems from '../components/design/QueryItems.vue';
 import { Ref, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
 
-
-interface QueryItem {
-    column: string,
-    relation?: string,
-    value?: string 
-    toQuery?: boolean
-};
-
 type metadata = { [key: string]: Concept | Concept[] | { [key: string]: Concept[] } | { [key: string]: Concept } | null };
+
+const queryGraph = ref();
 
 const tableMetadata: Ref<any> = ref({ keyspace: {}, tables: [], columns: {}, dataTypes: {} });
 const queryMetadata: Ref<any> = ref({ keyspace: {}, tables: [], columns: null, dataTypes: null });
@@ -161,7 +156,7 @@ const isTableGraphReady: Ref<boolean> = ref(false);
 
 const isQueryOptionsListOpened: Ref<boolean> = ref(false);
 const whereClauseItems: Ref<QueryItem[]> = ref([]);
-const queryConcepts: Ref<any> = ref(null);
+const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept } = useMetadata();
 
@@ -268,20 +263,14 @@ const addColumnToQuery = (columnConcept: Concept): void => {
 };
 
 const addQueryConcept = (queryClauseData: any) => {
-  if (queryClauseData.clause === 0) {
-    const firstColumnConcept = queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName][0];
-    if (whereClauseItems.value.length === 0) {
-      queryConcepts.value[firstColumnConcept.conceptName].firstColumn = queryClauseData.item.column;
-    } else {
-      queryConcepts.value[firstColumnConcept.conceptName].otherColumns.push(queryClauseData.item.column);
-    }
+  if (queryClauseData.clause === QueryClause.WHERE) {
+    queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
+    queryGraph.value.drawArrowsForQueryConcepts();
   }
 };
 
 const addWhereClauseToQuery = () => {
   whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
-  const firstColumnConcept = queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName][0];
-  queryConcepts[firstColumnConcept.conceptName] = { firstColumn: firstColumnConcept.conceptName, otherColumns: [] };
 };
 
 const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
@@ -293,7 +282,7 @@ const clearQueryMetadata = () => {
 }
 
 const removeClause = (clauseObject: any): void => {
-  if (clauseObject.clause === 0) {
+  if (clauseObject.clause === QueryClause.WHERE) {
     const index = whereClauseItems.value.findIndex(x => x.column === clauseObject.item.column);
     const clause = whereClauseItems.value.find(x => x.column === clauseObject.item.column);
     if (index > -1 && clause) {
@@ -324,7 +313,6 @@ watch(currentKeyspace, (newKeyspace, _) => {
 // Created
 tableMetadata.value = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
 queryMetadata.value = { keyspace: {}, tables: [], columns: null, dataTypes: null };
-queryConcepts.value = {};
 
 if (currentKeyspace.value) {
   retrieveAvailableTables();

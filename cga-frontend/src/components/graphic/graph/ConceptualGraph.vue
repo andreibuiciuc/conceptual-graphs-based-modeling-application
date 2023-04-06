@@ -80,11 +80,13 @@
                     </div>
                   </li>
                 </ul>
-                <ul v-if="isQueryGraph && queryConcepts && queryConcepts[columnConcept.conceptName]">
-                  <!-- Query level: 1 -->
+                <ul v-show="columnIndex === 0 && isQueryGraph && queryConcepts[whereClause].columns.length">
                   <li>
-                    <div class="tf-nc conceptual-graph-relation">
-                      <span>{{ queryConcepts[columnConcept.conceptName] }}</span>
+                    <div class="tf-nc conceptual-graph-relation" ref="filter">
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[whereClause].conceptRelation }}</span>
+                    </div>
+                    <div class="tf-nc" ref="filterReferent">
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[whereClause].conceptReferent }}</span>
                     </div>
                   </li>
                 </ul>
@@ -99,6 +101,8 @@
 
 <script lang="js">
 import constants from "@/constants/constants";
+import { QueryClause } from "../../../types/types";
+
 import arrowCreate, { DIRECTION } from 'arrows-svg';
 
 export default {
@@ -119,6 +123,7 @@ export default {
   data: () => ({
     arrows: []
   }),
+  expose: ['drawArrowsForQueryConcepts'],
   methods: {
     createArrow: function (sourceNode, targetNode, relatedNode) {
       const arrow = arrowCreate({
@@ -156,7 +161,17 @@ export default {
         }
       }
     },
-    drawArrowsForQueryConcepts: function () {
+    drawArrowsForQueryConcepts: async function () {
+      await this.$nextTick();
+      if (this.isQueryGraph && this.queryConcepts && this.queryConcepts[QueryClause.WHERE].columns) {
+        const currentTableConcept = this.tableConcepts[0];
+        for (let columnIndex in this.queryConcepts[QueryClause.WHERE].columns) {
+          const columnConcept = this.queryConcepts[QueryClause.WHERE].columns[parseInt(columnIndex)];
+          const index = this.columnConcepts[currentTableConcept.conceptName].findIndex(x => x.conceptName === columnConcept.conceptName);
+          this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConcept_${index}`][0], this.$refs.filter[0]);
+          this.createArrow(this.$refs.filter[0], this.$refs.filterReferent[0]);
+        }
+      }
     },
     drawInitialArrows: function () {
       if (!this.noKeyspace && this.keyspaceConcept) {
@@ -192,6 +207,9 @@ export default {
     columnRelation: function () {
       return constants.relationTypes.hasType;
     },
+    whereClause: function () {
+      return QueryClause.WHERE;
+    }
   },
   updated: function () {
     this.removeArrows();
@@ -213,12 +231,6 @@ export default {
     },
     tableConcepts: function () {
       this.removeArrows();
-    },
-    queryConcepts: {
-      deep: true,
-      handler: function () {
-        this.drawArrowsForQueryConcepts();
-      }
     }
   }
 }

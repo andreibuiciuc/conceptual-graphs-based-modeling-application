@@ -76,4 +76,11 @@ export default {
   cqlOperators: [
     "<", "<=", ">", ">=", "==", "!=", "IN", "NOT IN", "CONTAINS", "DOES NOT CONTAIN"
   ],
+  defaultQueryConcepts: {
+    where: {
+      conceptReferent: "TODO",
+      conceptRelation: "filter",
+      columns: []
+    }
+  }
 };
