@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 
+import useUserStore from '../stores/user';
+
 import HomeView from "@/views/HomeView.vue";
 import DataStructureView from "@/views/DataStructureView.vue";
 import QueryView from "@/views/QueryView.vue";
@@ -19,6 +21,14 @@ const routes = [
     path: "/query",
     name: "query",
     component: QueryView,
+    beforeEnter: (_to, _from, next) => {
+      const store = useUserStore();
+      if (store.isUserLoggedIn) {
+        next();
+      } else {
+        next({ name: "home" });
+      }
+    }
   },
   {
     path: "/:catchAll(.*)*",

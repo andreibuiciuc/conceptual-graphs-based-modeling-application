@@ -29,8 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from '@vue/reactivity';
-
+import { computed } from '@vue/reactivity';
 
 enum QueryClause {
     WHERE
@@ -40,7 +39,7 @@ interface QueryItem {
     column: string,
     relation?: string,
     value?: string 
-    toQuery: boolean
+    toQuery?: boolean
 };
 
 interface ColumnConcept {

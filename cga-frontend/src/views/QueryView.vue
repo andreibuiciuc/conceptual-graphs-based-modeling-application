@@ -27,7 +27,7 @@
       <div class="query-canvas">
         <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress"
           :are-columns-selectable="true"
-          :keyspace-concept="queryMetadata.keyspace"
+          :keyspace-concept="tableMetadata.keyspace"
           :table-concepts="tableMetadata.tables"
           :column-concepts="tableMetadata.columns"
           :data-type-concepts="tableMetadata.dataTypes"
@@ -61,7 +61,7 @@
           </div>
           <div class="info-block">
             <span>Table:</span>
-            <span v-if="isTableGraphReady">{{ tableMetadata.tables[0].conceptName }}</span>
+            <span v-if="isTableGraphReady">{{ tableMetadata.tables[0]?.conceptName }}</span>
             <template v-else>
               <v-icon color="red">mdi-alert-box</v-icon>
               <span>No table concept selected</span>
@@ -93,9 +93,9 @@
         <div class="query-panel-item">
           <query-items 
             v-if="queryMetadata.columns" 
-            :clause="0" :items="whereClauses" 
+            :clause="0" :items="whereClauseItems" 
             :columns="columnConcepts" 
-            :operators="cqlOperators"
+            :operators="constants.cqlOperators"
             @add="addQueryConcept"
             @remove="removeClause">
           </query-items>
@@ -131,189 +131,210 @@
   
 </template>
 
-<script>
+<script setup lang="ts">
 import constants from '../constants/constants';
-import useUserStore from "@/stores/user";
+import useUserStore from '../stores/user';
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
 import { useMetadata } from '../composables/metadata';
-import { mapActions, mapState } from 'pinia';
-import { manageRequest } from "@/includes/requests";
-
+import { storeToRefs } from 'pinia';
+import { manageRequest } from '../includes/requests';
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
+import { Ref, ref, watch } from 'vue';
+import { computed } from '@vue/reactivity';
 
-export default {
-  name: "QueryView",
-  data: () => ({
-    availableTables: [],
-    selectedTable: constants.inputValues.empty,
-    //
-    tableMetadata: null,
-    isTableRetrieveInProgress: false,
-    isTableGraphReady: false,
-    //
-    queryMetadata: null,
-    // where -> group by -> order by
-    isQueryOptionsListOpened: false,
-    whereClauses: [],
-    // 
-    queryConcepts: null
-  }),
-  components: {
-    ConceptualGraph,
-    QueryItems
-  },
-  setup: () => {
-    const { getRelationTypeForColumnConcept } = useMetadata();
-    return { getRelationTypeForColumnConcept };
-  },
-  computed: {
-    // These computed properties are mapped from the Connection Store
-    ...mapState(useConnectionStore, ['currentKeyspace']),
-    // These computed properties are related to the Query Panel actions
-    columnConcepts: function () {
-      return this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName];
-    },
-    isQueryActionDisabled: function () { 
-      return !this.currentKeyspace || !this.tableMetadata.tables.length || !this.tableMetadata.columns[this.tableMetadata.tables[0].conceptName].length; 
-    },
-    cqlOperators: function () {
-      return constants.cqlOperators;
-    }
-  },
-  methods: {
-    // These methods are mapped from the Notification Store
-    ...mapActions(useNotificationStore, ['setUpSnackbarState']),
-    // These methods handle events of components
-    addColumnToQuery: function (columnConcept) {
-      const isColumnAlreadyAdded = this.checkIfColumnIsAlreadyAdded(columnConcept);
-      if (!isColumnAlreadyAdded) {
-        this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName].push(columnConcept);
-      } else {
-        this.setUpSnackbarState(false, "Column already added to the query");
-      }
-    },
-    addQueryConcept: function (queryConcept) {
-      if (queryConcept.clause === 0) {
-        this.queryConcepts[queryConcept.item.column] = "filter";
-      }
-    },
-    changeTable: function (newTable) {
-      this.selectedTable = newTable;
-      this.retrieveTableMetadata();
-    },
-    clearQueryMetadata: function () {
-      this.queryMetadata = { keyspace: {}, tables: [], columns: null, dataTypes: null };
-    },
-    removeColumnFromQuery: function (columnMetadata) {
-      if (columnMetadata) {
-        const tableConceptName = this.queryMetadata.tables[0].conceptName;
-        const columnConceptIndex = this.queryMetadata.columns[tableConceptName].findIndex(x => x.conceptName === columnMetadata.columnConcept.conceptName);
-        if (columnConceptIndex > -1) {
-          this.queryMetadata.columns[tableConceptName].splice(columnConceptIndex, 1);
-          delete this.queryConcepts[columnMetadata.columnConcept.conceptName];
-        }
-      }
-    },
-    // These methods handle the retrieve of entities
-    parseTableMetadata: function (metadata) {
-      const tables = [{ conceptName: this.selectedTable, conceptType: constants.conceptTypes.table }];
-      const {columns, dataTypes } = this.getColumnsMetadataForTableGraph(metadata);
-
-      this.setConceptualGraphMetadata("tableMetadata", tables, columns, dataTypes);
-      this.setConceptualGraphMetadata("queryMetadata", tables, {[this.selectedTable]: [] });
-      
-      this.isTableGraphReady = true;
-    },
-    retrieveAvailableTables: async function () {
-      const response = await manageRequest(constants.requestTypes.GET, "tables", { 
-        keyspace_name: this.currentKeyspace
-      });
-      if (response) {
-        if (response.data.status === constants.requestStatus.SUCCESS) {
-          this.availableTables = JSON.parse(JSON.stringify(response.data.tables));
-        }
-      }
-    },
-    retrieveTableMetadata: async function () {
-      this.isTableRetrieveInProgress = true;
-      const response = await manageRequest(constants.requestTypes.GET, "table_metadata", {
-        keyspace_name: this.currentKeyspace,
-        table_name: this.selectedTable
-      });
-      if (response && response.data && response.data.status === constants.requestStatus.SUCCESS) {
-        this.parseTableMetadata(response.data.table_metadata);
-      }
-      this.isTableRetrieveInProgress = false;
-    },
-    // These methods handle the design of the query graph
-    addWhereClauseToQuery: function () {
-      this.whereClauses.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty, toQuery: false });
-    },
-    removeClause: function (clauseObject) {
-      if (clauseObject.clause === 0) {
-        const index = this.whereClauses.findIndex(x => x.column === clauseObject.item.column);
-        const clause = this.whereClauses.find(x => x.column === clauseObject.item.column);
-        if (index > -1 && clause) {
-          this.whereClauses.splice(index, 1);
-          delete this.queryConcepts[clause.column];
-        }
-      }
-    },
-    // These methods handle some utilities
-    checkIfColumnIsAlreadyAdded: function (columnConcept) {
-      return this.queryMetadata.columns[this.queryMetadata.tables[0].conceptName].some(column => column.conceptName === columnConcept.conceptName);
-    },
-    getColumnsMetadataForTableGraph: function (metadata) {
-      let columns = { [this.selectedTable]: [] };
-      let dataTypes = {};
-      
-      metadata.forEach(columnData => {
-        const relation = this.getRelationTypeForColumnConcept(columnData.column_kind, columnData.clustering_order);
-        const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation };
-        columns[this.selectedTable].push(columnConcept);
-        dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
-      });
-
-      return { columns, dataTypes };
-    },
-    setConceptualGraphMetadata: function (conceptualGraphProperty, tables = [], columns = null, dataTypes = null) {
-        this.whereClauses = [];
-        this[conceptualGraphProperty].keyspace = { conceptName: this.currentKeyspace, conceptType: constants.conceptTypes.keyspace };
-        this[conceptualGraphProperty].tables = JSON.parse(JSON.stringify(tables));
-        this[conceptualGraphProperty].columns = { ... columns };
-        if (conceptualGraphProperty === "tableMetadata") {
-          this[conceptualGraphProperty].dataTypes = { ... dataTypes };
-        } else {
-          this[conceptualGraphProperty].dataTypes = null;
-        }
-    }
-  },
-  created: function () {
-    this.tableMetadata = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
-    this.queryMetadata = { keyspace: {}, tables: [], columns: null, dataTypes: null };
-    this.queryConcepts = {};
-    if (this.currentKeyspace) {
-      this.retrieveAvailableTables();
-    } else {
-      this.setUpSnackbarState(false, "No selected keyspace.");
-    }
-  },
-  watch: {
-    currentKeyspace: function (newValue) {
-      this.queryMetadata.keyspace = newValue;
-    }
-  },
-  beforeRouteEnter: function (_from, _to, next) {
-    const store = useUserStore();
-    if (store.isUserLoggedIn) {
-      next();
-    } else {
-      next({ name: "home" });
-    }
-  },
+interface Concept {
+  conceptName: string,
+  conceptType: string
 };
+
+interface QueryItem {
+    column: string,
+    relation?: string,
+    value?: string 
+    toQuery?: boolean
+};
+
+type metadata = { [key: string]: Concept | Concept[] | { [key: string]: Concept[] } | { [key: string]: Concept } | null };
+
+const tableMetadata: Ref<any> = ref({ keyspace: {}, tables: [], columns: {}, dataTypes: {} });
+const queryMetadata: Ref<any> = ref({ keyspace: {}, tables: [], columns: null, dataTypes: null });
+const isTableGraphReady: Ref<boolean> = ref(false);
+
+const isQueryOptionsListOpened: Ref<boolean> = ref(false);
+const whereClauseItems: Ref<QueryItem[]> = ref([]);
+const queryConcepts: Ref<any> = ref(null);
+
+const { getRelationTypeForColumnConcept } = useMetadata();
+
+// Store state and action mappings
+const connectionStore = useConnectionStore();
+const notificationStore = useNotificationStore();
+const { currentKeyspace } = storeToRefs(connectionStore); 
+
+// Retrieve and parsing of the metadata
+const availableTables: Ref<any[]> = ref([]);
+const selectedTable: Ref<string> = ref(constants.inputValues.empty);
+const isTableRetrieveInProgress: Ref<boolean> = ref(false);
+
+const changeTable = (newTable: string): void => {
+  selectedTable.value = newTable;
+  retrieveTableMetadata();
+};
+
+const getColumnsMetadataForTableGraph = (metadata): any => {
+  let columns: { [key: string]: Concept[] } = { [selectedTable.value]: [] };
+  let dataTypes = {};
+  
+  metadata.forEach(columnData => {
+    const relation = getRelationTypeForColumnConcept(columnData.column_kind, columnData.clustering_order);
+    const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation };
+    columns[selectedTable.value].push(columnConcept);
+    dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
+  });
+
+  return { columns, dataTypes };
+}
+  
+const parseTableMetadata = (metadata) => {
+  const tables = [{ conceptName: selectedTable.value, conceptType: constants.conceptTypes.table }];
+  const {columns, dataTypes } = getColumnsMetadataForTableGraph(metadata);
+
+  setConceptualGraphMetadata(tableMetadata, tables, columns, dataTypes);
+  setConceptualGraphMetadata(queryMetadata, tables, {[selectedTable.value]: [] });
+  
+  isTableGraphReady.value = true;
+};
+
+const retrieveAvailableTables = async (): Promise<void> => {
+  const response = await manageRequest(constants.requestTypes.GET, "tables", { keyspace_name: currentKeyspace.value });
+  if (response && response.data) {
+    if (response.data.status === constants.requestStatus.SUCCESS) {
+      availableTables.value = JSON.parse(JSON.stringify(response.data.tables));
+    } else {
+      notificationStore.setUpSnackbarState(false, response.data.message);
+    }
+  } else {
+    notificationStore.setUpSnackbarState(false, "Unexpected error occured.");
+  }
+};
+
+const retrieveTableMetadata = async (): Promise<void> => {
+  isTableRetrieveInProgress.value = true;
+  const response = await manageRequest(constants.requestTypes.GET, "table_metadata", {
+    keyspace_name: currentKeyspace.value,
+    table_name: selectedTable.value
+  });
+  if (response && response.data) {
+    if (response.data.status === constants.requestStatus.SUCCESS) {
+      parseTableMetadata(response.data.table_metadata);
+    } else {
+      notificationStore.setUpSnackbarState(false, response.data.message);
+    }
+  } else {
+    notificationStore.setUpSnackbarState(false, "Unexpected error occured.");
+  }
+  isTableRetrieveInProgress.value = false;
+};
+
+const setConceptualGraphMetadata = (metadata: any, tables: Concept[] = [], 
+                                    columns: { [key: string]: Concept[] } | null = null, 
+                                    dataTypes: {[key: string]: Concept } | null = null): void => {
+  whereClauseItems.value = [];
+  metadata.value.keyspace = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
+  metadata.value.tables = JSON.parse(JSON.stringify(tables));
+  metadata.value.columns = { ... columns };
+  if (metadata === tableMetadata) {
+    metadata.value.dataTypes = { ... dataTypes };
+  } else {
+    metadata.value.dataTypes = null;
+  }
+}
+
+// Query builder functionalities
+const isQueryActionDisabled = computed(() => {
+  return !currentKeyspace.value || !tableMetadata.value.tables.length || !tableMetadata.value.columns[tableMetadata.value.tables[0].conceptName].length;
+})
+
+const columnConcepts = computed(() => {
+  return queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName];
+})
+
+const addColumnToQuery = (columnConcept: Concept): void => {
+  const isColumnAlreadyAdded = checkIfColumnIsAlreadyAdded(columnConcept);
+  if (!isColumnAlreadyAdded) {
+    queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName].push({ ... columnConcept, relation: constants.relationTypes.has });
+  } else {
+    notificationStore.setUpSnackbarState(false, "Column already added to the query");
+  }
+};
+
+const addQueryConcept = (queryClauseData: any) => {
+  if (queryClauseData.clause === 0) {
+    const firstColumnConcept = queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName][0];
+    if (whereClauseItems.value.length === 0) {
+      queryConcepts.value[firstColumnConcept.conceptName].firstColumn = queryClauseData.item.column;
+    } else {
+      queryConcepts.value[firstColumnConcept.conceptName].otherColumns.push(queryClauseData.item.column);
+    }
+  }
+};
+
+const addWhereClauseToQuery = () => {
+  whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
+  const firstColumnConcept = queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName][0];
+  queryConcepts[firstColumnConcept.conceptName] = { firstColumn: firstColumnConcept.conceptName, otherColumns: [] };
+};
+
+const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
+  return queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName].some(column => column.conceptName === columnConcept.conceptName);
+};
+
+const clearQueryMetadata = () => {
+  queryMetadata.value = { keyspace: {}, tables: [], columns: null, dataTypes: null };
+}
+
+const removeClause = (clauseObject: any): void => {
+  if (clauseObject.clause === 0) {
+    const index = whereClauseItems.value.findIndex(x => x.column === clauseObject.item.column);
+    const clause = whereClauseItems.value.find(x => x.column === clauseObject.item.column);
+    if (index > -1 && clause) {
+      whereClauseItems.value.splice(index, 1);
+      if (whereClauseItems.value.length === 0) {
+        delete queryConcepts.value[clause.column];
+      }
+    }
+  }
+}
+
+const removeColumnFromQuery = (columnMetadata) => {
+  if (columnMetadata) {
+    const tableConceptName = queryMetadata.value.tables[0].conceptName;
+    const columnConceptIndex = queryMetadata.value.columns[tableConceptName].findIndex(x => x.conceptName === columnMetadata.columnConcept.conceptName);
+    if (columnConceptIndex > -1) {
+      queryMetadata.value.columns[tableConceptName].splice(columnConceptIndex, 1);
+      delete queryConcepts.value[columnMetadata.columnConcept.conceptName];
+    }
+  }
+}
+
+// Watches
+watch(currentKeyspace, (newKeyspace, _) => {
+  queryMetadata.value.keyspace = newKeyspace;
+});
+
+// Created
+tableMetadata.value = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
+queryMetadata.value = { keyspace: {}, tables: [], columns: null, dataTypes: null };
+queryConcepts.value = {};
+
+if (currentKeyspace.value) {
+  retrieveAvailableTables();
+} else {
+  notificationStore.setUpSnackbarState(false, "No selected keyspace.");
+}
+
 </script>
 
 <style scoped lang="sass">

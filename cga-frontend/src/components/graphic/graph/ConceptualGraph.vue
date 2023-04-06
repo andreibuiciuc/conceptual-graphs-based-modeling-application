@@ -156,6 +156,8 @@ export default {
         }
       }
     },
+    drawArrowsForQueryConcepts: function () {
+    },
     drawInitialArrows: function () {
       if (!this.noKeyspace && this.keyspaceConcept) {
         this.createArrow(this.$refs.keyspaceConcept, this.$refs.keyspaceRelationConcept);
@@ -211,6 +213,12 @@ export default {
     },
     tableConcepts: function () {
       this.removeArrows();
+    },
+    queryConcepts: {
+      deep: true,
+      handler: function () {
+        this.drawArrowsForQueryConcepts();
+      }
     }
   }
 }
