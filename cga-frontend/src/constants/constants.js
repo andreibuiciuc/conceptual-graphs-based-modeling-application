@@ -50,10 +50,10 @@ export default {
     dataType: "T",
   },
   defaultConcept: {
-    conceptName: null,
-    conceptType: null,
-    kind: null,
-    relation: null,
+    conceptName: "",
+    conceptType: "",
+    kind: "",
+    relation: "",
   },
   relationTypes: {
     has: "has",

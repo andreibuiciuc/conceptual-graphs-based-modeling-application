@@ -16,6 +16,20 @@ interface Concept {
     relation?: string
 };
 
+interface GraphMetadata {
+    keyspace: Concept,
+    tables: Concept[],
+    columns: Map<string, Concept[]>,
+    dataTypes: Map<string, Concept>
+};
+
+interface ColumnMetadata {
+    column_name: string,
+    column_kind: string,
+    column_type: string,
+    clustering_order: string
+};
+
 enum QueryClause {
     WHERE = "where",
     ORDER_BY = "orderBy",
@@ -49,8 +63,10 @@ export {
     //
     QueryClause,
     Concept,
+    ColumnMetadata,
     QueryConcepts,
     QueryItem,
+    GraphMetadata,
     //
     Command
 };

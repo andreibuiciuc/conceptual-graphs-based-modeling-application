@@ -1,25 +1,25 @@
 <template>
   <div
-    class="tf-tree conceptual-graph" ref="conceptualGraph" id="conceptualGraph"
+    class="tf-tree conceptual-graph" id="conceptualGraph"
     :class="{ 'conceptual-graph-inverted': inverted, 'conceptual-graph-with-border': applyBorder }"
   >
     <ul class="conceptual-graph-root">
       <!-- Keyspace level-->
       <li>
-        <div class="tf-nc keyspace-concept" ref="keyspaceConcept" v-if="keyspaceConcept">
-          <span class="concept-type">{{ keyspaceConcept.conceptType }}:</span>
-          <span class="concept-name">{{ keyspaceConcept.conceptName }}</span>
+        <div class="tf-nc keyspace-concept" id="keyspaceConcept" v-if="graphMetadata?.keyspace">
+          <span class="concept-type">{{ graphMetadata.keyspace.conceptType }}:</span>
+          <span class="concept-name">{{ graphMetadata.keyspace.conceptName }}</span>
         </div>
-        <span class="tf-nc conceptual-graph-relation" ref="keyspaceRelationConcept" v-if="keyspaceConcept">
-          {{ keyspaceRelation }}
+        <span class="tf-nc conceptual-graph-relation" id="keyspaceRelationConcept" v-if="graphMetadata?.keyspace">
+          {{ constants.relationTypes.hasMore }}
         </span>
         <ul>
           <!-- Table level -->
           <li
-            v-for="(tableConcept, tableIndex) in tableConcepts"
+            v-for="(tableConcept, tableIndex) in graphMetadata?.tables"
             :key="tableConcept.conceptName"
           >
-            <div :ref="`tableConcept_${tableIndex}`"
+            <div :id="`tableConcept_${tableIndex}`"
               class="tf-nc"
               :class="{
                 'table-first': noKeyspace,
@@ -32,19 +32,14 @@
             </div>
             <ul>
               <!-- Column level -->
-              <li :class="{ 'column-concept-hoverable': areColumnsSelectable }"
-                v-for="(columnConcept, columnIndex) in columnConcepts[
-                  tableConcept.conceptName
-                ]"
-                :key="columnConcept.conceptName"
+              <li :class="{ 'column-concept-hoverable': areColumnsSelectable }" v-if="graphMetadata.columns.size"
+                v-for="(columnConcept, columnIndex) in graphMetadata.columns.get(tableConcept.conceptName)" :key="columnConcept.conceptName"
               >
-                <div class="tf-nc conceptual-graph-relation" :ref="`${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`">
+                <div class="tf-nc conceptual-graph-relation" :id="`${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`">
                   <span class="concept-name">{{ columnConcept.relation }}</span>
                 </div>
-                <div 
+                <div :id="`${tableConcept.conceptName}_columnConcept_${columnIndex}`"
                   class="tf-nc" :class="{ 'column-concept--selectable': areColumnsSelectable }"
-                  :style="{ backgroundColor: columnConcept.color }" 
-                  :ref="`${tableConcept.conceptName}_columnConcept_${columnIndex}`"
                   @click.prevent="selectColumn(columnConcept)"
                   >
                   <span class="concept-type"
@@ -61,32 +56,27 @@
                     <v-icon>mdi-close</v-icon>
                   </v-btn>
                 </div>
-                <ul v-if="dataTypeConcepts">
+                <ul v-if="graphMetadata.dataTypes.size">
                   <!-- Type level -->
                   <li>
-                    <div class="tf-nc conceptual-graph-relation" :ref="`${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`">
+                    <div class="tf-nc conceptual-graph-relation" 
+                      :ref="`${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`"
+                      :id="`${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`">
                       <span class="concept-name">hasType</span>
                     </div>
-                    <div class="tf-nc last" :ref="`${tableConcept.conceptName}_typeConcept_${columnIndex}`">
-                      <span class="concept-type"
-                        >{{
-                          dataTypeConcepts[columnConcept.conceptName]
-                            .conceptType
-                        }}:</span
-                      >
-                      <span class="concept-name">{{
-                        dataTypeConcepts[columnConcept.conceptName].conceptName
-                      }}</span>
+                    <div class="tf-nc last" :id="`${tableConcept.conceptName}_typeConcept_${columnIndex}`">
+                      <span class="concept-type">{{ graphMetadata.dataTypes.get(columnConcept.conceptName)?.conceptType }}:</span>
+                      <span class="concept-name">{{ graphMetadata.dataTypes.get(columnConcept.conceptName)?.conceptName }}</span>
                     </div>
                   </li>
                 </ul>
-                <ul v-show="columnIndex === 0 && isQueryGraph && queryConcepts[whereClause].columns.length">
+                <ul v-show="columnIndex === 0 && isQueryGraph && queryConcepts && queryConcepts[QueryClause.WHERE].columns.length">
                   <li>
                     <div class="tf-nc conceptual-graph-relation" ref="filter">
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[whereClause].conceptRelation }}</span>
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptRelation }}</span>
                     </div>
                     <div class="tf-nc" ref="filterReferent">
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[whereClause].conceptReferent }}</span>
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptReferent }}</span>
                     </div>
                   </li>
                 </ul>
@@ -99,141 +89,277 @@
   </div>
 </template>
 
-<script lang="js">
-import constants from "@/constants/constants";
-import { QueryClause } from "../../../types/types";
+<script setup lang="ts">
+import { Ref, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
+import constants from '../../../constants/constants';
+import { QueryClause, Concept, GraphMetadata } from "../../../types/types";
 
-import arrowCreate, { DIRECTION } from 'arrows-svg';
+import arrowCreate from 'arrows-svg';
 
-export default {
-  name: "ConceptualGraph",
-  props: {
-    keyspaceConcept: Object,
-    tableConcepts: Array,
-    columnConcepts: Object,
-    dataTypeConcepts: Object,
-    inverted: Boolean,
-    applyBorder: Boolean,
-    noKeyspace: Boolean,
-    isQueryGraph: Boolean,
-    queryConcepts: Object,
-    areColumnConceptsDeletable: Boolean,
-    areColumnsSelectable: Boolean
-  },
-  data: () => ({
-    arrows: []
-  }),
-  expose: ['drawArrowsForQueryConcepts'],
-  methods: {
-    createArrow: function (sourceNode, targetNode, relatedNode) {
-      const arrow = arrowCreate({
-        from: {
-          node: sourceNode,
-          direction: DIRECTION.BOTTOM
-        }, 
-        to: {
-          node: targetNode, 
-          direction: DIRECTION.TOP,
-        } 
-      });
-      arrow.relatedNode = relatedNode;
-      this.arrows.push(arrow);
-      const elementRef = document.getElementById("conceptualGraph");
-      elementRef.append(arrow.node);
+interface Props {
+  graphMetadata: GraphMetadata
+  inverted?: boolean,
+  applyBorder?: boolean,
+  noKeyspace?: boolean,
+  isQueryGraph?: boolean,
+  queryConcepts?: Object,
+  areColumnConceptsDeletable?: boolean,
+  areColumnsSelectable?: boolean
+};
+
+const props = defineProps<Props>();
+const emit = defineEmits(['select', 'remove']);
+
+const arrows: Ref<any> = ref([]);
+
+const createArrow = (sourceNode: any, targetNode: any, relatedNode: any = null) => {
+  if (!sourceNode || !targetNode) {
+    return;
+  }
+  const arrow = arrowCreate({
+    from: {
+      node: sourceNode,
+      direction: 'bottom'
     },
-    doesGraphHaveOnlyTableConcept: function (tableConcept) {
-      return tableConcept && this.columnConcepts && this.columnConcepts[tableConcept.conceptName].length === 0;
-    },
-    drawArrowsForConcepts: function () {
-      for (let tableIndex in this.tableConcepts) {
-        const currentTableConcept = this.tableConcepts[parseInt(tableIndex, 10)];
-        if (!this.noKeyspace) {
-          this.createArrow(this.$refs.keyspaceRelationConcept, this.$refs[`tableConcept_${tableIndex}`][0]);
-        }
-        for (let columnIndex in this.columnConcepts[currentTableConcept.conceptName]) {
-          const currentColumnConcept = this.columnConcepts[currentTableConcept.conceptName][parseInt(columnIndex, 10)];
-          this.createArrow(this.$refs[`tableConcept_${tableIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_columnConceptRelation_${columnIndex}`][0], currentColumnConcept);
-          this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConceptRelation_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`][0], currentColumnConcept);
-          if (this.dataTypeConcepts) {
-            this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], currentColumnConcept);
-            this.createArrow(this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConcept_${columnIndex}`][0], currentColumnConcept);
-          }
-        }
-      }
-    },
-    drawArrowsForQueryConcepts: async function () {
-      await this.$nextTick();
-      if (this.isQueryGraph && this.queryConcepts && this.queryConcepts[QueryClause.WHERE].columns) {
-        const currentTableConcept = this.tableConcepts[0];
-        for (let columnIndex in this.queryConcepts[QueryClause.WHERE].columns) {
-          const columnConcept = this.queryConcepts[QueryClause.WHERE].columns[parseInt(columnIndex)];
-          const index = this.columnConcepts[currentTableConcept.conceptName].findIndex(x => x.conceptName === columnConcept.conceptName);
-          this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConcept_${index}`][0], this.$refs.filter[0]);
-          this.createArrow(this.$refs.filter[0], this.$refs.filterReferent[0]);
-        }
-      }
-    },
-    drawInitialArrows: function () {
-      if (!this.noKeyspace && this.keyspaceConcept) {
-        this.createArrow(this.$refs.keyspaceConcept, this.$refs.keyspaceRelationConcept);
-      } 
-      this.drawArrowsForConcepts();
-    },
-    removeArrows: function (relatedNode = null) {
-      if (!relatedNode) {
-        this.arrows.forEach(arrow => arrow.clear());
-      } else {
-        this.arrows.forEach(arrow => {
-          if (arrow.relatedNode === relatedNode) {
-            arrow.clear();
-          }
-        })
-      }
-    },
-    removeColumnConcept: function (tableConcept, columnConcept) {
-      if (columnConcept) {
-        this.$emit('remove', { tableConcept, columnConcept });
-        this.removeArrows(columnConcept);
-      }
-    },
-    selectColumn: function (columnConcept) {
-      this.$emit("select", columnConcept);
+    to: {
+      node: targetNode,
+      direction: 'top'
     }
-  },
-  computed: {
-    keyspaceRelation: function () {
-      return this.tableConcepts.length > 1 ? constants.relationTypes.hasMore : constants.relationTypes.has;
-    },
-    columnRelation: function () {
-      return constants.relationTypes.hasType;
-    },
-    whereClause: function () {
-      return QueryClause.WHERE;
+  });
+  arrow.relatedNode = relatedNode;
+  arrows.value.push(arrow);
+  const elementRef = document.getElementById("conceptualGraph");
+  if (elementRef) {
+    elementRef.append(arrow.node);
+  }
+};
+
+const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
+  return tableConcept && props.graphMetadata.tables.length && props.graphMetadata.columns && props.graphMetadata.columns.size;
+}
+
+const drawArrowsForConcepts = () => {
+  for (let tableIndex in props.graphMetadata?.tables) {
+    const currentTableConcept = props.graphMetadata.tables[parseInt(tableIndex, 10)];
+    let tableConceptElement: HTMLElement | null = document.getElementById(`tableConcept_${tableIndex}`);
+
+    if (!props.noKeyspace) {
+      const keyspaceRelationElement: HTMLElement | null = document.getElementById(`tableConcept_${tableIndex}`);
+      createArrow(keyspaceRelationElement, tableConceptElement);
     }
-  },
-  updated: function () {
-    this.removeArrows();
-    this.drawInitialArrows();
-  },
-  mounted: function () {
-    this.drawInitialArrows();
-  },
-  unmounted: function () {
-    this.removeArrows();
-  },
-  watch: {
-    tableConcepts: function () {
-      this.removeArrows();
-      this.drawArrowsForConcepts();
-    },
-    keyspaceConcept: function () {
-      this.removeArrows();
-    },
-    tableConcepts: function () {
-      this.removeArrows();
+
+    for (let columnIndex in props.graphMetadata.columns.get(currentTableConcept.conceptName)) {
+      const currentColumnConcept: Concept | undefined = props.graphMetadata.columns.get(currentTableConcept.conceptName)?.at(parseInt(columnIndex, 10));
+
+      const columnConceptRelationElement: HTMLElement | null = document.getElementById(`${currentTableConcept.conceptName}_columnConceptRelation_${columnIndex}`);
+      const columnConceptElement: HTMLElement | null = document.getElementById(`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`);
+
+      createArrow(tableConceptElement, columnConceptRelationElement, currentColumnConcept);
+      createArrow(columnConceptRelationElement, columnConceptElement, currentColumnConcept);
+
+      if (props.graphMetadata.dataTypes.size) {
+        const typeConceptRelationElement: HTMLElement | null = document.getElementById(`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`);
+        const typeConceptElement: HTMLElement | null = document.getElementById(`${currentTableConcept.conceptName}_typeConcept_${columnIndex}`);
+
+        createArrow(columnConceptElement, typeConceptRelationElement, currentColumnConcept);
+        createArrow(typeConceptRelationElement, typeConceptElement, currentColumnConcept);
+      }
     }
   }
-}
+};
+
+const drawInitialArrows = () => {
+  if (!props.noKeyspace && props.graphMetadata?.keyspace) {
+    const keyspaceConceptElement: HTMLElement | null = document.getElementById('keyspaceConcept');
+    const keyspaceRelationConceptElement: HTMLElement | null = document.getElementById('keyspaceRelationConcept');
+    createArrow(keyspaceConceptElement, keyspaceRelationConceptElement);
+  } 
+  drawArrowsForConcepts();
+};
+
+const removeArrows = (relatedConcept: Concept | null = null) => {
+  if (!relatedConcept) {
+    arrows.value.forEach((arrow: any) => arrow.clear());
+  } else {
+    arrows.value.forEach((arrow: any) => {
+      if (arrow.relatedNode === relatedConcept) {
+        arrow.clear();
+      }
+    });
+  }
+};
+
+const removeColumnConcept = (tableConcept: Concept, columnConcept: Concept) => {
+  if (columnConcept) {
+    removeArrows(columnConcept);
+    emit('remove', { tableConcept, columnConcept });
+  }
+};
+
+const selectColumn = (columnConcept: Concept) => {
+  emit("select", columnConcept);
+};
+
+watch(() => props.graphMetadata.tables, () => {
+  removeArrows();
+  drawArrowsForConcepts();
+});
+
+watch(() => props.graphMetadata.keyspace, () => {
+  removeArrows();
+});
+
+onMounted(() => {
+  drawInitialArrows();
+});
+
+onUpdated(() => {
+  removeArrows();
+  drawInitialArrows();
+});
+
+onUnmounted(() => {
+  removeArrows();
+});
+
+defineExpose({
+  removeArrows,
+  drawArrowsForConcepts,
+});
+
+
+// export default {
+//   name: "ConceptualGraph",
+//   props: {
+//     keyspaceConcept: Object,
+//     tableConcepts: Array,
+//     columnConcepts: Object,
+//     dataTypeConcepts: Object,
+//     inverted: Boolean,
+//     applyBorder: Boolean,
+//     noKeyspace: Boolean,
+//     isQueryGraph: Boolean,
+//     queryConcepts: Object,
+//     areColumnConceptsDeletable: Boolean,
+//     areColumnsSelectable: Boolean
+//   },
+//   data: () => ({
+//     arrows: []
+//   }),
+//   expose: ['drawArrowsForQueryConcepts'],
+//   methods: {
+//     createArrow: function (sourceNode, targetNode, relatedNode) {
+//       const arrow = arrowCreate({
+//         from: {
+//           node: sourceNode,
+//           direction: DIRECTION.BOTTOM
+//         }, 
+//         to: {
+//           node: targetNode, 
+//           direction: DIRECTION.TOP,
+//         } 
+//       });
+//       arrow.relatedNode = relatedNode;
+//       this.arrows.push(arrow);
+//       const elementRef = document.getElementById("conceptualGraph");
+//       elementRef.append(arrow.node);
+//     },
+//     doesGraphHaveOnlyTableConcept: function (tableConcept) {
+//       return tableConcept && this.columnConcepts && this.columnConcepts[tableConcept.conceptName].length === 0;
+//     },
+//     drawArrowsForConcepts: function () {
+//       for (let tableIndex in this.tableConcepts) {
+//         const currentTableConcept = this.tableConcepts[parseInt(tableIndex, 10)];
+//         if (!this.noKeyspace) {
+//           this.createArrow(this.$refs.keyspaceRelationConcept, this.$refs[`tableConcept_${tableIndex}`][0]);
+//         }
+//         for (let columnIndex in this.columnConcepts[currentTableConcept.conceptName]) {
+//           const currentColumnConcept = this.columnConcepts[currentTableConcept.conceptName][parseInt(columnIndex, 10)];
+//           this.createArrow(this.$refs[`tableConcept_${tableIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_columnConceptRelation_${columnIndex}`][0], currentColumnConcept);
+//           this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConceptRelation_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`][0], currentColumnConcept);
+//           if (this.dataTypeConcepts) {
+//             this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConcept_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], currentColumnConcept);
+//             this.createArrow(this.$refs[`${currentTableConcept.conceptName}_typeConceptRelation_${columnIndex}`][0], this.$refs[`${currentTableConcept.conceptName}_typeConcept_${columnIndex}`][0], currentColumnConcept);
+//           }
+//         }
+//       }
+//     },
+//     drawArrowsForQueryConcepts: async function () {
+//       await this.$nextTick();
+//       if (this.isQueryGraph && this.queryConcepts && this.queryConcepts[QueryClause.WHERE].columns) {
+//         const currentTableConcept = this.tableConcepts[0];
+//         for (let columnIndex in this.queryConcepts[QueryClause.WHERE].columns) {
+//           const columnConcept = this.queryConcepts[QueryClause.WHERE].columns[parseInt(columnIndex)];
+//           const index = this.columnConcepts[currentTableConcept.conceptName].findIndex(x => x.conceptName === columnConcept.conceptName);
+//           this.createArrow(this.$refs[`${currentTableConcept.conceptName}_columnConcept_${index}`][0], this.$refs.filter[0]);
+//           this.createArrow(this.$refs.filter[0], this.$refs.filterReferent[0]);
+//         }
+//       }
+//     },
+//     drawInitialArrows: function () {
+//       if (!this.noKeyspace && this.keyspaceConcept) {
+//         this.createArrow(this.$refs.keyspaceConcept, this.$refs.keyspaceRelationConcept);
+//       } 
+//       this.drawArrowsForConcepts();
+//     },
+//     removeArrows: function (relatedNode = null) {
+//       if (!relatedNode) {
+//         this.arrows.forEach(arrow => arrow.clear());
+//       } else {
+//         this.arrows.forEach(arrow => {
+//           if (arrow.relatedNode === relatedNode) {
+//             arrow.clear();
+//           }
+//         })
+//       }
+//     },
+//     removeColumnConcept: function (tableConcept, columnConcept) {
+//       if (columnConcept) {
+//         this.$emit('remove', { tableConcept, columnConcept });
+//         this.removeArrows(columnConcept);
+//       }
+//     },
+//     selectColumn: function (columnConcept) {
+//       this.$emit("select", columnConcept);
+//     }
+//   },
+//   computed: {
+//     keyspaceRelation: function () {
+//       return this.tableConcepts.length > 1 ? constants.relationTypes.hasMore : constants.relationTypes.has;
+//     },
+//     columnRelation: function () {
+//       return constants.relationTypes.hasType;
+//     },
+//     whereClause: function () {
+//       return QueryClause.WHERE;
+//     }
+//   },
+//   updated: function () {
+//     this.removeArrows();
+//     this.drawInitialArrows();
+//   },
+//   mounted: function () {
+//     this.drawInitialArrows();
+//   },
+//   unmounted: function () {
+//     this.removeArrows();
+//   },
+//   watch: {
+//     tableConcepts: function () {
+//       this.removeArrows();
+//       this.drawArrowsForConcepts();
+//     },
+//     keyspaceConcept: function () {
+//       this.removeArrows();
+//     },
+//     tableConcepts: function () {
+//       this.removeArrows();
+//     }
+//   },
+//   created: function () {
+//     console.log(this.columnConcepts);
+//   }
+//}
 </script>
 
 <style lang="sass">

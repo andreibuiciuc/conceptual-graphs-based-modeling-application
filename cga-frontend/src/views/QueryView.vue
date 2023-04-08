@@ -25,24 +25,18 @@
     </div>
     <div class="query-canvas-wrapper">
       <div class="query-canvas">
-        <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress"
+        <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress" ref="tableGraph"
+          :graph-metadata="tableMetadata"
           :are-columns-selectable="true"
-          :keyspace-concept="tableMetadata.keyspace"
-          :table-concepts="tableMetadata.tables"
-          :column-concepts="tableMetadata.columns"
-          :data-type-concepts="tableMetadata.dataTypes"
           @select="addColumnToQuery" />
         <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
       </div>
       <div class="query-canvas">
         <conceptual-graph ref="queryGraph"
           v-if="queryMetadata && queryMetadata.columns"
+          :graph-metadata="queryMetadata"
           :are-columns-selectable="false"
           :areColumnConceptsDeletable="true"
-          :keyspace-concept="queryMetadata.keyspace"
-          :table-concepts="queryMetadata.tables"
-          :column-concepts="queryMetadata.columns"
-          :data-type-concepts="queryMetadata.dataTypes"
           :query-concepts="queryConcepts"
           :is-query-graph="true"
           @remove="removeColumnFromQuery" />
@@ -93,7 +87,7 @@
       <div class="query-panel-container">
         <div class="query-panel-item">
           <query-items 
-            v-if="queryMetadata.columns" 
+            v-if="whereClauseItems.length" 
             :clause="QueryClause.WHERE" :items="whereClauseItems" 
             :columns="columnConcepts" 
             :operators="constants.cqlOperators"
@@ -134,7 +128,7 @@
 
 <script setup lang="ts">
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryItem, QueryConcepts } from '../types/types';
+import { Concept, QueryClause, QueryItem, QueryConcepts, ColumnMetadata, GraphMetadata } from '../types/types';
 
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
@@ -146,12 +140,18 @@ import QueryItems from '../components/design/QueryItems.vue';
 import { Ref, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
 
-type metadata = { [key: string]: Concept | Concept[] | { [key: string]: Concept[] } | { [key: string]: Concept } | null };
+const defaultGraphMetadata: GraphMetadata = {
+  keyspace: constants.defaultConcept,
+  tables: [],
+  columns: new Map<string, Concept[]>(),
+  dataTypes: new Map<string, Concept>()
+};
 
+const tableGraph = ref();
 const queryGraph = ref();
 
-const tableMetadata: Ref<any> = ref({ keyspace: {}, tables: [], columns: {}, dataTypes: {} });
-const queryMetadata: Ref<any> = ref({ keyspace: {}, tables: [], columns: null, dataTypes: null });
+const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
+const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
 
 const isQueryOptionsListOpened: Ref<boolean> = ref(false);
@@ -166,7 +166,7 @@ const notificationStore = useNotificationStore();
 const { currentKeyspace } = storeToRefs(connectionStore); 
 
 // Retrieve and parsing of the metadata
-const availableTables: Ref<any[]> = ref([]);
+const availableTables: Ref<string[]> = ref([]);
 const selectedTable: Ref<string> = ref(constants.inputValues.empty);
 const isTableRetrieveInProgress: Ref<boolean> = ref(false);
 
@@ -175,26 +175,30 @@ const changeTable = (newTable: string): void => {
   retrieveTableMetadata();
 };
 
-const getColumnsMetadataForTableGraph = (metadata): any => {
-  let columns: { [key: string]: Concept[] } = { [selectedTable.value]: [] };
-  let dataTypes = {};
+const getColumnsMetadataForTableGraph = (metadata: ColumnMetadata[]) => {
+  let columns: Map<string, Concept[]> = new Map();
+  let dataTypes: Map<string, Concept> = new Map();
+  columns.set(selectedTable.value, []);
   
+  const tableColumnConcepts = columns.get(selectedTable.value);
   metadata.forEach(columnData => {
     const relation = getRelationTypeForColumnConcept(columnData.column_kind, columnData.clustering_order);
     const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation };
-    columns[selectedTable.value].push(columnConcept);
-    dataTypes[columnData.column_name] = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };        
+    tableColumnConcepts?.push(columnConcept);
+
+    const dataTypeConcept = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };
+    dataTypes.set(columnData.column_name, dataTypeConcept);
   });
 
   return { columns, dataTypes };
 }
   
-const parseTableMetadata = (metadata) => {
+const parseTableMetadata = (metadata: ColumnMetadata[]) => {
   const tables = [{ conceptName: selectedTable.value, conceptType: constants.conceptTypes.table }];
   const {columns, dataTypes } = getColumnsMetadataForTableGraph(metadata);
 
   setConceptualGraphMetadata(tableMetadata, tables, columns, dataTypes);
-  setConceptualGraphMetadata(queryMetadata, tables, {[selectedTable.value]: [] });
+  setConceptualGraphMetadata(queryMetadata, tables);
   
   isTableGraphReady.value = true;
 };
@@ -230,33 +234,39 @@ const retrieveTableMetadata = async (): Promise<void> => {
   isTableRetrieveInProgress.value = false;
 };
 
-const setConceptualGraphMetadata = (metadata: any, tables: Concept[] = [], 
-                                    columns: { [key: string]: Concept[] } | null = null, 
-                                    dataTypes: {[key: string]: Concept } | null = null): void => {
+const setConceptualGraphMetadata = (metadata: Ref<GraphMetadata>, tables: Concept[] = [], 
+                                    columns: Map<string, Concept[]> = defaultGraphMetadata.columns, 
+                                    dataTypes: Map<string, Concept> = defaultGraphMetadata.dataTypes): void => {
   whereClauseItems.value = [];
-  metadata.value.keyspace = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
+  metadata.value.keyspace = { conceptName: currentKeyspace.value ? currentKeyspace.value : constants.inputValues.empty, conceptType: constants.conceptTypes.keyspace };
   metadata.value.tables = JSON.parse(JSON.stringify(tables));
-  metadata.value.columns = { ... columns };
+  metadata.value.columns = new Map(JSON.parse(JSON.stringify([... columns])));
   if (metadata === tableMetadata) {
-    metadata.value.dataTypes = { ... dataTypes };
+    metadata.value.dataTypes = new Map(dataTypes);
   } else {
-    metadata.value.dataTypes = null;
+    metadata.value.dataTypes = defaultGraphMetadata.dataTypes;
   }
 }
 
 // Query builder functionalities
 const isQueryActionDisabled = computed(() => {
-  return !currentKeyspace.value || !tableMetadata.value.tables.length || !tableMetadata.value.columns[tableMetadata.value.tables[0].conceptName].length;
+  return !currentKeyspace.value || !tableMetadata.value.tables.length || !tableMetadata.value.columns.size;
 })
 
 const columnConcepts = computed(() => {
-  return queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName];
+  return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
 })
 
 const addColumnToQuery = (columnConcept: Concept): void => {
   const isColumnAlreadyAdded = checkIfColumnIsAlreadyAdded(columnConcept);
   if (!isColumnAlreadyAdded) {
-    queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName].push({ ... columnConcept, relation: constants.relationTypes.has });
+    const conceptToAdd = { ... columnConcept, relation: constants.relationTypes.has };
+    const columns = queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName);
+    if (!columns) {
+      queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, [conceptToAdd]);
+    } else {
+      columns?.push({ ... columnConcept, relation: constants.relationTypes.has });
+    }
   } else {
     notificationStore.setUpSnackbarState(false, "Column already added to the query");
   }
@@ -265,7 +275,6 @@ const addColumnToQuery = (columnConcept: Concept): void => {
 const addQueryConcept = (queryClauseData: any) => {
   if (queryClauseData.clause === QueryClause.WHERE) {
     queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
-    queryGraph.value.drawArrowsForQueryConcepts();
   }
 };
 
@@ -274,11 +283,14 @@ const addWhereClauseToQuery = () => {
 };
 
 const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
-  return queryMetadata.value.columns[queryMetadata.value.tables[0].conceptName].some(column => column.conceptName === columnConcept.conceptName);
+  if (queryMetadata.value.columns.size && queryMetadata.value.columns.has(queryMetadata.value.tables[0].conceptName)) {
+    return queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName)!.some(column => column.conceptName === columnConcept.conceptName);
+  }
+  return false;
 };
 
 const clearQueryMetadata = () => {
-  queryMetadata.value = { keyspace: {}, tables: [], columns: null, dataTypes: null };
+  queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, []);
 }
 
 const removeClause = (clauseObject: any): void => {
@@ -297,9 +309,9 @@ const removeClause = (clauseObject: any): void => {
 const removeColumnFromQuery = (columnMetadata) => {
   if (columnMetadata) {
     const tableConceptName = queryMetadata.value.tables[0].conceptName;
-    const columnConceptIndex = queryMetadata.value.columns[tableConceptName].findIndex(x => x.conceptName === columnMetadata.columnConcept.conceptName);
+    const columnConceptIndex = queryMetadata.value.columns.get(tableConceptName)!.findIndex(x => x.conceptName === columnMetadata.columnConcept.conceptName);
     if (columnConceptIndex > -1) {
-      queryMetadata.value.columns[tableConceptName].splice(columnConceptIndex, 1);
+      queryMetadata.value.columns.get(tableConceptName)!.splice(columnConceptIndex, 1);
       delete queryConcepts.value[columnMetadata.columnConcept.conceptName];
     }
   }
@@ -307,12 +319,8 @@ const removeColumnFromQuery = (columnMetadata) => {
 
 // Watches
 watch(currentKeyspace, (newKeyspace, _) => {
-  queryMetadata.value.keyspace = newKeyspace;
+  queryMetadata.value.keyspace = Object.assign({}, newKeyspace);
 });
-
-// Created
-tableMetadata.value = { keyspace: {}, tables: [], columns: {}, dataTypes: {} };
-queryMetadata.value = { keyspace: {}, tables: [], columns: null, dataTypes: null };
 
 if (currentKeyspace.value) {
   retrieveAvailableTables();
