@@ -27,13 +27,13 @@
     <section class="summary-section">
       <div class="summary-container">
         <h1>Conceptual Graphs are a great visualization tool</h1>
-        <ConceptualGraph
+        <!-- <ConceptualGraph
           :inverted="true"
           :keyspaceConcept="dummyConceptualGraph.keyspaceConcept"
           :tableConcepts="dummyConceptualGraph.tableConcepts"
           :columnConcepts="dummyConceptualGraph.columnConcepts"
           :dataTypeConcepts="dummyConceptualGraph.dataTypeConcepts"
-        />
+        /> -->
       </div>
     </section>
     <div class="delimiter-negative"></div>
@@ -143,6 +143,10 @@ const dummyCQLCommands = computed(() => {
 
   .authentication-container
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+    img
+      width: 479px
+      height: 767px
 
     .auth-activator .v-card-text
         padding: 0

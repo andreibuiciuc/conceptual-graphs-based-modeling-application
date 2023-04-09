@@ -1,59 +1,62 @@
 // Authentication types
 interface LoginCredentials {
-    email: string,
+    email: string
     password: string
 };
 
 interface RegisterCredentials extends LoginCredentials {
-    firstname: string,
-    lastname: string,
+    firstname: string
+    lastname: string
 };
 
 // Conceptual Graphs types
 interface Concept {
-    conceptName: string,
+    conceptName: string
     conceptType: string
     relation?: string
+    columnKind?: string
 };
 
 interface GraphMetadata {
-    keyspace: Concept,
-    tables: Concept[],
-    columns: Map<string, Concept[]>,
+    keyspace: Concept
+    tables: Concept[]
+    columns: Map<string, Concept[]>
     dataTypes: Map<string, Concept>
 };
 
 interface ColumnMetadata {
-    column_name: string,
-    column_kind: string,
-    column_type: string,
+    column_name: string
+    column_kind: string
+    column_type: string
     clustering_order: string
 };
 
 enum QueryClause {
     WHERE = "where",
     ORDER_BY = "orderBy",
-    GROUP_BY = "groupBy"
+    GROUP_BY = "groupBy",
 };
 
 interface QueryConcepts {
     [QueryClause.WHERE]: {
-        conceptReferent: string,
-        conceptRelation: string,
+        conceptReferent: string
+        conceptRelation: string
         columns: Concept[]
     }
 };
 
 interface QueryItem {
-    column: string,
-    relation?: string,
+    column: string
+    relation?: string
     value?: string 
+    valueSelect?: string,
+    tooltip?: string
     toQuery?: boolean
 };
 
 // Utility types
 interface Command {
-    lineContent: string,
+    lineContent: string
     lineNumber: number
 };
 

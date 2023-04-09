@@ -3,7 +3,7 @@
     <div class="query-section">
     <div class="header-container elevation-1">
       <div>
-        <span>Query Design</span>
+        <span>query design</span>
       </div>
       <div class="header-actions">
         <v-select v-model="selectedTable"
@@ -16,10 +16,10 @@
         >
         </v-select>
         <v-btn variant="text">
-          Save
+          save
         </v-btn>
         <v-btn variant="text">
-          Generate Query
+          generate Query
         </v-btn>
       </div>
     </div>
@@ -50,39 +50,45 @@
       <div class="query-panel-header">
         <div class="query-panel-header-info">
           <div class="info-block">
-            <span>Keyspace:</span>
+            <span>keyspace:</span>
             <span v-if="currentKeyspace">{{ currentKeyspace }}</span>
             <template v-else>
               <v-icon color="red">mdi-alert-box</v-icon>
-              <span>No keyspace selected</span>
+              <span>no keyspace selected</span>
             </template>
           </div>
           <div class="info-block">
-            <span>Table:</span>
+            <span>table:</span>
             <span v-if="isTableGraphReady">{{ tableMetadata.tables[0]?.conceptName }}</span>
             <template v-else>
               <v-icon color="red">mdi-alert-box</v-icon>
-              <span>No table concept selected</span>
+              <span>no table concept selected</span>
             </template>
           </div>
         </div>
         <div class="query-panel-header-actions">
-          <v-btn
-            :disabled="isQueryActionDisabled" 
-            variant="outlined">
-            Run
+          <v-btn 
+            :disabled="isQueryActionDisabled"
+            variant="outlined"
+            @click.prevent="isQueryOptionsListOpened = true">
+            add to query
           </v-btn>
           <v-btn 
             :disabled="isQueryActionDisabled"
             variant="text"
             @click.prevent="clearQueryMetadata">
-            Clear
+            clear
           </v-btn>
           <v-divider vertical></v-divider>
           <v-btn 
             :disabled="isQueryActionDisabled"
             variant="outlined">
-            Command  
+            command  
+          </v-btn>
+          <v-btn
+            :disabled="isQueryActionDisabled" 
+            variant="outlined">
+            run
           </v-btn>
         </div>
       </div>
@@ -91,21 +97,23 @@
         <div class="query-panel-item">
           <query-items 
             v-if="whereClauseItems.length" 
-            :clause="QueryClause.WHERE" :items="whereClauseItems" 
+            :clause="QueryClause.WHERE" 
+            :items="whereClauseItems" 
             :columns="columnConcepts" 
             :operators="constants.cqlOperators"
             @add="addQueryConcept"
             @remove="removeClause">
           </query-items>
+          <query-items
+            v-if="orderByClauseItems.length"
+            :clause="QueryClause.ORDER_BY"
+            :items="orderByClauseItems"
+            :columns="columnConcepts"
+            @add="addQueryConcept"
+            @remove="removeClause"
+          ></query-items>
         </div>
         <div class="query-panel-item">
-          <v-btn 
-            :disabled="isQueryActionDisabled"
-            variant="text"
-            prepend-icon="mdi-plus"
-            @click.prevent="isQueryOptionsListOpened = true">
-            Add to query
-          </v-btn>
           <v-dialog v-model="isQueryOptionsListOpened"
             contained
             absolute
@@ -115,10 +123,9 @@
             >
             <v-card>
               <v-list>
-                <v-list-item @click.prevent="addWhereClauseToQuery">Where</v-list-item>
-                <v-list-item>Group</v-list-item>
-                <v-list-item>Order</v-list-item>
-                <v-list-item>Count</v-list-item>
+                <v-list-item v-for="clause in QueryClause" :key="clause" @click.prevent="addClauseToQuery(clause)">
+                  {{ clause }}
+                </v-list-item>
               </v-list>
             </v-card>
           </v-dialog>
@@ -142,6 +149,7 @@ import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
 import { Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
+import { def } from '@vue/shared';
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -158,7 +166,11 @@ const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMeta
 const isTableGraphReady: Ref<boolean> = ref(false);
 
 const isQueryOptionsListOpened: Ref<boolean> = ref(false);
+
 const whereClauseItems: Ref<QueryItem[]> = ref([]);
+const orderByClauseItems: Ref<QueryItem[]> = ref([]);
+const groupByClauseItems: Ref<QueryItem[]> = ref([]);
+
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept } = useMetadata();
@@ -186,7 +198,7 @@ const getColumnsMetadataForTableGraph = (metadata: ColumnMetadata[]) => {
   const tableColumnConcepts = columns.get(selectedTable.value);
   metadata.forEach(columnData => {
     const relation = getRelationTypeForColumnConcept(columnData.column_kind, columnData.clustering_order);
-    const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation };
+    const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation, columnKind: columnData.column_kind };
     tableColumnConcepts?.push(columnConcept);
 
     const dataTypeConcept = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };
@@ -294,15 +306,26 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
   if (queryClauseData.clause === QueryClause.WHERE) {
     queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
     await nextTick();
-    debugger
     queryGraph.value.removeArrows();
     queryGraph.value.drawArrowsForConcepts();
     queryGraph.value.drawArrowsForQueryConcepts();
   }
 };
 
-const addWhereClauseToQuery = () => {
-  whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
+const addClauseToQuery = (clause: QueryClause): void => {
+  switch (clause) {
+    case QueryClause.WHERE:
+      whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
+      break;
+    case QueryClause.GROUP_BY:
+      break;
+    case QueryClause.ORDER_BY:
+      orderByClauseItems.value.push({ column: constants.inputValues.empty, value: constants.inputValues.empty });
+      break;
+    default:
+      break;
+  }
+  isQueryOptionsListOpened.value = false;
 };
 
 const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
@@ -314,17 +337,21 @@ const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
 
 const clearQueryMetadata = () => {
   queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, []);
-}
+  queryConcepts.value[QueryClause.WHERE].columns = [];
+  queryGraph.value.removeArrows();
+  queryGraph.value.drawInitialArrows();
+  queryGraph.value.drawArrowsForConcepts();
+};
 
 const removeClause = (clauseObject: any): void => {
-  if (clauseObject.clause === QueryClause.WHERE) {
-    const index = whereClauseItems.value.findIndex(x => x.column === clauseObject.item.column);
-    const clause = whereClauseItems.value.find(x => x.column === clauseObject.item.column);
-    if (index > -1 && clause) {
-      whereClauseItems.value.splice(index, 1);
-      if (whereClauseItems.value.length === 0) {
-        delete queryConcepts.value[clause.column];
-      }
+  const clauseArrayReference = clauseObject.clause === QueryClause.WHERE ? whereClauseItems : orderByClauseItems;
+  
+  const index = clauseArrayReference.value.findIndex(x => x.column === clauseObject.item.column);
+  const clause = clauseArrayReference.value.find(x => x.column === clauseObject.item.column);
+  if (index > -1 && clause) {
+    clauseArrayReference.value.splice(index, 1);
+    if (clauseArrayReference.value.length === 0) {
+      delete queryConcepts.value[clause.column];
     }
   }
 }
