@@ -25,15 +25,18 @@
     </div>
     <div class="query-canvas-wrapper">
       <div class="query-canvas">
-        <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress" ref="tableGraph"
+        <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress" 
+          ref="tableGraph"
+          graph-key="tableGraph"
           :graph-metadata="tableMetadata"
           :are-columns-selectable="true"
           @select="addColumnToQuery" />
         <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
       </div>
       <div class="query-canvas">
-        <conceptual-graph ref="queryGraph"
-          v-if="queryMetadata && queryMetadata.columns"
+        <conceptual-graph v-if="queryMetadata && queryMetadata.columns" 
+          ref="queryGraph"
+          graph-key="queryGraph"
           :graph-metadata="queryMetadata"
           :are-columns-selectable="false"
           :areColumnConceptsDeletable="true"
@@ -137,7 +140,7 @@ import { storeToRefs } from 'pinia';
 import { manageRequest } from '../includes/requests';
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
-import { Ref, ref, watch } from 'vue';
+import { Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
 
 const defaultGraphMetadata: GraphMetadata = {
@@ -225,6 +228,18 @@ const retrieveTableMetadata = async (): Promise<void> => {
   if (response && response.data) {
     if (response.data.status === constants.requestStatus.SUCCESS) {
       parseTableMetadata(response.data.table_metadata);
+      isTableRetrieveInProgress.value = false;
+    
+      // Wait for the graph components to be mounted on the DOM,
+      // then draw the arrows between the concepts
+      await nextTick();
+      tableGraph.value.removeArrows();
+      tableGraph.value.drawInitialArrows();
+      tableGraph.value.drawArrowsForConcepts();
+      queryGraph.value.removeArrows();
+      queryGraph.value.drawInitialArrows();
+      queryGraph.value.drawArrowsForConcepts();
+
     } else {
       notificationStore.setUpSnackbarState(false, response.data.message);
     }
@@ -257,7 +272,7 @@ const columnConcepts = computed(() => {
   return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
 })
 
-const addColumnToQuery = (columnConcept: Concept): void => {
+const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
   const isColumnAlreadyAdded = checkIfColumnIsAlreadyAdded(columnConcept);
   if (!isColumnAlreadyAdded) {
     const conceptToAdd = { ... columnConcept, relation: constants.relationTypes.has };
@@ -267,14 +282,22 @@ const addColumnToQuery = (columnConcept: Concept): void => {
     } else {
       columns?.push({ ... columnConcept, relation: constants.relationTypes.has });
     }
+    await nextTick();
+    queryGraph.value.removeArrows();
+    queryGraph.value.drawArrowsForConcepts();
   } else {
     notificationStore.setUpSnackbarState(false, "Column already added to the query");
   }
 };
 
-const addQueryConcept = (queryClauseData: any) => {
+const addQueryConcept = async (queryClauseData: any): Promise<void> => {
   if (queryClauseData.clause === QueryClause.WHERE) {
     queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
+    await nextTick();
+    debugger
+    queryGraph.value.removeArrows();
+    queryGraph.value.drawArrowsForConcepts();
+    queryGraph.value.drawArrowsForQueryConcepts();
   }
 };
 
@@ -319,6 +342,7 @@ const removeColumnFromQuery = (columnMetadata) => {
 
 // Watches
 watch(currentKeyspace, (newKeyspace, _) => {
+  tableMetadata.value.keyspace = Object.assign({}, newKeyspace)
   queryMetadata.value.keyspace = Object.assign({}, newKeyspace);
 });
 

@@ -1,8 +1,6 @@
 <template>
-  <conceptual-graph
-    :graph-metadata="graphMetadata"
-    :inverted="false">
-  </conceptual-graph>
+  <v-progress-circular indeterminate v-if="isKeyspaceRetrieveInProgress" />
+  <conceptual-graph graph-key="keyspaceGraph" :graph-metadata="graphMetadata" v-else />
 </template>
 
 <script setup lang="ts">
@@ -28,11 +26,13 @@ const defaultGraphMetadata: GraphMetadata = {
 };
 
 const graphMetadata: Ref<GraphMetadata> = ref(defaultGraphMetadata);
+const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
 
 const notificationStore = useNotificationStore();
 const { getRelationTypeForColumnConcept } = useMetadata();
 
 const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
+  resetKeyspaceMetadata();
   const keyspaceConcept = {
     conceptType: constants.conceptTypes.keyspace,
     conceptName: keyspaceMetadata.keyspace_name
@@ -60,11 +60,17 @@ const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
 };
 
 const resetKeyspaceMetadata = (): void => {
-  graphMetadata.value = Object.assign({}, defaultGraphMetadata);
+  const defaultConcept = { conceptName: props.selectedKeyspace, conceptType: constants.conceptTypes.keyspace };
+  graphMetadata.value.keyspace = { ... defaultConcept };
+  graphMetadata.value.tables = [];
+  graphMetadata.value.columns = new Map<string, Concept[]>();
+  graphMetadata.value.dataTypes = new Map<string, Concept>();
 };
 
 const retrieveKeyspaceMetadata = async (): Promise<void> => {
   if (props.selectedKeyspace) {
+    isKeyspaceRetrieveInProgress.value = true;
+
     resetKeyspaceMetadata();
     const response = await manageRequest(constants.requestTypes.GET, "keyspace", { keyspace_name: props.selectedKeyspace });
     
@@ -77,6 +83,8 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
     } else {
       notificationStore.setUpSnackbarState(false, "Unexpected error occured.");
     }
+
+    isKeyspaceRetrieveInProgress.value = false;
   }
 };
 
