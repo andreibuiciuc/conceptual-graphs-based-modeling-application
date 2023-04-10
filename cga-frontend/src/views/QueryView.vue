@@ -3,24 +3,17 @@
     <div class="query-section">
     <div class="header-container elevation-1">
       <div>
-        <span>query design</span>
+        <span>cassandra query design</span>
       </div>
       <div class="header-actions">
-        <v-select v-model="selectedTable"
-          variant="plain"
+        <Dropdown v-model="selectedTable"
+          placeholder="table"
           :disabled="!currentKeyspace"
-          :hide-details="true"
-          :items="availableTables"
-          :loading="isTableRetrieveInProgress"
-          @update:modelValue="changeTable"
-        >
-        </v-select>
-        <v-btn variant="text">
-          save
-        </v-btn>
-        <v-btn variant="text">
-          generate Query
-        </v-btn>
+          :options="availableTables"
+          @change="changeTable">
+        </Dropdown>
+        <Button label="save" outlined severity="primary" />
+        <Button label="generate query" outlined severity="primary"></Button>
       </div>
     </div>
     <div class="query-canvas-wrapper">
@@ -53,7 +46,7 @@
             <span>keyspace:</span>
             <span v-if="currentKeyspace">{{ currentKeyspace }}</span>
             <template v-else>
-              <v-icon color="red">mdi-alert-box</v-icon>
+              <i class="pi pi-exclamation-circle" style="color: red; font-size: 1.25rem;"></i>
               <span>no keyspace selected</span>
             </template>
           </div>
@@ -61,35 +54,22 @@
             <span>table:</span>
             <span v-if="isTableGraphReady">{{ tableMetadata.tables[0]?.conceptName }}</span>
             <template v-else>
-              <v-icon color="red">mdi-alert-box</v-icon>
+              <i class="pi pi-exclamation-circle" style="color: red; font-size: 1.25rem;"></i>
               <span>no table concept selected</span>
             </template>
           </div>
         </div>
         <div class="query-panel-header-actions">
-          <v-btn 
+          <Dropdown v-model="selectedClauseType"
+            placeholder="add to query" 
             :disabled="isQueryActionDisabled"
-            variant="outlined"
-            @click.prevent="isQueryOptionsListOpened = true">
-            add to query
-          </v-btn>
-          <v-btn 
-            :disabled="isQueryActionDisabled"
-            variant="text"
-            @click.prevent="clearQueryMetadata">
-            clear
-          </v-btn>
-          <v-divider vertical></v-divider>
-          <v-btn 
-            :disabled="isQueryActionDisabled"
-            variant="outlined">
-            command  
-          </v-btn>
-          <v-btn
-            :disabled="isQueryActionDisabled" 
-            variant="outlined">
-            run
-          </v-btn>
+            :options="[QueryClause.WHERE, QueryClause.GROUP_BY, QueryClause.ORDER_BY]"
+            @change="addClauseToQuery(selectedClauseType)"
+            ></Dropdown>
+          <Button label="clear" text severity="secondary" :disabled="isQueryActionDisabled" @click="clearQueryMetadata" />
+          <Divider layout="vertical" />
+          <Button label="command" outlined severity="primary" :disabled="isQueryActionDisabled" />
+          <Button label="run" outlined severity="primary" :disabled="isQueryActionDisabled" />
         </div>
       </div>
       <v-divider></v-divider>
@@ -111,23 +91,6 @@
             @add="addQueryConcept"
             @remove="removeClause"
           ></query-items>
-        </div>
-        <div class="query-panel-item">
-          <v-dialog v-model="isQueryOptionsListOpened"
-            contained
-            absolute
-            width="100px"
-            class="query-options-list-card"
-            elevation="4"
-            >
-            <v-card>
-              <v-list>
-                <v-list-item v-for="clause in QueryClause" :key="clause" @click.prevent="addClauseToQuery(clause)">
-                  {{ clause }}
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-dialog>
         </div>
       </div>
   </div>
@@ -163,7 +126,7 @@ const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMeta
 const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
 
-const isQueryOptionsListOpened: Ref<boolean> = ref(false);
+const selectedClauseType: Ref<QueryClause | null> = ref(null);
 
 const whereClauseItems: Ref<QueryItem[]> = ref([]);
 const orderByClauseItems: Ref<QueryItem[]> = ref([]);
@@ -183,8 +146,8 @@ const availableTables: Ref<string[]> = ref([]);
 const selectedTable: Ref<string> = ref(constants.inputValues.empty);
 const isTableRetrieveInProgress: Ref<boolean> = ref(false);
 
-const changeTable = (newTable: string): void => {
-  selectedTable.value = newTable;
+const changeTable = (newTable: any): void => {
+  selectedTable.value = newTable.value;
   retrieveTableMetadata();
 };
 
@@ -311,7 +274,8 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
   }
 };
 
-const addClauseToQuery = (clause: QueryClause): void => {
+const addClauseToQuery = (clause: QueryClause | null): void => {
+  selectedClauseType.value = null;
   switch (clause) {
     case QueryClause.WHERE:
       whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty, chipValues: null, currentChipValue: '' });
@@ -324,7 +288,6 @@ const addClauseToQuery = (clause: QueryClause): void => {
     default:
       break;
   }
-  isQueryOptionsListOpened.value = false;
 };
 
 const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
@@ -460,7 +423,7 @@ if (currentKeyspace.value) {
       .query-panel-header-actions
         @include containers.flex-container()
 
-        & > .v-btn, & > .v-divider
+        & > .p-button, & > .v-divider
           margin-left: 10px
 
     .query-panel-container

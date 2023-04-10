@@ -30,6 +30,9 @@ import "primeicons/primeicons.css";
 // PrimeVue
 import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
+import Button from 'primevue/button';
+import Divider from 'primevue/divider';
+import Dropdown from 'primevue/dropdown';
 
 const vuetify = createVuetify({
   components,
@@ -50,7 +53,12 @@ auth.onAuthStateChanged(() => {
     app.use(router);
     app.use(VeeValidatePlugin);
     
-    app.use(PrimeVue);
+    app.use(PrimeVue, { ripple: true });
+
+    app.component('Button', Button);
+    app.component('Dropdown', Dropdown);
+    app.component('Divider', Divider);
+
     app.directive('tooltip', Tooltip);
     app.mount("#app");
   }

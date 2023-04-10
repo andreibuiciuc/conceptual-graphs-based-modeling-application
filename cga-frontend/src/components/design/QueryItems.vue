@@ -20,21 +20,24 @@
                     :options="props.columns" 
                     optionLabel="conceptName" 
                     optionValue="conceptName" 
-                    placeholder="Column"
+                    placeholder="column"
                     @change="changeItem(clause, item)">
                 </Dropdown>
                 <template v-if="clause === QueryClause.WHERE">
                     <Dropdown 
                         v-model="item.relation"
                         :options="item.operators"
-                        placeholder="Operators">
+                        placeholder="operator">
                     </Dropdown>
                     <template v-if="[constants.cqlOperators.IN, constants.cqlOperators.NOT_IN].includes(item.relation!)">
                         <div class="card p-fluid">
                             <Chips v-model="item.chipValues" />
                         </div>
                     </template>
-                    <InputText v-model="item.value" v-else></InputText>
+                    <InputText v-else
+                        v-model="item.value"
+                        placeholder="value">
+                    </InputText>
                 </template>
                 <Dropdown v-else-if="clause === QueryClause.ORDER_BY"
                     v-model="item.valueSelect"
