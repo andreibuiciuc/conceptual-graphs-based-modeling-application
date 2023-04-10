@@ -52,6 +52,9 @@ interface QueryItem {
     valueSelect?: string,
     tooltip?: string
     toQuery?: boolean
+    operators?: string[],
+    currentChipValue?: string,
+    chipValues?: any
 };
 
 // Utility types

@@ -73,12 +73,21 @@ export default {
     ascending: "asc",
     descending: "desc",
   },
-  cqlOperators: [
-    "<", "<=", ">", ">=", "==", "!=", "IN", "NOT IN", "CONTAINS", "DOES NOT CONTAIN"
-  ],
+  cqlOperators: {
+    LESS: '<',
+    LESS_EQUAL: '<=',
+    GREATER: '>',
+    GREATER_EQUAL: ">=",
+    EQUAL: "==",
+    NOT_EQUAL: "!=",
+    IN: "IN",
+    NOT_IN: "NOT_IN",
+    CONTAINS: "CONTAINS",
+    NOT_CONTAINS: "DOES NOT CONTAIN"
+  },
   defaultQueryConcepts: {
     where: {
-      conceptReferent: "TODO",
+      conceptReferent: "",
       conceptRelation: "filter",
       columns: []
     }

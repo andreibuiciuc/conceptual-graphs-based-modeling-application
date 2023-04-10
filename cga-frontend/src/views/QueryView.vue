@@ -100,7 +100,6 @@
             :clause="QueryClause.WHERE" 
             :items="whereClauseItems" 
             :columns="columnConcepts" 
-            :operators="constants.cqlOperators"
             @add="addQueryConcept"
             @remove="removeClause">
           </query-items>
@@ -149,7 +148,6 @@ import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
 import { Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
-import { def } from '@vue/shared';
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -173,7 +171,7 @@ const groupByClauseItems: Ref<QueryItem[]> = ref([]);
 
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
-const { getRelationTypeForColumnConcept } = useMetadata();
+const { getRelationTypeForColumnConcept, getConceptReferentValue } = useMetadata();
 
 // Store state and action mappings
 const connectionStore = useConnectionStore();
@@ -305,6 +303,7 @@ const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
 const addQueryConcept = async (queryClauseData: any): Promise<void> => {
   if (queryClauseData.clause === QueryClause.WHERE) {
     queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
+    queryConcepts.value[QueryClause.WHERE].conceptReferent = getConceptReferentValue(whereClauseItems.value);
     await nextTick();
     queryGraph.value.removeArrows();
     queryGraph.value.drawArrowsForConcepts();
@@ -315,7 +314,7 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
 const addClauseToQuery = (clause: QueryClause): void => {
   switch (clause) {
     case QueryClause.WHERE:
-      whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty });
+      whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty, chipValues: null, currentChipValue: '' });
       break;
     case QueryClause.GROUP_BY:
       break;

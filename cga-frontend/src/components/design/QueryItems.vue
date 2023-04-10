@@ -1,81 +1,66 @@
 <template>
-    <div class="query-panel">
-        <div class="query-panel-title">{{ clause }} clause</div>
-        <div class="query-panel-info">
-            <v-icon >mdi-information</v-icon>
-            <p>{{ informationMessages[clause] }}</p>
-        </div>
-        <div v-for="(item, index) in props.items" class="query-panel-item-clause" :id="`${clause}_item_${index}`" >
-            <v-icon 
-                color="red" 
-                @click.prevent="removeItem(props.clause, item)">
-                mdi-close
-            </v-icon>
-            <span v-if="clause === QueryClause.WHERE" class="item-clause-label">
-                {{ index === 0 ? 'where' : 'and' }}
-            </span>
-            <span v-else-if="clause === QueryClause.ORDER_BY">
-                order
-            </span>
-            <v-select
-                v-model="item.column"
-                density="compact"
-                :hide-details="true"
-                :items="props.columns"
-                item-title="conceptName"
-                item-value="conceptName"
-                variant="outlined"
-                @update:modelValue="changeItem(clause, item)">
-            </v-select>
-            <template v-if="clause === QueryClause.WHERE">
-                <v-select 
-                    v-model="item.relation"
-                    density="compact"
-                    :hide-details="true"
-                    :items="props.operators"
-                    variant="outlined">
-                </v-select>
-                <v-text-field 
-                    v-model="item.value"
-                    density="compact"
-                    :hide-details="true"
-                    variant="outlined"> 
-                </v-text-field>
-            </template>
-            <v-select v-else-if="clause === QueryClause.ORDER_BY"
-                v-model="item.valueSelect"
-                density="compact"
-                :hide-details="true"
-                :items="orderByOptions"
-                variant="outlined">
-            </v-select>
-            <v-icon 
-                :color="item.toQuery ? 'gray' : 'green'" 
-                @click.prevent="addToQuery(props.clause, item)">
-                mdi-check
-            </v-icon>
-            <v-tooltip 
-                :text="item.tooltip" 
-                :key="`${item.column}_tooltip`" 
-                location="right" 
-                attach=".query-panel">
-                <template v-slot:activator="{ props }">
-                    <v-icon v-bind="props">mdi-help</v-icon>
+    <Card class="query-panel shadow-2">
+        <template #subtitle>
+            <div class="flex flex-row">
+                <i class="pi pi-info-circle" style="font-size: 1.25rem;"></i>
+                <p>{{ informationMessages[clause] }}</p>
+            </div>
+        </template>
+        <template #content>
+            <div v-for="(item, index) in props.items" class="query-panel-item-clause" :id="`${clause}_item_${index}`" >
+                <i class="pi pi-times" style="color: red; font-size: 1.25rem" @click="removeItem(clause, item)"></i>
+                <span v-if="clause === QueryClause.WHERE" class="clause-label">
+                    {{ index === 0 ? 'where' : 'and' }}
+                </span>
+                <span v-else-if="clause === QueryClause.ORDER_BY">
+                    order
+                </span>
+                <Dropdown 
+                    v-model="item.column" 
+                    :options="props.columns" 
+                    optionLabel="conceptName" 
+                    optionValue="conceptName" 
+                    placeholder="Column"
+                    @change="changeItem(clause, item)">
+                </Dropdown>
+                <template v-if="clause === QueryClause.WHERE">
+                    <Dropdown 
+                        v-model="item.relation"
+                        :options="item.operators"
+                        placeholder="Operators">
+                    </Dropdown>
+                    <template v-if="[constants.cqlOperators.IN, constants.cqlOperators.NOT_IN].includes(item.relation!)">
+                        <div class="card p-fluid">
+                            <Chips v-model="item.chipValues" />
+                        </div>
+                    </template>
+                    <InputText v-model="item.value" v-else></InputText>
                 </template>
-            </v-tooltip>
-        </div>
-    </div>
+                <Dropdown v-else-if="clause === QueryClause.ORDER_BY"
+                    v-model="item.valueSelect"
+                    :options="orderByOptions">
+                </Dropdown>
+                <i class="pi pi-check" style="font-size: 1.25rem" @click="addToQuery(clause, item)"></i>
+                <i class="pi pi-question" style="font-size: 1.25rem" v-tooltip="item.tooltip"></i>
+            </div>
+        </template>
+    </Card>
 </template>
 
 <script setup lang="ts">
-import { QueryClause, QueryItem, Concept } from '../../types/types';
 import constants from '../../constants/constants';
+import { useMetadata } from '../../composables/metadata';
+import { QueryClause, QueryItem, Concept } from '../../types/types';
+
+import Card from 'primevue/card';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import Chips from 'primevue/chips';
 
 interface Props {
     clause: QueryClause
     columns?: Concept[]
     items: QueryItem[],
-    operators?: string[]
 };
 
 const orderByOptions = [ "ASCENDING", "DESCENDING" ];
@@ -88,12 +73,16 @@ const informationMessages = {
 
 const tooltips = {
     [QueryClause.WHERE]: {
-        regular: "the partition key columns support only two operators: = and IN"
+        regular: "the partition key columns support only two operators: = and IN (and the negation: != and NOT IN)"
     },
 };
 
+// Props and emits
 const props = defineProps<Props>();
 const emit = defineEmits(['remove', 'add']);
+
+// Data and functions mapped from composables
+const { getCQLWhereOperatorsByColumnKind } = useMetadata();
 
 // Functions related to the item actions
 const addToQuery = (clause: QueryClause, item: QueryItem): void => {
@@ -104,15 +93,14 @@ const addToQuery = (clause: QueryClause, item: QueryItem): void => {
 };
 
 const changeItem = (clause: QueryClause, item: QueryItem): void => {
-    item.tooltip = getTooltip(clause, item);
-};
-
-const getTooltip = (clause: QueryClause, item: QueryItem): string => {
     const currentColumn = props.columns?.find(x => x.conceptName === item.column);
     if (currentColumn) {
-        return tooltips[clause][currentColumn.columnKind];
+        item.operators = getCQLWhereOperatorsByColumnKind(currentColumn.columnKind);
+        item.tooltip = tooltips[clause][currentColumn.columnKind];
+    } else {
+        item.operators = [];
+        item.tooltip = constants.inputValues.empty;
     }
-    return constants.inputValues.empty;
 };
 
 const removeItem = (clause: QueryClause, item: QueryItem): void => {
@@ -124,6 +112,19 @@ const removeItem = (clause: QueryClause, item: QueryItem): void => {
 <style lang="sass">
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
+
+.pi:hover
+    cursor: pointer
+
+.p-inputtext, .p-dropdown
+    width: 240px
+
+.p-card
+    box-shadow: none !important
+
+.clause-label
+    text-align: end
+    width: 50px
 
 .query-panel
     @include containers.flex-container($flex-direction: column)
@@ -142,7 +143,7 @@ const removeItem = (clause: QueryClause, item: QueryItem): void => {
         @include containers.flex-container($flex-direction: row)
         margin-bottom: 16px
 
-        .v-icon
+        .pi
             color: variables.$cassandra-blue
             margin-right: 16px
 

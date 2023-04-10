@@ -75,6 +75,7 @@
                       <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptRelation }}</span>
                     </div>
                     <div class="tf-nc" :id="`${graphKey}_filterReferentConcept`">
+                      <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
                       <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptReferent }}</span>
                     </div>
                   </li>
