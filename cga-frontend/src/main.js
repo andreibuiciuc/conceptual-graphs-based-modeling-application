@@ -35,6 +35,8 @@ import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 
 const vuetify = createVuetify({
   components,
@@ -62,6 +64,8 @@ auth.onAuthStateChanged(() => {
     app.component('Dropdown', Dropdown);
     app.component('Divider', Divider);
     app.component('InputText', InputText);
+    app.component('Accordion', Accordion);
+    app.component('AccordionTab', AccordionTab);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

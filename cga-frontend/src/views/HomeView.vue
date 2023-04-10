@@ -18,7 +18,6 @@
             <span class="landing-title-text">based on the simplicity of Conceptual Graphs</span>
           </h2>
         </div>
-        <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="dummyCQLCommands" />
       </div>
     </section>
     <section class="homepage-section">
@@ -45,13 +44,12 @@
         <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
       </cga-banner-card>
       <div class="landing-image-wrapper">
-        <!-- <img id="macbook" src="/macbook-air-medium.png" /> -->
         <model-viewer src="/macbook_air_m2/scene.gltf" alt="macbook"></model-viewer>
       </div>
+      <!-- <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="dummyCQLCommands" /> -->
     </section>
-    <!-- TODO: Authentication section -->
     <section class="homepage-section homepage-section__last" id="auth">
-      <AuthenticationModal />
+      <AuthenticationCard />
     </section>
   </div>
 
@@ -74,20 +72,13 @@ import { computed } from '@vue/reactivity';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
 import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
-import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
+import AuthenticationCard from '../components/authentication/AuthenticationCard.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
 
 // Store state mappings
 const userStore = useUserStore();
-const authModalStore = useAuthModalStore();
 
 const { isUserLoggedIn } = storeToRefs(userStore);
-const { isModalOpened } = storeToRefs(authModalStore);
-
-// Computed properties
-const dummyConceptualGraph = computed(() => {
-  return dummyCG;
-});
 
 const dummyCQLCommands = computed(() => {
   return cassandraTerminalConstants.dummyCQL
@@ -190,7 +181,7 @@ model-viewer
           .landing-title-text
             color: variables.$cassandra-black
             font-size: 5rem
-            font-weight: 800
+            font-weight: 300
             padding: 0.5rem
         
         .landing-subtitle
@@ -199,7 +190,7 @@ model-viewer
           .landing-title-text
             color: variables.$cassandra-black
             font-size: 2.5rem
-            font-weight: 400
+            font-weight: 200
             line-height: 3rem
 
       .landing-section-pre-symbol
