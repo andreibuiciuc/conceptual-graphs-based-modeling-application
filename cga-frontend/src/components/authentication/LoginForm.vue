@@ -4,11 +4,11 @@
       <v-text-field
         v-bind="field"
         v-model="loginCredentials.email"
+        :value="loginCredentials.email"
         variant="outlined"
         label="Email"
         suffix="@gmail.com"
         maxlength="50"
-        :value="loginCredentials.email"
         :error-messages="errors"
       />
     </vee-field>
@@ -38,50 +38,52 @@
   </vee-form>
 </template>
 
-<script lang="js">
-import constants from '@/constants/constants'
+<script setup lang="ts">
+import constants from '../../constants/constants';
+import { LoginCredentials } from '../../types/types';
 
-import { mapActions, mapWritableState } from 'pinia';
-import useAuthModalStore from "@/stores/authModal";
-import useUserStore from '@/stores/user';
-import useNotificationStore from "@/stores/notification";
+import useAuthModalStore from '../../stores/authModal';
+import useUserStore from '../../stores/user';
+import useNotificationStore from '../../stores/notification';
+import { Ref, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 
-export default {
-    name: "LoginForm",
-    data: () => ({
-        loginValidationSchema: {
-            email: 'required|min:3|max:50|email',
-            password: 'required|min:6|max:50'
-        },
-        loginCredentials: null,
-        showPassword: false,
-        isLoginInSubmission: false
-    }),
-    computed: {
-        ...mapWritableState(useAuthModalStore, ["isModalOpened"])
-    },
-    methods: {
-        // These methods are mapped from the user store.
-        ...mapActions(useUserStore, { authenticate: "login" }),
-        // These methods are mapped from the notification store.
-        ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
-        // These methods handle the login process.
-        login: async function () {
-            this.isLoginInSubmission = true;
-            try {
-                await this.authenticate(this.loginCredentials);
-            } catch (error) {
-                this.isLoginInSubmission = false;
-                this.setUpSnackbarState(false, error.message);
-                return;
-            }
-            this.isLoginInSubmission = false;
-            this.isModalOpened = false;
-            this.setUpSnackbarState(true, constants.snackbarMessages.loginSuccess);
-        }
-    },
-    created: function () {
-        this.loginCredentials = Object.assign({}, constants.defaultLoginCredentials);
-    }
-}
+const loginValidationSchema = {
+  email: 'required|min:3|max:50|email',
+  password: 'required|min:3|max:50|'
+};
+const loginCredentials: Ref<LoginCredentials> = ref({ ... constants.defaultLoginCredentials });
+const showPassword: Ref<boolean> = ref(false);
+const isLoginInSubmission: Ref<boolean> = ref(false);
+
+// Store state and actions mappings
+const notificationStore = useNotificationStore();
+const userStore = useUserStore();
+const authModalStore = useAuthModalStore();
+const { isModalOpened } = storeToRefs(authModalStore);
+
+// Functions related to the Login flow
+const login = async (): Promise<void> => {
+  isLoginInSubmission.value = true;
+
+  try {
+    await userStore.login(loginCredentials.value);
+    handleSuccessfulLogin();
+  } catch (error: Error | any) {
+    handleUnsuccessfulLogin(error);
+  }
+
+};
+
+const handleSuccessfulLogin = (): void => {
+  isLoginInSubmission.value = false;
+  isModalOpened.value = false;
+  notificationStore.setUpSnackbarState(true, constants.snackbarMessages.loginSuccess);
+};
+
+const handleUnsuccessfulLogin = (error: Error): void => {
+  isLoginInSubmission.value = false;
+  notificationStore.setUpSnackbarState(false, error.message);
+};
+
 </script>

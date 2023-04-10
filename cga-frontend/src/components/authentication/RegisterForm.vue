@@ -60,55 +60,55 @@
   </vee-form>
 </template>
 
-<script>
-import constants from "@/constants/constants";
+<script setup lang="ts">
+import constants from "../../constants/constants";
+import { RegisterCredentials } from "../../types/types";
 
-import { mapWritableState, mapActions } from "pinia";
-import useAuthModalStore from "@/stores/authModal";
-import useUserStore from "@/stores/user";
-import useNotificationStore from "@/stores/notification";
+import useAuthModalStore from "../../stores/authModal";
+import useUserStore from "../../stores/user";
+import useNotificationStore from "../../stores/notification";
+import { Ref, ref } from "vue";
+import { storeToRefs } from "pinia";
 
-export default {
-  name: "RegisterForm",
-  data: () => ({
-    registerValidationSchema: {
-      firstname: "required|min:3|max:50|alpha_spaces",
-      lastname: "required|min:3|max:50|alpha_spaces",
-      email: "required|min:3|max:50|email",
-      password: "required|min:6|max:50",
-    },
-    registerCredentials: null,
-    showPassword: false,
-    isRegistrationInSubmission: false,
-  }),
-  computed: {
-    ...mapWritableState(useAuthModalStore, ["isModalOpened"]),
-  },
-  methods: {
-    // These methods are mapped from the user store.
-    ...mapActions(useUserStore, { authenticate: "register" }),
-    // These methods are mapped from the notification store.
-    ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
-    // These methods handle the registration process.
-    register: async function () {
-      this.isRegistrationInSubmission = true;
-      try {
-        await this.authenticate(this.registerCredentials);
-      } catch (error) {
-        this.isRegistrationInSubmission = false;
-        this.setUpSnackbarState(false, error.message);
-        return;
-      }
-      this.isRegistrationInSubmission = false;
-      this.isModalOpened = false;
-      this.setUpSnackbarState(true, constants.snackbarMessages.registerSuccess);
-    },
-  },
-  created: function () {
-    this.registerCredentials = Object.assign(
-      {},
-      constants.defaultRegisterCredentials
-    );
-  },
+// Data
+const registerValidationSchema = {
+  firstname: "required|min:3|max:50|alpha_spaces",
+  lastname: "required|min:3|max:50|alpha_spaces",
+  email: "required|min:3|max:50|email",
+  password: "required|min:6|max:50",
 };
+
+const registerCredentials: Ref<RegisterCredentials> = ref({ ... constants.defaultRegisterCredentials });
+const showPassword: Ref<boolean> = ref(false);
+const isRegistrationInSubmission: Ref<boolean> = ref(false);
+
+// Store state and actions mappings
+const notificationStore = useNotificationStore();
+const userStore = useUserStore();
+const authModalStore = useAuthModalStore();
+const { isModalOpened } = storeToRefs(authModalStore);
+
+// Functions related to the Register flow
+const register = async (): Promise<void> => {
+  isRegistrationInSubmission.value = true;
+
+  try {
+    await userStore.register(registerCredentials.value);
+    handleSuccessfulRegister();
+  } catch (error: Error | any) {
+    handleUnsuccessfulRegister(error);
+  }
+};
+
+const handleSuccessfulRegister = (): void => {
+  isRegistrationInSubmission.value = false;
+  isModalOpened.value = false;
+  notificationStore.setUpSnackbarState(true, constants.snackbarMessages.registerSuccess);
+};
+
+const handleUnsuccessfulRegister = (error: Error | any): void => {
+  isRegistrationInSubmission.value = false;
+  notificationStore.setUpSnackbarState(false, error.message);
+};
+
 </script>

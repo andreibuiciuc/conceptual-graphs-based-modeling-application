@@ -13,7 +13,7 @@ function createRequestURL(endpoint) {
   return `${urlPrefix}${server.HOST}:${server.PORT}/${endpoint}`;
 }
 
-function manageRequest(requestType, endpoint, payload = null) {
+function manageRequest(requestType, endpoint, payload: object | null = null) {
   const requestURL = createRequestURL(endpoint);
   switch (requestType) {
     case constants.requestTypes.GET:

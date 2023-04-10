@@ -1,12 +1,30 @@
 <template>
-  <div class="design-container">
-    <div class="design-toolbox-container">
-      <DesignToolbox
-        :keyspace="currentKeyspace"
-        @openTerminal="openTerminal"
-        @render="renderConceptualGraph">
-      </DesignToolbox>
+  <div class="design-section">
+    <div class="header-container elevation-1">
+      <div>
+        <span>Table CG Design</span>
+      </div>
+      <div class="header-actions">
+        <v-btn variant="text">
+          Command
+        </v-btn>
+        <v-btn variant="text">
+          Save
+        </v-btn>
+        <v-divider vertical></v-divider>
+        <v-btn variant="text">
+          Run
+        </v-btn>
+      </div>
     </div>
+    <div class="design-container">
+      <div class="design-container-item">
+        <DesignToolbox
+          :keyspace="currentKeyspace"
+          @openTerminal="openTerminal"
+          @render="renderConceptualGraph">
+        </DesignToolbox>
+      </div>
     <Transition name="fade" mode="out-in">
       <div v-if="!isPlaceholderVisible" class="conceptual-graph-container">
         <ConceptualGraph 
@@ -19,10 +37,10 @@
           @remove="removeColumnConcept">
         </ConceptualGraph>
       </div>
-      <Placeholder v-else-if="isPlaceholderVisible" :in-loading-state="true" />
+      <!-- <Placeholder v-else-if="isPlaceholderVisible" :in-loading-state="true" /> -->
     </Transition>
   </div>
-
+  </div>
   <v-dialog v-model="isTerminalOpened"
             v-if="isTerminalOpened"
             persistent
@@ -148,21 +166,27 @@ export default {
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_transitions.sass"
 
-// Shared Sass vatriables for transitions
 $transition-all-time: 0.5s
 
-// Shared Sass classes between media
-.design-container
-  @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
-  padding: variables.$cga-topbar-height 40px 0
-  height: 100vh
+.design-section
+  @include containers.flex-container($flex-direction: column)
+  margin-top: variables.$cga-topbar-height
+  height: calc(100vh - variables.$cga-topbar-height)
 
-.design-toolbox-container
-  @include containers.flex-container($flex-direction: column, $justify-content: flex-start, $align-items: center)
-  transition: all $transition-all-time
-  height: 100%
-  padding: 40px 0
-  
+  .design-container
+    @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
+    width: 100%
+    height: 100%
+
+    & > *:first-child
+      margin-right: 32px
+
+    .design-container-item
+      @include containers.flex-container($flex-direction: column)
+      border-right: 1px solid variables.$cassandra-light-gray
+      height: 100%
+      padding: 32px
+
 .conceptual-graph-container
   height: 100%
   width: 100%

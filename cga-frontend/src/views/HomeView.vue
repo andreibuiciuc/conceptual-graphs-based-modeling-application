@@ -18,7 +18,7 @@
         <CassandraTerminal
           :is-terminal-opened="true"
           :is-terminal-readonly="true"
-          :commands="getDummyCommands"
+          :commands="dummyCQLCommands"
         />
       </div>
     </section>
@@ -27,13 +27,13 @@
     <section class="summary-section">
       <div class="summary-container">
         <h1>Conceptual Graphs are a great visualization tool</h1>
-        <ConceptualGraph
+        <!-- <ConceptualGraph
           :inverted="true"
-          :keyspaceConcept="getDummyCG.keyspaceConcept"
-          :tableConcepts="getDummyCG.tableConcepts"
-          :columnConcepts="getDummyCG.columnConcepts"
-          :dataTypeConcepts="getDummyCG.dataTypeConcepts"
-        />
+          :keyspaceConcept="dummyConceptualGraph.keyspaceConcept"
+          :tableConcepts="dummyConceptualGraph.tableConcepts"
+          :columnConcepts="dummyConceptualGraph.columnConcepts"
+          :dataTypeConcepts="dummyConceptualGraph.dataTypeConcepts"
+        /> -->
       </div>
     </section>
     <div class="delimiter-negative"></div>
@@ -65,37 +65,36 @@
   </div>
 </template>
 
-<script lang="js">
-import dummyCG from '@/constants/dummyCG';
+<script setup lang="ts">
+import dummyCG from '../constants/dummyCG';
 import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
-import { mapWritableState } from 'pinia';
-import useAuthModalStore from '@/stores/authModal';
-import useUserStore from '@/stores/user';
+
+import useAuthModalStore from '../stores/authModal';
+import useUserStore from '../stores/user';
+import { storeToRefs } from 'pinia';
+import { computed } from '@vue/reactivity';
 
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 
-export default {
-  name: "HomeView",
-  components: {
-    CassandraTerminal,
-    AuthenticationModal,
-    ConnectionDashboard,
-    ConceptualGraph
-  },
-  computed: {
-    ...mapWritableState(useUserStore, ['isUserLoggedIn']),
-    ...mapWritableState(useAuthModalStore, ['isModalOpened']),
-    getDummyCG: function () {
-      return dummyCG;
-    },
-    getDummyCommands: function () {
-      return cassandraTerminalConstants.dummyCQL;
-    }
-  }
-}
+// Store state mappings
+const userStore = useUserStore();
+const authModalStore = useAuthModalStore();
+
+const { isUserLoggedIn } = storeToRefs(userStore);
+const { isModalOpened } = storeToRefs(authModalStore);
+
+// Computed properties
+const dummyConceptualGraph = computed(() => {
+  return dummyCG;
+});
+
+const dummyCQLCommands = computed(() => {
+  return cassandraTerminalConstants.dummyCQL
+});
+
 </script>
 
 <style scoped lang="sass">
@@ -144,6 +143,10 @@ export default {
 
   .authentication-container
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+    img
+      width: 479px
+      height: 767px
 
     .auth-activator .v-card-text
         padding: 0

@@ -23,6 +23,16 @@ import App from "./App.vue";
 // Styles imports
 import "./assets/main.css";
 import "@mdi/font/css/materialdesignicons.css";
+import "primevue/resources/themes/lara-light-indigo/theme.css";     
+import "primevue/resources/primevue.min.css";
+import "primeicons/primeicons.css";
+
+// PrimeVue
+import PrimeVue from 'primevue/config';
+import Tooltip from 'primevue/tooltip';
+import Button from 'primevue/button';
+import Divider from 'primevue/divider';
+import Dropdown from 'primevue/dropdown';
 
 const vuetify = createVuetify({
   components,
@@ -32,16 +42,24 @@ const vuetify = createVuetify({
   },
 });
 
+
 let app;
 auth.onAuthStateChanged(() => {
   if (!app) {
     app = createApp(App);
-
+    
     app.use(createPinia());
     app.use(vuetify);
     app.use(router);
     app.use(VeeValidatePlugin);
+    
+    app.use(PrimeVue, { ripple: true });
 
+    app.component('Button', Button);
+    app.component('Dropdown', Dropdown);
+    app.component('Divider', Divider);
+
+    app.directive('tooltip', Tooltip);
     app.mount("#app");
   }
 });

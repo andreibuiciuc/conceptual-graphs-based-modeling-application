@@ -1,19 +1,11 @@
 <template>
-  <div>
+  <div class="design-toolbox-container">
     <v-card
       variant="outlined"
       class="toolbox"
       :class="{ 'toolbox-warning': !keyspace }"
     >
-      <v-card-title>
-        <div class="d-flex justify-center align-center">
-          Conceptual Graph Design Toolbox
-          <v-icon v-if="!keyspace">mdi-alert-box-outline</v-icon>
-        </div>
-      </v-card-title>
-     
       <v-card-text>
-
         <div class="d-flex">
           <v-text-field v-model="currentTableConcept.conceptName"
             variant="outlined"
@@ -36,9 +28,7 @@
             <v-icon v-else>mdi-plus</v-icon>
           </v-btn>
         </div>
-        
         <v-divider></v-divider>
-
         <div class="column-concept-container">
           <div class="column-concept-config">
             <v-text-field v-model="currentColumnConcept.conceptName"
@@ -86,9 +76,7 @@
             <v-icon>mdi-plus</v-icon>
           </v-btn>
         </div>
-       
         <v-divider></v-divider>
-        
         <div class="clustering-options-container">
           <v-select v-model="currentClusteringOrderOptions.clusteringColumn"
             variant="outlined"
@@ -109,10 +97,8 @@
             :loading="isSaveTriggered">
           </v-select>
         </div>
-      
       </v-card-text>
     </v-card>
-
     <v-card
       variant="outlined"
       class="toolbox"
@@ -227,7 +213,7 @@ export default {
         keyspace_name: this.currentKeyspace
       });
       if (response.data.flag) {
-        this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} already exists in the current keyspace`);
+        this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} already exists in the current keyspace`, 'bottom left');
         this.isTableNameDuplicated = true;
       } else {
         this.addTableConceptToGraph();
@@ -414,10 +400,11 @@ export default {
 @use '@/assets/styles/_variables.sass'
 
 .toolbox-warning
-  border-color: variables.$cassandra-yellow
+  // border-color: variables.$cassandra-yellow
 
 .toolbox
-  border-color: variables.$cassandra-blue
+  // border-color: variables.$cassandra-blue
+  border: none
 
   .v-card-title
     margin-bottom: 1rem
