@@ -1,7 +1,6 @@
 <template>
-  <v-card>
     <v-layout>
-      <v-app-bar elevation="1" height="88">
+      <v-app-bar :elevation="currentScrollYPosition > 0 ? 1 : 0" height="88" :class="currentScrollYPosition > 0 ? 'app-bar--transparent' : ''">
         <template #prepend>
           <RouterLink :to="{ name: appToolbar.navigationHeader.pathTo }">
             <v-list-item
@@ -48,13 +47,13 @@
         </template>
       </v-app-bar>
     </v-layout>
-  </v-card>
 </template>
 
 <script setup lang="ts">
 import { Toolbar, toolbar} from "./navigationConstants.js";
 import useUserStore from '../../stores/user';
 import useConnectionStore from '../../stores/connection';
+import useAuthModalStore from '../../stores/authModal';
 import { Ref, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
@@ -64,8 +63,11 @@ const currentNavigationIndex: Ref<number> = ref(0);
 
 const userStore = useUserStore();
 const connectionStore = useConnectionStore();
+const authModalStore = useAuthModalStore();
+
 const { isUserLoggedIn } = storeToRefs(userStore);
 const { cassandraServerCredentials } = storeToRefs(connectionStore);
+const { currentScrollYPosition } = storeToRefs(authModalStore);
 
 const router = useRouter();
 
@@ -115,4 +117,9 @@ const onAccountItemClick = (): void => {
 
 .navigation-item--active
   color: variables.$cassandra-blue
+
+.app-bar--transparent
+  background-color: hsla(0,0%,100%,.8)
+  backdrop-filter: saturate(180%) blur(5px)
+
 </style>

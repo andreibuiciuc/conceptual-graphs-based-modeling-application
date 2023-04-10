@@ -4,5 +4,6 @@ export default defineStore("authModal", {
   state: () => ({
     isModalOpened: false,
     isRegisterModalActive: true,
+    currentScrollYPosition: 0
   }),
 });
