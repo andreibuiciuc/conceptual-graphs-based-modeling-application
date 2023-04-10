@@ -5,22 +5,15 @@
   </div>
 </template>
 
-<script>
-import constants from "@/constants/constants";
+<script setup lang="ts">
+import { Ref, ref } from 'vue';
+import constants from '../../constants/constants';
 import ConnectionConsole from "./items/ConnectionConsole.vue";
 import KeyspaceGraph from "./items/KeyspaceGraph.vue";
 
-export default {
-  name: "ConnectionDashboard",
-  components: {
-    ConnectionConsole,
-    KeyspaceGraph,
-  },
-  data: () => ({
-    selectedKeyspace: constants.inputValues.empty,
-    conceptualGraphLeftLimit: 0
-  })
-};
+const selectedKeyspace: Ref<string> = ref(constants.inputValues.empty);
+const conceptualGraphLeftLimit: Ref<number> = ref(0);
+
 </script>
 
 <style scoped lang="sass">

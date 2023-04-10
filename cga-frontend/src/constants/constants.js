@@ -50,10 +50,10 @@ export default {
     dataType: "T",
   },
   defaultConcept: {
-    conceptName: null,
-    conceptType: null,
-    kind: null,
-    relation: null,
+    conceptName: "",
+    conceptType: "",
+    kind: "",
+    relation: "",
   },
   relationTypes: {
     has: "has",
@@ -73,4 +73,23 @@ export default {
     ascending: "asc",
     descending: "desc",
   },
+  cqlOperators: {
+    LESS: '<',
+    LESS_EQUAL: '<=',
+    GREATER: '>',
+    GREATER_EQUAL: ">=",
+    EQUAL: "==",
+    NOT_EQUAL: "!=",
+    IN: "IN",
+    NOT_IN: "NOT_IN",
+    CONTAINS: "CONTAINS",
+    NOT_CONTAINS: "DOES NOT CONTAIN"
+  },
+  defaultQueryConcepts: {
+    where: {
+      conceptReferent: "",
+      conceptRelation: "filter",
+      columns: []
+    }
+  }
 };

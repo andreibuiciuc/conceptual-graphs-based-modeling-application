@@ -22,26 +22,27 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "CassandraTerminal",
-  props: {
-    isTerminalOpened: Boolean,
-    isTerminalReadonly: Boolean,
-    commands: Array,
-  },
-  methods: {
-    closeTerminal: function () {
-      if (!this.isTerminalReadonly) {
-        this.$emit("close");
-      }
-    },
-  },
-  computed: {
-    showTerminal: function () {
-      return this.isTerminalOpened;
-    },
-  },
+<script setup lang="ts">
+import { Command } from '../../../types/types';
+import { computed } from '@vue/reactivity';
+
+interface Props {
+  isTerminalOpened: boolean,
+  isTerminalReadonly: boolean,
+  commands: Command[]
+};
+
+const props = defineProps<Props>();
+const emit = defineEmits(['close']);
+
+const showTerminal = computed(() => {
+  return props.isTerminalOpened;
+});
+
+const closeTerminal = (): void => {
+  if (!props.isTerminalReadonly) {
+    emit('close');
+  }
 };
 </script>
 

@@ -2,12 +2,12 @@
     <v-layout>
       <v-app-bar :elevation="currentScrollYPosition > 0 ? 1 : 0" height="88" :class="currentScrollYPosition > 0 ? 'app-bar--transparent' : ''">
         <template #prepend>
-          <RouterLink :to="{ name: navigationHeader.pathTo }">
+          <RouterLink :to="{ name: appToolbar.navigationHeader.pathTo }">
             <v-list-item
               class="navigation-item"
-              :prepend-avatar="navigationHeader.avatar"
-              :title="navigationHeader.title"
-              :subtitle="navigationHeader.subtitle"
+              :prepend-avatar="appToolbar.navigationHeader.avatar"
+              :title="appToolbar.navigationHeader.title"
+              :subtitle="appToolbar.navigationHeader.subtitle"
               @click="onNavigationItemClick(true)"
             >
             </v-list-item>
@@ -16,7 +16,7 @@
         <v-app-bar-title>
           <v-list class="navigation-items-list" v-if="isUserLoggedIn">
             <RouterLink
-              v-for="navigationItem in navigationItems"
+              v-for="navigationItem in appToolbar.navigationItems"
               :key="navigationItem.key"
               :to="{ name: navigationItem.pathTo }"
             >
@@ -40,7 +40,7 @@
               :value="isUserLoggedIn ? 'signOut' : 'signIn'"
               :title="isUserLoggedIn ? 'Sign Out' : 'Sign In'"
               append-icon="mdi-account"
-              @click="onAccountActionItemClick"
+              @click="onAccountItemClick"
             >
             </v-list-item>
           </v-list>
@@ -49,72 +49,57 @@
     </v-layout>
 </template>
 
-<script>
-import navigationConstants from "./navigationConstants.js";
+<script setup lang="ts">
+import { Toolbar, toolbar} from "./navigationConstants.js";
+import useUserStore from '../../stores/user';
+import useConnectionStore from '../../stores/connection';
+import useAuthModalStore from '../../stores/authModal';
+import { Ref, ref } from "vue";
+import { storeToRefs } from "pinia";
+import { useRouter } from "vue-router";
 
-import { mapActions, mapState, mapWritableState } from "pinia";
-import useUserStore from "@/stores/user";
-import useConnectionStore from "@/stores/connection";
-import useAuthModalStore from "@/stores/authModal";
+const appToolbar: Ref<Toolbar> = ref( { ... toolbar });
+const currentNavigationIndex: Ref<number> = ref(0);
 
-export default {
-    name: "TopbarNavigation",
-    props: {
-      scrollYPosition: Number
-    },
-    data: function () {
-      return {
-        title: "CGA",
-        subtitle: "Cassandra",
-        navigationHeader: null,
-        navigationItems: null,
-        currentNavigationIndex: 0,
-      };
-    },
-    computed: {
-      ...mapState(useConnectionStore, ["cassandraServerCredentials"]),
-      ...mapWritableState(useUserStore, ["isUserLoggedIn", "userCredentials"]),
-      ...mapState(useAuthModalStore, ["currentScrollYPosition"])
-    },  
-    methods: {
-      // These methods are mapped from the user store.
-      ...mapActions(useUserStore, ["signOut"]),
-      // These methods are mapped from the connection store.
-      ...mapActions(useConnectionStore, ["disconnect"]),
-      // These methods are component level based
-      onNavigationItemClick: function (isHomeLink, navigationItemKey) {
-        if (isHomeLink) {
-          this.navigationItems[this.currentNavigationIndex].active = false;
-          return;
-        }
-        const index = this.navigationItems.findIndex(x => x.key === navigationItemKey);
-        if (index > -1 && this.navigationItems[index]) {
-          this.navigationItems[this.currentNavigationIndex].active = false;
-          this.navigationItems[index].active = true;
-          this.currentNavigationIndex = index;
-        }
-      },
-      // These methods handle the signing out process
-      onAccountActionItemClick: function () {
-        if (this.isUserLoggedIn) {
-          if (this.cassandraServerCredentials.isCassandraServerConnected) {
-            this.disconnect();
-          }
-          this.signOut();
-          this.$router.push({ name: "home" });
-          return;
-        }
-        const authSectionElement = document.getElementById('auth');
-        if (authSectionElement) {
-          authSectionElement.scrollIntoView({ behavior: 'smooth' });
-        }
-    },
-  },
-  created: function () {
-    this.navigationHeader = navigationConstants.toolbar.navigationHeader;
-    this.navigationItems = navigationConstants.toolbar.navigationItems;
-  },
+const userStore = useUserStore();
+const connectionStore = useConnectionStore();
+const authModalStore = useAuthModalStore();
+
+const { isUserLoggedIn } = storeToRefs(userStore);
+const { cassandraServerCredentials } = storeToRefs(connectionStore);
+const { currentScrollYPosition } = storeToRefs(authModalStore);
+
+const router = useRouter();
+
+// Functions related to the navigation flow
+const onNavigationItemClick = (isHomeLink: boolean, navigationItemKey?: string): void => {
+  if (isHomeLink) {
+    appToolbar.value.navigationItems[currentNavigationIndex.value].active = false;
+  } else {
+    const index = appToolbar.value.navigationItems.findIndex(x => x.key && x.key === navigationItemKey);
+    if (index > -1 && appToolbar.value.navigationItems[index]) {
+      appToolbar.value.navigationItems[currentNavigationIndex.value].active = false;
+      appToolbar.value.navigationItems[index].active = true;
+      currentNavigationIndex.value = index;
+    }
+  }
 };
+
+const onAccountItemClick = (): void => {
+  if (isUserLoggedIn.value) {
+    if (cassandraServerCredentials.value.isCassandraServerConnected) {
+      connectionStore.disconnect();
+    }
+    userStore.signOut();
+    router.push({ name: 'home' });
+  } else {
+    const authSectionElement = document.getElementById('auth');
+    if (authSectionElement) {
+      authSectionElement.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+};
+
 </script>
 
 <style scoped lang="sass">

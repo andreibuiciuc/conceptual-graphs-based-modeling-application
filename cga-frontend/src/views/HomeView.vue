@@ -18,7 +18,7 @@
             <span class="landing-title-text">based on the simplicity of Conceptual Graphs</span>
           </h2>
         </div>
-        <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" />
+        <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="dummyCQLCommands" />
       </div>
     </section>
     <section class="homepage-section">
@@ -82,12 +82,14 @@
   </div>
 </template>
 
-<script lang="js">
-import dummyCG from '@/constants/dummyCG';
+<script setup lang="ts">
+import dummyCG from '../constants/dummyCG';
 import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
-import { mapWritableState } from 'pinia';
-import useAuthModalStore from '@/stores/authModal';
-import useUserStore from '@/stores/user';
+
+import useAuthModalStore from '../stores/authModal';
+import useUserStore from '../stores/user';
+import { storeToRefs } from 'pinia';
+import { computed } from '@vue/reactivity';
 
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
@@ -97,55 +99,22 @@ import AuthenticationModal from '../components/authentication/AuthenticationModa
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 
-export default {
-  name: "HomeView",
-  components: {
-    CgaCard,
-    CgaBannerCard,
-    CgaDelimiter,
-    CassandraTerminal,
-    AuthenticationModal,
-    ConnectionDashboard,
-    ConceptualGraph
-  },
-  data: function () {
-    return {
-      homepageElement: null,
-      bannerElement: null,
-      bannerElementYPosition: 0,
-      diplayImageElement: null,
-      displayImageElementPosition: 0,
-    }
-  },
-  computed: {
-    // These computed properties are mapped from the User store.
-    ...mapWritableState(useUserStore, ['isUserLoggedIn']),
-    // These computed properties are mapped from the AuthModal store.
-    ...mapWritableState(useAuthModalStore, ['isModalOpened', "currentScrollYPosition"]),
-    // These computed properties are related to the Cassandra Terminal component
-    getDummyCG: function () { return dummyCG; },
-    getDummyCommands: function () { return cassandraTerminalConstants.dummyCQL; }
-  },
-  methods: {
-    handleScrollEvent: function () {
-      this.currentScrollYPosition = this.homepageElement.scrollTop;
-      if (this.currentScrollYPosition >= this.bannerElementYPosition - 3 * window.innerHeight / 4) {
-        this.bannerElement.classList.add("banner-card--fade-in")
-      }
-    }
-  },
-  mounted: function () {
-    this.homepageElement = document.getElementById("homepage");
-    this.bannerElement = document.getElementById("banner");
-    
-    if (this.homepageElement) {
-      this.homepageElement.addEventListener("scroll", this.handleScrollEvent);
-      if (this.bannerElement) {
-        this.bannerElementYPosition = this.homepageElement.scrollTop + this.bannerElement.getBoundingClientRect().top;
-      }
-    }
-  }
-}
+// Store state mappings
+const userStore = useUserStore();
+const authModalStore = useAuthModalStore();
+
+const { isUserLoggedIn } = storeToRefs(userStore);
+const { isModalOpened } = storeToRefs(authModalStore);
+
+// Computed properties
+const dummyConceptualGraph = computed(() => {
+  return dummyCG;
+});
+
+const dummyCQLCommands = computed(() => {
+  return cassandraTerminalConstants.dummyCQL
+});
+
 </script>
 
 <style lang="sass">

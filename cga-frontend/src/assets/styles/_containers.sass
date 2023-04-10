@@ -27,6 +27,24 @@ h2
     line-height: 32px
     color: variables.$cassandra-black
 
+section
+    @include flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+    position: relative
+    padding: 0 10vw
+
+.header-container
+    @include flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
+    height: variables.$cga-header-height
+    min-height: variables.$cga-header-height
+    width: 100%
+    padding: 10px 26px
+
+    .header-actions
+        @include flex-container($flex-direction: row, $justify-content: flex-end, $align-items: center)
+
+        & > *:not(:last-child)
+            margin-right: 10px
+
 // Custom global SASS classes are defined here.
 .flex-start
     justify-content: flex-start !important
@@ -95,7 +113,14 @@ h2
 .v-expansion-panel-title--active:hover > .v-expansion-panel-title__overlay,
 .v-expansion-panel-title:hover > .v-expansion-panel-title__overlay,
 .v-expansion-panel-title__overlay 
-    background-color: variables.$cassandra-blue
+    background-color: variables.$cassandra-white
+
+.v-expansion-panel--active > .v-expansion-panel-title
+    border-bottom: 1px solid variables.$cassandra-light-gray
+    min-height: 48px !important
+
+.v-expansion-panel-text__wrapper
+    padding: 20px
 
 .v-btn__overlay
     border-radius: 0px
@@ -103,5 +128,14 @@ h2
 .v-overlay__content.v-select__content
     max-height: 400px !important
 
+.v-expansion-panel--active
+    max-height: 400px
+
 .elevation-1
-    box-shadow: 0px 0px 0px 0px var(--v-shadow-key-umbra-opacity, rgba(0, 0, 0, 0.2)), 0px 1px 0px 0px var(--v-shadow-key-penumbra-opacity, rgba(0, 0, 0, 0.14)), 0px 1px 0px 0px var(--v-shadow-key-penumbra-opacity, rgba(0, 0, 0, 0.12)) !important
+    box-shadow: 0px 2px 1px -1px variables.$cassandra-light-gray !important
+
+.v-progress-circular
+    color: variables.$cassandra-blue
+
+.query-panel-item .v-overlay__scrim
+    display: none
