@@ -18,25 +18,21 @@
             <span class="landing-title-text">based on the simplicity of Conceptual Graphs</span>
           </h2>
         </div>
+        <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" />
       </div>
     </section>
     <section class="homepage-section">
       <div class="landing-section-content">
-        <!-- <cga-delimiter label="1" text="Move from blipping consoles to a friendlier Visual Query System" :gradientType="0" /> -->
         <div class="landing-section-container">
-          <!-- <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="getDummyCommands" /> -->
           <div class="landing-cards-container">
-            <cga-card icon="mdi-magnify" title="Connect And Start Exploring">
+            <cga-card title="Connect And Start Exploring">
               <span>Connect to your Cassandra server, locally or on the cloud, or play around with the one provided by us.</span>
-              <span>We use Astra DB for hosting the mock database.</span>
             </cga-card>
-            <cga-card icon="mdi-family-tree" title="Create Cassandra Data Structures">
+            <cga-card title="Create Cassandra Data Structures">
               <span>Visualise and create Cassandra data structures by building conceptual graphs.</span>
-              <span>Conceptual Graphs are a fast and easy way of data visualisation.</span>  
             </cga-card>
-            <cga-card icon="mdi-database-search" title="Query Cassandra Tables">
+            <cga-card title="Query Cassandra Tables">
               <span>Query your database tables and get results in real time, without touching your Cassandra bash terminal.</span>
-              <span>We provide an interface for you in order to facilitate the process of selecting data.</span>
               <span></span>
             </cga-card>
           </div>
@@ -44,19 +40,13 @@
       </div>
     </section>
     <section class="homepage-section">
-      <!-- <cga-banner-card title="Conceptual Graphs" id="banner">
+      <cga-banner-card title="Conceptual Graphs" id="banner">
         <span class="banner-card-text">"With their direct mapping to language, conceptual graphs can serve as an</span>
         <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
-      </cga-banner-card> -->
-      <div class="landing-page-content">
-        <!-- <cga-delimiter label="2" :gradientType="1" text="Leverage the simplicity of the Conceptual Graphs" /> -->
-        <!-- <cga-banner-card>
-          <conceptual-graph 
-          :keyspaceConcept="getDummyCG.keyspaceConcept"
-          :tableConcepts="getDummyCG.tableConcepts"
-          :columnConcepts="getDummyCG.columnConcepts"
-          :dataTypeConcepts="getDummyCG.dataTypeConcepts" />
-        </cga-banner-card> -->
+      </cga-banner-card>
+      <div class="landing-image-wrapper">
+        <!-- <img id="macbook" src="/macbook-air-medium.png" /> -->
+        <model-viewer src="/macbook_air_m2/scene.gltf" alt="macbook"></model-viewer>
       </div>
     </section>
     <!-- TODO: Authentication section -->
@@ -122,7 +112,9 @@ export default {
     return {
       homepageElement: null,
       bannerElement: null,
-      bannerElementYPosition: 0
+      bannerElementYPosition: 0,
+      diplayImageElement: null,
+      displayImageElementPosition: 0,
     }
   },
   computed: {
@@ -145,6 +137,7 @@ export default {
   mounted: function () {
     this.homepageElement = document.getElementById("homepage");
     this.bannerElement = document.getElementById("banner");
+    
     if (this.homepageElement) {
       this.homepageElement.addEventListener("scroll", this.handleScrollEvent);
       if (this.bannerElement) {
@@ -155,9 +148,13 @@ export default {
 }
 </script>
 
-<style scoped lang="sass">
+<style lang="sass">
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
+
+model-viewer
+  width: 800px
+  height: 800px
 
 .homepage
   overflow-y: auto
@@ -170,6 +167,21 @@ export default {
     max-width: 100%
     padding: 0 24px
     height: calc(100vh - variables.$cga-topbar-height)
+
+    .landing-image-wrapper
+      @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+      .display-image-fade-in
+        visibility: visible
+        animation: display-image-fade-in 0.5s cubic-bezier(0.390, 0.575, 0.565, 1.000) both
+
+      @keyframes display-image-fade-in
+          0% 
+              opacity: 0
+              transform: translateY(40px)
+          100%
+              opacity: 1
+              transform: translateY(0)
 
     .landing-animation-wrapper
       position: absolute
@@ -277,16 +289,33 @@ export default {
             &:nth-of-type(1)
               background: linear-gradient(135deg, variables.$cassandra-light-blue, variables.$cassandra-gradient-blue, variables.$cassandra-gradient-blue-darken, variables.$cassandra-gradient-blue-darkest)
               background-size: 200% 200%
-              color: variables.$cassandra-white
-              animation: gradient-changing-animation 8s ease infinite
+              max-height: 568px
+              background: url(https://cdn.auth0.com/website/new-homepage/resources/bg-1.svg) right bottom no-repeat, linear-gradient(135deg, variables.$cassandra-light-blue, variables.$cassandra-gradient-blue, variables.$cassandra-gradient-blue-darken, variables.$cassandra-gradient-blue-darkest)
+
+              .landing-card-text
+                color: variables.$cassandra-white !important
 
             &:nth-of-type(2)
               grid-area: second / second / second / second
-              height: 18.4rem
+              height: 16.3rem
+              
+              .landing-card-title-text
+                font-size: 2rem
+                color: variables.$cassandra-gradient-blue
+
+              .landing-card-text
+                color: variables.$cassandra-black
 
             &:nth-of-type(3)
               grid-area: third / third / third / third
-              height: 18.4rem
+              height: 16.3rem
+
+              .landing-card-title-text
+                font-size: 2rem
+                color: variables.$cassandra-gradient-blue
+
+              .landing-card-text
+                color: variables.$cassandra-black
 
             &:hover
               transform: scale(1.015)
@@ -305,8 +334,10 @@ export default {
 
                 .v-icon
                   font-size: 24px
+
             .landing-card-text
               @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
+              color: variables.$cassandra-white
 
   .homepage-section:nth-of-type(2), .homepage-section:nth-of-type(3)
     height: 120vh
@@ -320,60 +351,6 @@ export default {
   margin-top: variables.$cga-topbar-height
   height: calc(100vh - variables.$cga-topbar-height)
   padding: 5rem
-
-.landing-section 
-  @include containers.flex-container($flex-direction: column, $align-items: center)
-  background-color: variables.$cassandra-white
-  height: calc(100vh - variables.$cga-topbar-height)
-
-  .landing-section-text 
-    @include containers.flex-container($flex-direction: column)
-
-    h1
-      font-size: 7rem
-
-.summary-section
-  color: variables.$cassandra-white
-  background-color: variables.$cassandra-blue
-  min-height: 100vh
-
-  .summary-container
-    @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-
-    h1
-      color: variables.$cassandra-white
-  
-.authentication-section 
-  height: 100%
-  background-color: variables.$cassandra-white
-  justify-content: flex-end
-  padding: 0
-
-  .authentication-container
-    @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-
-    .auth-activator .v-card-text
-        padding: 0
-
-    .auth-button
-      height: auto
-
-// .landing-page-final-block
-//   @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-//   background-color: variables.$cassandra-black
-//   color: variables.$cassandra-white !important
-//   border-top-left-radius: 10%
-//   border-top-right-radius: 25%
-//   padding: 50px 0
-//   width: 100%
-//   height: 75%
-
-// .landing-page-final-block h1
-//   font-size: 64px
-//   color: variables.$cassandra-white
-
-//   span
-//     color: variables.$cassandra-yellow !important
 
 @keyframes floating-oval-animation__first
   0%
@@ -411,12 +388,4 @@ export default {
   100%
     transform: translateY(-50%) translateX(-50%) translateX(-15%) translateY(10%)
     
-@keyframes gradient-changing-animation
-  0% 
-    background-position: 0% 50%
-  50% 
-    background-position: 100% 50%
-  100% 
-    background-position: 0% 50%
-
 </style>

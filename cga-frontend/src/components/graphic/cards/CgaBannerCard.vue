@@ -38,7 +38,7 @@ const props = defineProps<Props>();
     .banner-card
         @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
         background-color: variables.$cassandra-white
-        border-radius: 96px
+        border-radius: 3rem
         box-shadow: 0px 7px 13px rgb(0 0 0 / 13%)
         padding: 40px 80px
         z-index: 4

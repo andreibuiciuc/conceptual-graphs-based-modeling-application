@@ -17,6 +17,7 @@
     "firebase": "^8.10.1",
     "install": "^0.13.0",
     "pinia": "^2.0.26",
+    "three": "^0.151.3",
     "vee-validate": "^4.7.3",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6",

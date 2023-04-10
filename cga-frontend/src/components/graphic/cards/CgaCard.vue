@@ -1,7 +1,8 @@
 <template>
     <div class="landing-card">
         <div class="landing-card-title">
-            <div class="landing-card-icon-wrapper">
+            <div v-if="props.icon" 
+                class="landing-card-icon-wrapper">
                 <v-icon>{{ props.icon }}</v-icon>
             </div>
             <div class="landing-card-title-text">
@@ -17,7 +18,7 @@
 <script lang="ts" setup>
 
 interface Props {
-    icon: string,
+    icon?: string,
     title: string
 };
 
@@ -30,9 +31,9 @@ const props = defineProps<Props>();
 @use "@/assets/styles/_containers.sass"
 
 .landing-card
-    @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
+    @include containers.flex-container($flex-direction: column, $justify-content: space-between, $align-items: flex-start)
     background-color: variables.$cassandra-light-gray
-    padding: 2.5rem
+    padding: 2.5rem 2.5rem 2.5rem 2.5rem
     height: 40rem
     border-radius: 1.5rem
 
@@ -58,4 +59,5 @@ const props = defineProps<Props>();
 
     .landing-card-text
         @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
+        font-size: 1.25rem
 </style>
