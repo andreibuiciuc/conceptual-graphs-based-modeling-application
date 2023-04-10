@@ -1,8 +1,7 @@
 <template>
-  <div class="connection-console" ref="connectionConsole">
-    <Accordion :multiple="true" :activeIndex="[0]">
-      <AccordionTab header="connect to cassandra server">
-        <div class="panel-container">
+  <div class="connection-console">
+    <Sidebar v-model:visible="isSidebarOpened" class="w-full md:w-25rem lg:w-30rem">
+      <div class="panel-container">
           <!-- hint="Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc." -->
           <InputText 
             v-model="cassandraServerCredentials.ipAddress"
@@ -36,28 +35,25 @@
             :loading="isConnectionButtonTriggered"
             @click="manageServerConnection"
           />
-        </div>
-      </AccordionTab>
-      <AccordionTab header="keyspace">
-        <div class="panel-container">
-          <Dropdown
-            v-model="currentKeyspace"
-            outlined
-            placeholder="keyspace"
-            :disabled="!cassandraServerCredentials.isCassandraServerConnected"
-            :options="availableKeyspaces"
-            @change="changeKeyspace"          
-          />
-          <Button 
-            outlined
-            severity="primary"
-            label="re-render conceptual graph"
-            :disabled="!cassandraServerCredentials.isCassandraServerConnected"
-            @click="rerenderGraph"
-          />
-        </div>
-      </AccordionTab>
-    </Accordion>
+      </div>
+      <div class="panel-container">
+        <Dropdown
+          v-model="currentKeyspace"
+          outlined
+          placeholder="keyspace"
+          :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+          :options="availableKeyspaces"
+          @change="changeKeyspace"          
+        />
+        <Button 
+          outlined
+          severity="primary"
+          label="re-render conceptual graph"
+          :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+          @click="rerenderGraph"
+        />
+      </div>
+    </Sidebar>
   </div>
 </template>
 
@@ -65,15 +61,16 @@
 import constants from '@/constants/constants';
 import { mapActions, mapWritableState } from "pinia";
 import useConnectionStore from "@/stores/connection";
+import useAuthModalStore from "@/stores/authModal";
 
 export default {
   name: "ConnectionConsole",
   data: () => ({
-    currentActivePanels: [0],
     isConnectionButtonTriggered: false,
   }),
   computed: {
     ...mapWritableState(useConnectionStore, ["cassandraServerCredentials", "currentKeyspace", "availableKeyspaces"]),
+    ...mapWritableState(useAuthModalStore, ["isSidebarOpened"]),
     connectionPanelExpandedTitle: function () {
       if (!this.cassandraServerCredentials.isCassandraServerConnected) return constants.inputValues.empty;
       return this.cassandraServerCredentials.ipAddress + " : " + this.cassandraServerCredentials.port;
@@ -116,24 +113,17 @@ export default {
       this.cassandraServerCredentials = { ... constants.emptyCassandraNetwork };
     }
   },
-  beforeMount: function () {
-    if (this.cassandraServerCredentials.isCassandraServerConnected) {
-      this.currentActivePanels.push(1);
-    }
-  },
-  mounted: function () {
-    const conceptualGraphLeftLimit = this.$refs.connectionConsole.getBoundingClientRect().x;
-    this.$emit("limit", conceptualGraphLeftLimit);
-  }
 }
 </script>
 
 <style lang="sass">
 @use "@/assets/styles/_containers.sass"
 
-.connection-console
-  width: 40vw
-  margin-right: 2em
+.p-sidebar
+  width: 25rem !important
+  
+  .p-sidebar-content
+    padding-top: 2.5rem !important
 
   .panel-container
     @include containers.flex-container($flex-direction: column, $align-items: center)

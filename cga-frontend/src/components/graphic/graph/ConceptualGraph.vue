@@ -139,7 +139,8 @@ const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
   return tableConcept && props.graphMetadata.tables.length && props.graphMetadata.columns && props.graphMetadata.columns.size;
 }
 
-const drawArrowsForConcepts = () => {
+const drawArrowsForConcepts = async (): Promise<void> => {
+  await nextTick();
   for (let tableIndex in props.graphMetadata?.tables) {
     const currentTableConcept = props.graphMetadata.tables[parseInt(tableIndex, 10)];
     let tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${tableIndex}`);
@@ -187,7 +188,8 @@ const drawArrowsForQueryConcepts = async (): Promise<void> => {
   }
 };
 
-const drawInitialArrows = () => {
+const drawInitialArrows = async (): Promise<void> => {
+  await nextTick();
   if (!props.noKeyspace && props.graphMetadata?.keyspace) {
     const keyspaceConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_keyspaceConcept`);
     const keyspaceRelationConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_keyspaceRelationConcept`);

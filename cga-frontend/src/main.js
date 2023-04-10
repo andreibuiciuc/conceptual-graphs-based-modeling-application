@@ -37,6 +37,7 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import Sidebar from 'primevue/sidebar';
 
 const vuetify = createVuetify({
   components,
@@ -66,6 +67,7 @@ auth.onAuthStateChanged(() => {
     app.component('InputText', InputText);
     app.component('Accordion', Accordion);
     app.component('AccordionTab', AccordionTab);
+    app.component('Sidebar', Sidebar);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

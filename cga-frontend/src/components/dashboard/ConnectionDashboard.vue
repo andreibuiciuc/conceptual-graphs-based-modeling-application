@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
-    <connection-console @changekeyspace="selectedKeyspace = $event" @limit="conceptualGraphLeftLimit = $event"/>
-    <keyspace-graph :selected-keyspace="selectedKeyspace" :left-limit="conceptualGraphLeftLimit" />
+    <connection-console @changekeyspace="selectedKeyspace = $event" />
+    <keyspace-graph :selected-keyspace="selectedKeyspace" />
   </div>
 </template>
 
@@ -12,7 +12,6 @@ import ConnectionConsole from "./items/ConnectionConsole.vue";
 import KeyspaceGraph from "./items/KeyspaceGraph.vue";
 
 const selectedKeyspace: Ref<string> = ref(constants.inputValues.empty);
-const conceptualGraphLeftLimit: Ref<number> = ref(0);
 
 </script>
 
@@ -20,7 +19,8 @@ const conceptualGraphLeftLimit: Ref<number> = ref(0);
 @use "@/assets/styles/_containers.sass"
 
 .dashboard
-  @include containers.flex-container($flex-direction: row)
-  height: 100%
+  @include containers.flex-container($flex-direction: column, $align-items: center, $justify-content: center)
   width: 100%
+  height: 100%
+  
 </style>

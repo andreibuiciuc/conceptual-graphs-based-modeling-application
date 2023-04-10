@@ -54,9 +54,12 @@
   </div>
 
   <div v-else>
-    <section class="console-section">
+    <div class="console-section">
+      <div class="header-container elevation-1">
+        <Button outlined severity="primary" label="connect" @click="isSidebarOpened = true" />
+      </div>
       <ConnectionDashboard />
-    </section>
+    </div>
   </div>
 </template>
 
@@ -67,21 +70,41 @@ import cassandraTerminalConstants from '../components/graphic/terminal/cassandra
 import useAuthModalStore from '../stores/authModal';
 import useUserStore from '../stores/user';
 import { storeToRefs } from 'pinia';
-import { computed } from '@vue/reactivity';
+import { Ref, computed, ref } from '@vue/reactivity';
 
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
 import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
 import AuthenticationCard from '../components/authentication/AuthenticationCard.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
+import { onMounted } from 'vue';
 
 // Store state mappings
 const userStore = useUserStore();
+const authModalStore = useAuthModalStore();
 
 const { isUserLoggedIn } = storeToRefs(userStore);
+const { currentScrollYPosition, isSidebarOpened } = storeToRefs(authModalStore);
+
+const homepageElement: Ref<HTMLElement | null> = ref(null);
 
 const dummyCQLCommands = computed(() => {
   return cassandraTerminalConstants.dummyCQL
+});
+
+const handleScrollEvent = (): void => {
+  if (homepageElement.value) {
+    currentScrollYPosition.value = homepageElement.value.scrollTop;
+  } else {
+    currentScrollYPosition.value = 0;
+  }
+}
+
+onMounted(() => {
+  homepageElement.value = document.getElementById('homepage');
+  if (homepageElement) {
+    homepageElement.value?.addEventListener('scroll', handleScrollEvent);
+  }
 });
 
 </script>
@@ -281,10 +304,8 @@ model-viewer
     height: 120vh
 
 .console-section
-  @include containers.flex-container($flex-direction: column)
   margin-top: variables.$cga-topbar-height
   height: calc(100vh - variables.$cga-topbar-height)
-  padding: 5rem
 
 @keyframes floating-oval-animation__first
   0%

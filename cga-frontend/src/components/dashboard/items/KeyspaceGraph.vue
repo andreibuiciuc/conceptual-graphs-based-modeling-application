@@ -1,6 +1,6 @@
 <template>
-  <v-progress-circular indeterminate v-if="isKeyspaceRetrieveInProgress" />
-  <conceptual-graph graph-key="keyspaceGraph" :graph-metadata="graphMetadata" v-else />
+  <!-- <v-progress-circular indeterminate v-if="isKeyspaceRetrieveInProgress" /> -->
+  <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
 </template>
 
 <script setup lang="ts">
@@ -11,12 +11,14 @@ import ConceptualGraph from '../../graphic/graph/ConceptualGraph.vue';
 import { Concept, GraphMetadata } from '../../../types/types';
 import { useMetadata } from '../../../composables/metadata';
 import useNotificationStore from '../../../stores/notification';
+import { nextTick } from 'vue';
 
 interface Props {
   selectedKeyspace: string,
 };
 
 const props = defineProps<Props>();
+const keyspaceGraph = ref();
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -88,8 +90,15 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
   }
 };
 
-watch(() => props.selectedKeyspace, () => {
-  retrieveKeyspaceMetadata();
+watch(() => props.selectedKeyspace, async () => {
+  await retrieveKeyspaceMetadata();
+  await nextTick();
+  keyspaceGraph.value.removeArrows();
+  keyspaceGraph.value.drawInitialArrows();
 });
 
 </script>
+
+<style scoped lang="sass">
+
+</style>
