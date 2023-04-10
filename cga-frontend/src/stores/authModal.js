@@ -5,6 +5,7 @@ export default defineStore("authModal", {
     isModalOpened: false,
     isRegisterModalActive: true,
     currentScrollYPosition: 0,
-    isSidebarOpened: false
+    isSidebarOpened: false,
+    forceGraph: false
   }),
 });

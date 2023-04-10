@@ -1,6 +1,10 @@
 <template>
   <div class="connection-console">
     <Sidebar v-model:visible="isSidebarOpened" class="w-full md:w-25rem lg:w-30rem">
+      <template #header>
+        <InputSwitch v-model="forceGraph" />
+        <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
+      </template>
       <div class="panel-container">
           <!-- hint="Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc." -->
           <InputText 
@@ -36,6 +40,7 @@
             @click="manageServerConnection"
           />
       </div>
+      <Divider />
       <div class="panel-container">
         <Dropdown
           v-model="currentKeyspace"
@@ -70,7 +75,7 @@ export default {
   }),
   computed: {
     ...mapWritableState(useConnectionStore, ["cassandraServerCredentials", "currentKeyspace", "availableKeyspaces"]),
-    ...mapWritableState(useAuthModalStore, ["isSidebarOpened"]),
+    ...mapWritableState(useAuthModalStore, ["isSidebarOpened", "forceGraph"]),
     connectionPanelExpandedTitle: function () {
       if (!this.cassandraServerCredentials.isCassandraServerConnected) return constants.inputValues.empty;
       return this.cassandraServerCredentials.ipAddress + " : " + this.cassandraServerCredentials.port;
@@ -122,6 +127,15 @@ export default {
 .p-sidebar
   width: 25rem !important
   
+  .p-sidebar-header
+    justify-content: space-between !important
+
+    .p-sidebar-header-content
+      @include containers.flex-container($flex-direction: row, $align-items: center)
+
+      .sidebar-header-label
+        margin-left: 1rem
+
   .p-sidebar-content
     padding-top: 2.5rem !important
 
