@@ -112,7 +112,7 @@ const removeItem = (clause: QueryClause, item: QueryItem): void => {
 
 </script>
 
-<style lang="sass">
+<style scoped lang="sass">
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
 

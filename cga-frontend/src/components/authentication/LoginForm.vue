@@ -26,15 +26,7 @@
         :error-messages="errors"
       />
     </vee-field>
-    <v-btn
-      variant="outlined"
-      type="submit"
-      class="action-button submit-button"
-      :loading="isLoginInSubmission"
-      :disabled="isLoginInSubmission"
-    >
-      Submit
-    </v-btn>
+    <Button outlined label="login" severity="primary" :disabled="isLoginInSubmission" :loading="isLoginInSubmission" @click="login" />
   </vee-form>
 </template>
 
@@ -45,6 +37,7 @@ import { LoginCredentials } from '../../types/types';
 import useAuthModalStore from '../../stores/authModal';
 import useUserStore from '../../stores/user';
 import useNotificationStore from '../../stores/notification';
+
 import { Ref, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
@@ -52,6 +45,7 @@ const loginValidationSchema = {
   email: 'required|min:3|max:50|email',
   password: 'required|min:3|max:50|'
 };
+
 const loginCredentials: Ref<LoginCredentials> = ref({ ... constants.defaultLoginCredentials });
 const showPassword: Ref<boolean> = ref(false);
 const isLoginInSubmission: Ref<boolean> = ref(false);
@@ -61,6 +55,7 @@ const notificationStore = useNotificationStore();
 const userStore = useUserStore();
 const authModalStore = useAuthModalStore();
 const { isModalOpened } = storeToRefs(authModalStore);
+
 
 // Functions related to the Login flow
 const login = async (): Promise<void> => {

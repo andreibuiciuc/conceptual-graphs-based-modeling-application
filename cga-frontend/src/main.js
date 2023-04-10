@@ -29,10 +29,12 @@ import "primeicons/primeicons.css";
 
 // PrimeVue
 import PrimeVue from 'primevue/config';
+import Card from 'primevue/card';
 import Tooltip from 'primevue/tooltip';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
 
 const vuetify = createVuetify({
   components,
@@ -55,9 +57,11 @@ auth.onAuthStateChanged(() => {
     
     app.use(PrimeVue, { ripple: true });
 
+    app.component('Card', Card);
     app.component('Button', Button);
     app.component('Dropdown', Dropdown);
     app.component('Divider', Divider);
+    app.component('InputText', InputText);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

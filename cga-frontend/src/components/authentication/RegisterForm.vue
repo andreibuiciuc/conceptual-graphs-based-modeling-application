@@ -48,15 +48,7 @@
         @click:append-inner="showPassword = !showPassword"
       />
     </vee-field>
-    <v-btn
-      variant="outlined"
-      type="submit"
-      class="action-button submit-button"
-      :loading="isRegistrationInSubmission"
-      :disabled="isRegistrationInSubmission"
-    >
-      Submit
-    </v-btn>
+    <Button outlined label="register" :disabled="isRegistrationInSubmission" :loading="isRegistrationInSubmission" @click="register" />
   </vee-form>
 </template>
 

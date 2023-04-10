@@ -51,27 +51,7 @@
     </section>
     <!-- TODO: Authentication section -->
     <section class="homepage-section homepage-section__last" id="auth">
-      <div class="landing-page-final-block">
-        <div class="authentication-container">
-        <h1>Start exploring databases by <br />
-          <span>building Conceptual Graphs</span>
-        </h1>
-        <v-card variant="outlined" class="auth-activator">
-          <v-card-text>
-            <v-btn
-              variant="text"
-              class="auth-button"
-              @click.prevent="isModalOpened = true"
-            >
-              Create a new account <br />
-              or <br />
-              sign in
-            </v-btn>
-          </v-card-text>
-        </v-card>
-        <AuthenticationModal />
-      </div>
-      </div>
+      <AuthenticationModal />
     </section>
   </div>
 
@@ -94,10 +74,8 @@ import { computed } from '@vue/reactivity';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
 import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
-import CgaDelimiter from '../components/graphic/delimiters/CgaDelimiter.vue';
 import AuthenticationModal from '../components/authentication/AuthenticationModal.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
-import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 
 // Store state mappings
 const userStore = useUserStore();
@@ -310,10 +288,6 @@ model-viewer
 
   .homepage-section:nth-of-type(2), .homepage-section:nth-of-type(3)
     height: 120vh
-
-  .homepage-section__last
-    @include containers.flex-container($flex-direction: column, $justify-content: flex-end, $align-items: center)
-    padding: 0
 
 .console-section
   @include containers.flex-container($flex-direction: column)
