@@ -65,8 +65,17 @@
             :disabled="isQueryActionDisabled"
             :options="[QueryClause.WHERE, QueryClause.GROUP_BY, QueryClause.ORDER_BY]"
             @change="addClauseToQuery(selectedClauseType)"
-            ></Dropdown>
-          <Button label="clear" text severity="secondary" :disabled="isQueryActionDisabled" @click="clearQueryMetadata" />
+          />
+          <Toast />
+          <ConfirmPopup group="clear">
+            <template #message="slotProps">
+              <div class="flex p-4">
+                <i :class="slotProps.message.icon" style="font-size: 1.5rem;"></i>
+                <p class="pl-2">{{ slotProps.message.message }}</p>
+              </div>
+            </template>
+          </ConfirmPopup>
+          <Button label="clear" text severity="secondary" :disabled="isQueryActionDisabled" @click="openConfirmationPopup($event)" />
           <Divider layout="vertical" />
           <Button label="command" outlined severity="primary" :disabled="isQueryActionDisabled" />
           <Button label="run" outlined severity="primary" :disabled="isQueryActionDisabled" />
@@ -102,13 +111,17 @@
 import constants from '../constants/constants';
 import { Concept, QueryClause, QueryItem, QueryConcepts, ColumnMetadata, GraphMetadata } from '../types/types';
 
+import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
+import QueryItems from '../components/design/QueryItems.vue';
+
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
 import { useMetadata } from '../composables/metadata';
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
+
 import { storeToRefs } from 'pinia';
 import { manageRequest } from '../includes/requests';
-import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
-import QueryItems from '../components/design/QueryItems.vue';
 import { Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
 
@@ -146,6 +159,8 @@ const availableTables: Ref<string[]> = ref([]);
 const selectedTable: Ref<string> = ref(constants.inputValues.empty);
 const isTableRetrieveInProgress: Ref<boolean> = ref(false);
 
+
+// Functions related to the retrieval and parsing of entities
 const changeTable = (newTable: any): void => {
   selectedTable.value = newTable.value;
   retrieveTableMetadata();
@@ -245,6 +260,7 @@ const columnConcepts = computed(() => {
   return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
 })
 
+// Functions related to the addition of query columns, clauses and data
 const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
   const isColumnAlreadyAdded = checkIfColumnIsAlreadyAdded(columnConcept);
   if (!isColumnAlreadyAdded) {
@@ -278,7 +294,16 @@ const addClauseToQuery = (clause: QueryClause | null): void => {
   selectedClauseType.value = null;
   switch (clause) {
     case QueryClause.WHERE:
-      whereClauseItems.value.push({ column: constants.inputValues.empty, relation: "==", value: constants.inputValues.empty, chipValues: null, currentChipValue: '' });
+      whereClauseItems.value.push({ 
+        column: constants.inputValues.empty, 
+        relation: "==", 
+        value: constants.inputValues.empty, 
+        chipValues: null, 
+        currentChipValue: '',
+        isColumnValid: true,
+        isOperatorValid: true,
+        isValueValid: true
+      });
       break;
     case QueryClause.GROUP_BY:
       break;
@@ -297,9 +322,16 @@ const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
   return false;
 };
 
+// Funcrions related to the removal of query columns, clauses and data
 const clearQueryMetadata = () => {
+  // Clear query metadata and columns set for query
   queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, []);
   queryConcepts.value[QueryClause.WHERE].columns = [];
+  // Clear query clauses
+  whereClauseItems.value = [];
+  orderByClauseItems.value = [];
+  groupByClauseItems.value = [];
+  // Re-draw the Query Conceptual Graph without the query concepts
   queryGraph.value.removeArrows();
   queryGraph.value.drawInitialArrows();
   queryGraph.value.drawArrowsForConcepts();
@@ -328,6 +360,22 @@ const removeColumnFromQuery = (columnMetadata) => {
     }
   }
 }
+
+// Functions related to some utilities
+const confirm = useConfirm();
+const openConfirmationPopup = (event: any): void => {
+  confirm.require({
+    target: event.currentTarget,
+    group: 'clear',
+    message: 'are you sure you want to delete the current query?',
+    icon: 'pi pi-question-circle',
+    acceptIcon: 'pi pi-check',
+    rejectIcon: 'pi pi-times',
+    accept: () => {
+      clearQueryMetadata();
+    }
+  });
+};
 
 // Watches
 watch(currentKeyspace, (newKeyspace, _) => {

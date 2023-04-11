@@ -46,6 +46,7 @@ interface QueryConcepts {
 };
 
 interface QueryItem {
+    // Configuration
     column: string
     relation?: string
     value?: string 
@@ -54,7 +55,11 @@ interface QueryItem {
     toQuery?: boolean
     operators?: string[],
     currentChipValue?: string,
-    chipValues?: any
+    chipValues?: any,
+    // Validation
+    isColumnValid?: boolean,
+    isOperatorValid?: boolean,
+    isValueValid?: boolean
 };
 
 // Utility types

@@ -78,7 +78,7 @@ export default {
     LESS_EQUAL: '<=',
     GREATER: '>',
     GREATER_EQUAL: ">=",
-    EQUAL: "==",
+    EQUAL: "=",
     NOT_EQUAL: "!=",
     IN: "IN",
     NOT_IN: "NOT_IN",

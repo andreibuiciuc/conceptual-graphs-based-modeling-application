@@ -39,6 +39,9 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Sidebar from 'primevue/sidebar';
 import InputSwitch from 'primevue/inputswitch';
+import ConfirmPopup from 'primevue/confirmpopup';
+import ConfirmationService from 'primevue/confirmationservice';
+import Toast from 'primevue/toast';
 
 const vuetify = createVuetify({
   components,
@@ -60,6 +63,7 @@ auth.onAuthStateChanged(() => {
     app.use(VeeValidatePlugin);
     
     app.use(PrimeVue, { ripple: true });
+    app.use(ConfirmationService);
 
     app.component('Card', Card);
     app.component('Button', Button);
@@ -70,6 +74,8 @@ auth.onAuthStateChanged(() => {
     app.component('AccordionTab', AccordionTab);
     app.component('Sidebar', Sidebar);
     app.component('InputSwitch', InputSwitch);
+    app.component('ConfirmPopup', ConfirmPopup);
+    app.component('Toast', Toast);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

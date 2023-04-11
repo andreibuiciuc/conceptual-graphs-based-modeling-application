@@ -6,24 +6,32 @@
         <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
       </template>
       <div class="panel-container">
-          <!-- hint="Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc." -->
-          <InputText 
-            v-model="cassandraServerCredentials.ipAddress"
-            outlined 
-            placeholder="ip address" 
-            maxlength="15"
-            :disabled="cassandraServerCredentials.isCassandraServerConnected"
-            :readonly="cassandraServerCredentials.isCassandraServerConnected" 
-          />
-          <!-- hint="Enter the exposed port number of your running cassandra network (server). Example: 9042 (default cassandra port), etc." -->
-          <InputText
-            v-model="cassandraServerCredentials.port"
-            outlined
-            placeholder="port"
-            maxlength="4"
-            :disabled="cassandraServerCredentials.isCassandraServerConnected"
-            :readonly="cassandraServerCredentials.isCassandraServerConnected" 
-          />
+          <div class="flex flex-column gap-2">
+            <small id="ip-help">Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc.</small>
+            <InputText 
+              v-model="cassandraServerCredentials.ipAddress"
+              outlined 
+              id="ip"
+              placeholder="ip address" 
+              maxlength="15"
+              class="mt-4"
+              :disabled="cassandraServerCredentials.isCassandraServerConnected"
+              :readonly="cassandraServerCredentials.isCassandraServerConnected" 
+            />
+          </div>
+          <div class="flex flex-column gap-2">
+            <small id="port-help">Enter the exposed port number of your running cassandra network (server). Example: 9042 (cassandra default), etc.</small>
+            <InputText
+              v-model="cassandraServerCredentials.port"
+              outlined
+              id="port"
+              placeholder="port"
+              maxlength="4"
+              class="mt-2 mb-12"
+              :disabled="cassandraServerCredentials.isCassandraServerConnected"
+              :readonly="cassandraServerCredentials.isCassandraServerConnected" 
+            />
+          </div>
           <Button 
             outlined 
             severity="primary" 
