@@ -24,7 +24,7 @@ const toolbar: Toolbar = {
   navigationItems: [
     {
       key: "dataStructure",
-      title: "Data Structure CG Design",
+      title: "data structure design",
       value: "dataStructure",
       icon: "mdi-family-tree",
       pathTo: "data-structure",
@@ -32,7 +32,7 @@ const toolbar: Toolbar = {
     },
     {
       key: "query",
-      title: "Query CG Design",
+      title: "query design",
       value: "query",
       icon: "mdi-database-search",
       pathTo: "query",

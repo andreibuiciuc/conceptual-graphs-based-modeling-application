@@ -7,7 +7,7 @@
       </template>
       <div class="panel-container">
           <div class="flex flex-column gap-2">
-            <small id="ip-help">Enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc.</small>
+            <small id="ip-help">enter the exposed IP address of your running cassandra network (server). Example: 127.0.0.1, localhost, etc.</small>
             <InputText 
               v-model="cassandraServerCredentials.ipAddress"
               outlined 
@@ -20,7 +20,7 @@
             />
           </div>
           <div class="flex flex-column gap-2">
-            <small id="port-help">Enter the exposed port number of your running cassandra network (server). Example: 9042 (cassandra default), etc.</small>
+            <small id="port-help">enter the exposed port number of your running cassandra network (server). Example: 9042 (cassandra default), etc.</small>
             <InputText
               v-model="cassandraServerCredentials.port"
               outlined

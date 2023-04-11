@@ -23,11 +23,11 @@ import App from "./App.vue";
 // Styles imports
 import "./assets/main.css";
 import "@mdi/font/css/materialdesignicons.css";
-import "primevue/resources/themes/lara-light-indigo/theme.css";     
+import "primevue/resources/themes/lara-light-blue/theme.css";     
 import "primevue/resources/primevue.min.css";
 import "primeicons/primeicons.css";
 
-// PrimeVue
+// PrimeVue components
 import PrimeVue from 'primevue/config';
 import Card from 'primevue/card';
 import Tooltip from 'primevue/tooltip';
@@ -41,7 +41,8 @@ import Sidebar from 'primevue/sidebar';
 import InputSwitch from 'primevue/inputswitch';
 import ConfirmPopup from 'primevue/confirmpopup';
 import ConfirmationService from 'primevue/confirmationservice';
-import Toast from 'primevue/toast';
+import Splitter from 'primevue/splitter';
+import SplitterPanel from "primevue/splitterpanel";
 
 const vuetify = createVuetify({
   components,
@@ -50,7 +51,6 @@ const vuetify = createVuetify({
     defaultSet: "mdi",
   },
 });
-
 
 let app;
 auth.onAuthStateChanged(() => {
@@ -61,9 +61,8 @@ auth.onAuthStateChanged(() => {
     app.use(vuetify);
     app.use(router);
     app.use(VeeValidatePlugin);
-    
-    app.use(PrimeVue, { ripple: true });
     app.use(ConfirmationService);
+    app.use(PrimeVue, { ripple: true });
 
     app.component('Card', Card);
     app.component('Button', Button);
@@ -75,7 +74,8 @@ auth.onAuthStateChanged(() => {
     app.component('Sidebar', Sidebar);
     app.component('InputSwitch', InputSwitch);
     app.component('ConfirmPopup', ConfirmPopup);
-    app.component('Toast', Toast);
+    app.component('Splitter', Splitter);
+    app.component('SplitterPanel', SplitterPanel);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

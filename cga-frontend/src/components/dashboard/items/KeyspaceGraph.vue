@@ -1,5 +1,4 @@
 <template>
-  <!-- <v-progress-circular indeterminate v-if="isKeyspaceRetrieveInProgress" /> -->
   <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
 </template>
 
@@ -8,7 +7,7 @@ import { Ref, ref, watch } from 'vue';
 import constants from '../../../constants/constants';
 import { manageRequest } from '../../../includes/requests';
 import ConceptualGraph from '../../graphic/graph/ConceptualGraph.vue';
-import { Concept, GraphMetadata } from '../../../types/types';
+import { ConfigurableConcept, GraphMetadata } from '../../../types/types';
 import { useMetadata } from '../../../composables/metadata';
 import useNotificationStore from '../../../stores/notification';
 import { nextTick } from 'vue';
@@ -23,8 +22,8 @@ const keyspaceGraph = ref();
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],
-  columns: new Map<string, Concept[]>(),
-  dataTypes: new Map<string, Concept>()
+  columns: new Map<string, ConfigurableConcept[]>(),
+  dataTypes: new Map<string, ConfigurableConcept>()
 };
 
 const graphMetadata: Ref<GraphMetadata> = ref(defaultGraphMetadata);
@@ -42,9 +41,10 @@ const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
   graphMetadata.value.keyspace = Object.assign({}, keyspaceConcept);
   
   keyspaceMetadata.tables.forEach((table: any) => {
-    const tableConcept = {
+    const tableConcept: ConfigurableConcept = {
       conceptType: constants.conceptTypes.table,
       conceptName: table.table,
+      isTableExpanded: true
     };
     graphMetadata.value.tables.push(tableConcept);
     graphMetadata.value.columns.set(tableConcept.conceptName, []);
@@ -53,7 +53,7 @@ const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
       const columnConcept = { conceptType: constants.conceptTypes.column, conceptName: column.column_name };
       const relationType = getRelationTypeForColumnConcept(column.column_kind, column.clustering_order)
 
-      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: relationType});
+      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: relationType });
 
       const typeConcept = { conceptType: constants.conceptTypes.dataType, conceptName: column.column_type };
       graphMetadata.value.dataTypes.set(columnConcept.conceptName, { ... typeConcept, relation: constants.relationTypes.hasType });
@@ -65,8 +65,8 @@ const resetKeyspaceMetadata = (): void => {
   const defaultConcept = { conceptName: props.selectedKeyspace, conceptType: constants.conceptTypes.keyspace };
   graphMetadata.value.keyspace = { ... defaultConcept };
   graphMetadata.value.tables = [];
-  graphMetadata.value.columns = new Map<string, Concept[]>();
-  graphMetadata.value.dataTypes = new Map<string, Concept>();
+  graphMetadata.value.columns = new Map<string, ConfigurableConcept[]>();
+  graphMetadata.value.dataTypes = new Map<string, ConfigurableConcept>();
 };
 
 const retrieveKeyspaceMetadata = async (): Promise<void> => {

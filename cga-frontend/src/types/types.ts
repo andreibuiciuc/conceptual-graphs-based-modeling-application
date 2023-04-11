@@ -17,11 +17,15 @@ interface Concept {
     columnKind?: string
 };
 
+interface ConfigurableConcept extends Concept {
+    isTableExpanded?: boolean
+};
+
 interface GraphMetadata {
     keyspace: Concept
-    tables: Concept[]
-    columns: Map<string, Concept[]>
-    dataTypes: Map<string, Concept>
+    tables: ConfigurableConcept[]
+    columns: Map<string, ConfigurableConcept[]>
+    dataTypes: Map<string, ConfigurableConcept>
 };
 
 interface ColumnMetadata {
@@ -74,6 +78,7 @@ export {
     //
     QueryClause,
     Concept,
+    ConfigurableConcept,
     ColumnMetadata,
     QueryConcepts,
     QueryItem,

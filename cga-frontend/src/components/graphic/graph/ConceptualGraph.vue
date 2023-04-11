@@ -19,20 +19,19 @@
             v-for="(tableConcept, tableIndex) in graphMetadata?.tables"
             :graphKey="tableConcept.conceptName"
           >
-            <div :id="`${graphKey}_tableConcept_${tableIndex}`"
+            <div 
+              :id="`${graphKey}_tableConcept_${tableIndex}`"
               class="tf-nc"
-              :class="{
-                'table-first': noKeyspace,
-                'table-first-no-col':
-                  doesGraphHaveOnlyTableConcept(tableConcept),
-              }"
-            >
+              :class="{ 'table-first': noKeyspace, 'table-first-no-col': doesGraphHaveOnlyTableConcept(tableConcept) }"
+              >
               <span class="concept-type">{{ tableConcept.conceptType }}:</span>
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
+              <i class="pi" :class="tableConcept.isTableExpanded ? 'pi-minus' : 'pi-plus'" style="font-size: 1.5rem;" @click="expandTable(tableConcept)"></i>
             </div>
             <ul>
               <!-- Column level -->
-              <li :class="{ 'column-concept-hoverable': areColumnsSelectable }" v-if="graphMetadata.columns.size"
+              <li
+                :class="{ 'column-concept-hoverable': areColumnsSelectable }" v-if="graphMetadata.columns.size"
                 v-for="(columnConcept, columnIndex) in graphMetadata.columns.get(tableConcept.conceptName)" :graphKey="columnConcept.conceptName"
               >
                 <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`">
@@ -42,12 +41,8 @@
                   class="tf-nc" :class="{ 'column-concept--selectable': areColumnsSelectable }"
                   @click.prevent="selectColumn(columnConcept)"
                   >
-                  <span class="concept-type"
-                    >{{ columnConcept.conceptType }}:</span
-                  >
-                  <span class="concept-name">{{
-                    columnConcept.conceptName
-                  }}</span>
+                  <span class="concept-type">{{ columnConcept.conceptType }}:</span>
+                  <span class="concept-name">{{ columnConcept.conceptName }}</span>
                   <v-btn
                     v-if="areColumnConceptsDeletable"
                     @click="removeColumnConcept(tableConcept, columnConcept)"
@@ -92,9 +87,10 @@
 <script setup lang="ts">
 import { Ref, nextTick, onUnmounted, ref } from 'vue';
 import constants from '../../../constants/constants';
-import { QueryClause, Concept, GraphMetadata } from "../../../types/types";
+import { QueryClause, Concept, ConfigurableConcept, GraphMetadata } from "../../../types/types";
 
 import arrowCreate from 'arrows-svg';
+import { svg } from 'd3-fetch';
 
 interface Props {
   graphMetadata: GraphMetadata
@@ -103,6 +99,7 @@ interface Props {
   noKeyspace?: boolean
   isQueryGraph?: boolean
   queryConcepts?: Object
+  areTablesCollapsable?: boolean,
   areColumnConceptsDeletable?: boolean
   areColumnsSelectable?: boolean
   graphKey: string
@@ -113,7 +110,7 @@ const emit = defineEmits(['select', 'remove']);
 
 const arrows: Ref<any> = ref([]);
 
-const createArrow = (sourceNode: any, targetNode: any, relatedNode: any = null) => {
+const createArrow = (sourceNode: any, targetNode: any, relatedConcept: Concept | null = null) => {
   if (!sourceNode || !targetNode) {
     return;
   }
@@ -127,8 +124,13 @@ const createArrow = (sourceNode: any, targetNode: any, relatedNode: any = null) 
       direction: 'top'
     }
   });
-  arrow.relatedNode = relatedNode;
-  arrows.value.push(arrow);
+  arrow.relatedNode = relatedConcept;
+  
+  // Add class for the arrow svg
+  if (relatedConcept) {
+    arrow.node.firstElementChild.setAttribute('related-concept', `${relatedConcept.conceptName}`);
+  }
+  
   const elementRef = document.getElementById(`${props.graphKey}_conceptualGraph`);
   if (elementRef) {
     elementRef.append(arrow.node);
@@ -138,6 +140,29 @@ const createArrow = (sourceNode: any, targetNode: any, relatedNode: any = null) 
 const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
   return tableConcept && props.graphMetadata.tables.length && props.graphMetadata.columns && props.graphMetadata.columns.size;
 }
+
+const drawArrowsForConcept = async (tableConcept: Concept): Promise<void> => {
+  await nextTick();
+  const tableIndex = props.graphMetadata.tables.findIndex(table => table.conceptName === tableConcept.conceptName);
+  const tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${tableIndex}`);
+  for (let columnIndex in props.graphMetadata.columns.get(tableConcept.conceptName)) {
+    const currentColumnConcept: Concept | undefined = props.graphMetadata.columns.get(tableConcept.conceptName)?.at(parseInt(columnIndex, 10));
+
+    const columnConceptRelationElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`);
+    const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_columnConcept_${columnIndex}`);
+
+    createArrow(tableConceptElement, columnConceptRelationElement, currentColumnConcept);
+    createArrow(columnConceptRelationElement, columnConceptElement, currentColumnConcept);
+
+    if (props.graphMetadata.dataTypes.size) {
+      const typeConceptRelationElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`);
+      const typeConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_typeConcept_${columnIndex}`);
+
+      createArrow(columnConceptElement, typeConceptRelationElement, currentColumnConcept);
+      createArrow(typeConceptRelationElement, typeConceptElement, currentColumnConcept);
+    }
+  }
+};
 
 const drawArrowsForConcepts = async (): Promise<void> => {
   await nextTick();
@@ -202,19 +227,40 @@ const removeArrows = (relatedConcept: Concept | null = null) => {
   if (!relatedConcept) {
     arrows.value.forEach((arrow: any) => arrow.clear());
   } else {
-    arrows.value.forEach((arrow: any) => {
-      if (arrow.relatedNode === relatedConcept) {
-        arrow.clear();
-      }
-    });
+    removeArrowForChildrenConcepts(relatedConcept);
   }
 };
+
+const removeArrowForChildrenConcepts = (parentConcept: Concept): void => {
+  arrows.value.forEach((arrow: any) => {
+    if (arrow.relatedNode === parentConcept) {
+      arrow.clear();
+    }
+  });
+}
 
 const removeColumnConcept = (tableConcept: Concept, columnConcept: Concept) => {
   if (columnConcept) {
     removeArrows(columnConcept);
     emit('remove', { tableConcept, columnConcept });
   }
+};
+
+const expandTable = (tableConcept: ConfigurableConcept): void => {
+  tableConcept.isTableExpanded = !tableConcept.isTableExpanded;
+  hideOrShowArrowsForConcept(tableConcept);
+};
+
+const hideOrShowArrowsForConcept = (concept: ConfigurableConcept): void => {
+  const arrowSvgs = document.querySelectorAll(`[related-concept=t0]`);
+  arrowSvgs.forEach((svg: Element) => {
+    const castedSvg = <HTMLElement> svg;
+    if (concept.isTableExpanded) {
+      castedSvg.style.setProperty('visibility', '0')
+    } else {
+      castedSvg.style.setProperty('visibility', 'visible')
+    }
+  });
 };
 
 const selectColumn = (columnConcept: Concept) => {

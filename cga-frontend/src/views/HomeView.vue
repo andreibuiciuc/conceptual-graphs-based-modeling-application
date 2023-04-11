@@ -43,9 +43,6 @@
         <span class="banner-card-text">"With their direct mapping to language, conceptual graphs can serve as an</span>
         <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
       </cga-banner-card>
-      <div class="landing-image-wrapper">
-        <model-viewer src="/macbook_air_m2/scene.gltf" alt="macbook"></model-viewer>
-      </div>
       <!-- <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="dummyCQLCommands" /> -->
     </section>
     <section class="homepage-section homepage-section__last" id="auth">
@@ -128,21 +125,6 @@ model-viewer
     max-width: 100%
     padding: 0 24px
     height: calc(100vh - variables.$cga-topbar-height)
-
-    .landing-image-wrapper
-      @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
-
-      .display-image-fade-in
-        visibility: visible
-        animation: display-image-fade-in 0.5s cubic-bezier(0.390, 0.575, 0.565, 1.000) both
-
-      @keyframes display-image-fade-in
-          0% 
-              opacity: 0
-              transform: translateY(40px)
-          100%
-              opacity: 1
-              transform: translateY(0)
 
     .landing-animation-wrapper
       position: absolute

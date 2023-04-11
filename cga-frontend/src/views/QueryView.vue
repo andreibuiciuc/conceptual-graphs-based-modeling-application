@@ -16,8 +16,8 @@
         <Button label="generate query" outlined severity="primary"></Button>
       </div>
     </div>
-    <div class="query-canvas-wrapper">
-      <div class="query-canvas">
+    <Splitter class="query-canvas-wrapper">
+      <SplitterPanel>
         <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress" 
           ref="tableGraph"
           graph-key="tableGraph"
@@ -25,8 +25,8 @@
           :are-columns-selectable="true"
           @select="addColumnToQuery" />
         <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
-      </div>
-      <div class="query-canvas">
+      </SplitterPanel>
+      <SplitterPanel>
         <conceptual-graph v-if="queryMetadata && queryMetadata.columns" 
           ref="queryGraph"
           graph-key="queryGraph"
@@ -36,8 +36,8 @@
           :query-concepts="queryConcepts"
           :is-query-graph="true"
           @remove="removeColumnFromQuery" />
-      </div>
-    </div>
+      </SplitterPanel>
+    </Splitter>
     </div>
     <div class="query-toolbox">
       <div class="query-panel-header">
@@ -419,7 +419,6 @@ if (currentKeyspace.value) {
           margin-right: 10px
 
     .query-canvas-wrapper
-      @include containers.flex-container($flex-direction: row)
       padding: 10px
       height: 100%
       width: 100%
