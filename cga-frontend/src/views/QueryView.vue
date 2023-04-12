@@ -23,6 +23,7 @@
           graph-key="tableGraph"
           :graph-metadata="tableMetadata"
           :are-columns-selectable="true"
+          :are-tables-collapsable="false"
           @select="addColumnToQuery" />
         <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
       </SplitterPanel>
@@ -31,8 +32,9 @@
           ref="queryGraph"
           graph-key="queryGraph"
           :graph-metadata="queryMetadata"
+          :are-tables-collapsable="false"
           :are-columns-selectable="false"
-          :areColumnConceptsDeletable="true"
+          :are-column-concepts-deletable="true"
           :query-concepts="queryConcepts"
           :is-query-graph="true"
           @remove="removeColumnFromQuery" />
@@ -66,7 +68,6 @@
             :options="[QueryClause.WHERE, QueryClause.GROUP_BY, QueryClause.ORDER_BY]"
             @change="addClauseToQuery(selectedClauseType)"
           />
-          <Toast />
           <ConfirmPopup group="clear">
             <template #message="slotProps">
               <div class="flex p-4">
@@ -77,7 +78,7 @@
           </ConfirmPopup>
           <Button label="clear" text severity="secondary" :disabled="isQueryActionDisabled" @click="openConfirmationPopup($event)" />
           <Divider layout="vertical" />
-          <Button label="command" outlined severity="primary" :disabled="isQueryActionDisabled" />
+          <Button label="command" outlined severity="primary" :disabled="isQueryActionDisabled" @click="openQueryTerminal" />
           <Button label="run" outlined severity="primary" :disabled="isQueryActionDisabled" />
         </div>
       </div>
@@ -87,7 +88,6 @@
           <query-items 
             v-if="whereClauseItems.length" 
             :clause="QueryClause.WHERE" 
-            :items="whereClauseItems" 
             :columns="columnConcepts" 
             @add="addQueryConcept"
             @remove="removeClause">
@@ -102,9 +102,16 @@
           ></query-items>
         </div>
       </div>
+    </div>
   </div>
-  </div>
-  
+  <Dialog v-model:visible="isQueryTerminalOpened" :show-header="false" modal>
+    <CassandraTerminal 
+      :is-terminal-opened="isQueryTerminalOpened"
+      :is-terminal-readonly="false"
+      :commands="[]"
+      @close="isQueryTerminalOpened = false" 
+    />
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -113,17 +120,18 @@ import { Concept, QueryClause, QueryItem, QueryConcepts, ColumnMetadata, GraphMe
 
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
+import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 
 import useConnectionStore from '../stores/connection';
 import useNotificationStore from '../stores/notification';
 import { useMetadata } from '../composables/metadata';
 import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
 
 import { storeToRefs } from 'pinia';
 import { manageRequest } from '../includes/requests';
 import { Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
+import { useQueryStore } from '../stores/query';
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -141,10 +149,6 @@ const isTableGraphReady: Ref<boolean> = ref(false);
 
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
 
-const whereClauseItems: Ref<QueryItem[]> = ref([]);
-const orderByClauseItems: Ref<QueryItem[]> = ref([]);
-const groupByClauseItems: Ref<QueryItem[]> = ref([]);
-
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept, getConceptReferentValue } = useMetadata();
@@ -152,7 +156,10 @@ const { getRelationTypeForColumnConcept, getConceptReferentValue } = useMetadata
 // Store state and action mappings
 const connectionStore = useConnectionStore();
 const notificationStore = useNotificationStore();
+const queryStore = useQueryStore();
+
 const { currentKeyspace } = storeToRefs(connectionStore); 
+const { whereClauseItems, orderByClauseItems, groupByClauseItems } = storeToRefs(queryStore);
 
 // Retrieve and parsing of the metadata
 const availableTables: Ref<string[]> = ref([]);
@@ -322,7 +329,7 @@ const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
   return false;
 };
 
-// Funcrions related to the removal of query columns, clauses and data
+// Functions related to the removal of query columns, clauses and data
 const clearQueryMetadata = () => {
   // Clear query metadata and columns set for query
   queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, []);
@@ -360,6 +367,12 @@ const removeColumnFromQuery = (columnMetadata) => {
     }
   }
 }
+
+// Functions related to the query actions
+const isQueryTerminalOpened: Ref<boolean> = ref(false);
+const openQueryTerminal = (): void => {
+  isQueryTerminalOpened.value = true;
+};
 
 // Functions related to some utilities
 const confirm = useConfirm();

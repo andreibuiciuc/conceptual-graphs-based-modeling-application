@@ -43,6 +43,7 @@ import ConfirmPopup from 'primevue/confirmpopup';
 import ConfirmationService from 'primevue/confirmationservice';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel";
+import Dialog from 'primevue/dialog';
 
 const vuetify = createVuetify({
   components,
@@ -76,6 +77,7 @@ auth.onAuthStateChanged(() => {
     app.component('ConfirmPopup', ConfirmPopup);
     app.component('Splitter', Splitter);
     app.component('SplitterPanel', SplitterPanel);
+    app.component('Dialog', Dialog);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

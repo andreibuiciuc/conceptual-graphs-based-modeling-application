@@ -12,7 +12,7 @@
             </div>
         </template>
         <template #content>
-            <div v-for="(item, index) in props.items" class="query-panel-item-clause" :id="`${clause}_item_${index}`" >
+            <div v-for="(item, index) in items" class="query-panel-item-clause" :id="`${clause}_item_${index}`" >
                 <i class="pi pi-times" style="color: red; font-size: 1.25rem" @click="removeItem(clause, item)"></i>
                 <span v-if="clause === QueryClause.WHERE" class="item-clause-label">
                     {{ index === 0 ? 'where' : 'and' }}
@@ -63,17 +63,19 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import { useMetadata } from '../../composables/metadata';
+import { useQueryStore } from '../../stores/query';
 import { QueryClause, QueryItem, Concept } from '../../types/types';
 
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Chips from 'primevue/chips';
+import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
 
 interface Props {
     clause: QueryClause
     columns?: Concept[]
-    items: QueryItem[],
 };
 
 const orderByOptions = [ "ASCENDING", "DESCENDING" ];
@@ -98,6 +100,24 @@ const emit = defineEmits(['remove', 'add']);
 
 // Data and functions mapped from composables
 const { getCQLWhereOperatorsByColumnKind } = useMetadata();
+
+const queryStore = useQueryStore();
+
+const items = computed((): QueryItem[] => {
+    switch (props.clause) {
+        case QueryClause.WHERE:
+            const { whereClauseItems } = storeToRefs(queryStore);
+            return whereClauseItems.value;
+        case QueryClause.ORDER_BY:
+            const { orderByClauseItems } = storeToRefs(queryStore);
+            return orderByClauseItems.value;
+        case QueryClause.GROUP_BY:
+            const { groupByClauseItems } = storeToRefs(queryStore);
+            return groupByClauseItems.value; 
+        default:
+            return [];
+    }
+});
 
 // Functions related to the item actions
 const addToQuery = (clause: QueryClause, item: QueryItem): void => {

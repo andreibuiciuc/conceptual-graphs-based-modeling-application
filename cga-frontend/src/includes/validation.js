@@ -13,9 +13,6 @@ import {
 } from "@vee-validate/rules";
 
 export default {
-  // Validation plugin outsourced from main.js file.
-  // Registers the components to be available globally and defines the validation rules.
-
   install(app) {
     app.component("VeeForm", VeeForm);
     app.component("VeeField", VeeField);

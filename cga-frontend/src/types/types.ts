@@ -52,6 +52,7 @@ interface QueryConcepts {
 interface QueryItem {
     // Configuration
     column: string
+    availableColumns?: Concept[]
     relation?: string
     value?: string 
     valueSelect?: string,
