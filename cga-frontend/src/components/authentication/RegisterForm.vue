@@ -56,10 +56,8 @@
 import constants from "../../constants/constants";
 import { RegisterCredentials } from "../../types/types";
 
-import useAuthModalStore from "../../stores/authModal";
 import { useUserStore } from "../../stores/user";
 import { Ref, ref } from "vue";
-import { storeToRefs } from "pinia";
 import { useUtils } from "../../composables/utils";
 
 // Data
@@ -79,8 +77,6 @@ const { openNotificationToast } = useUtils();
 
 // Store state and actions mappings
 const userStore = useUserStore();
-const authModalStore = useAuthModalStore();
-const { isModalOpened } = storeToRefs(authModalStore);
 
 // Functions related to the Register flow
 const register = async (): Promise<void> => {
@@ -96,7 +92,6 @@ const register = async (): Promise<void> => {
 
 const handleSuccessfulRegister = (): void => {
   isRegistrationInSubmission.value = false;
-  isModalOpened.value = false;
   openNotificationToast(constants.snackbarMessages.registerSuccess, 'success');
 };
 

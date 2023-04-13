@@ -126,7 +126,7 @@ import QueryItems from '../components/design/QueryItems.vue';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 
 // Store imports
-import useConnectionStore from '../stores/connection';
+import { useConnectionStore } from '../stores/connection';
 import { useQueryStore } from '../stores/query';
 
 // Composable imports
@@ -402,8 +402,8 @@ const openConfirmationPopup = (event: any): void => {
 
 // Watches
 watch(currentKeyspace, (newKeyspace, _) => {
-  tableMetadata.value.keyspace = Object.assign({}, newKeyspace)
-  queryMetadata.value.keyspace = Object.assign({}, newKeyspace);
+  tableMetadata.value.keyspace.conceptName = newKeyspace
+  queryMetadata.value.keyspace.conceptName = newKeyspace;
 });
 
 if (currentKeyspace.value) {

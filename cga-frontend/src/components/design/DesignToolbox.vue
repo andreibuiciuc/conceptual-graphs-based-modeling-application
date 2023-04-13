@@ -140,7 +140,7 @@
 <script lang="js">
 import constants from "@/constants/constants";
 import designToolboxConstants from "../design/designToolboxConstants";
-import useConnectionStore from '../../stores/connection';
+import { useConnectionStore } from '../../stores/connection';
 import { manageRequest } from "@/includes/requests";
 import { conceptualGraphsCollection } from "../../includes/firebase";
 import { mapWritableState } from "pinia";

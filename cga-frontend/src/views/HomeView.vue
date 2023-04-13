@@ -43,7 +43,6 @@
         <span class="banner-card-text">"With their direct mapping to language, conceptual graphs can serve as an</span>
         <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
       </cga-banner-card>
-      <!-- <cassandra-terminal :is-terminal-opened="true" :is-terminal-readonly="true" :commands="dummyCQLCommands" /> -->
     </section>
     <section class="homepage-section homepage-section__last" id="auth">
       <AuthenticationCard />
@@ -61,12 +60,10 @@
 </template>
 
 <script setup lang="ts">
-import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
-
-import useAuthModalStore from '../stores/authModal';
+import { useUtilsStore } from '../stores/utils';
 import { useUserStore } from '../stores/user';
 import { storeToRefs } from 'pinia';
-import { Ref, computed, ref } from '@vue/reactivity';
+import { Ref, ref } from '@vue/reactivity';
 
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
 import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
@@ -76,16 +73,12 @@ import { onMounted } from 'vue';
 
 // Store state mappings
 const userStore = useUserStore();
-const authModalStore = useAuthModalStore();
+const utilsStore = useUtilsStore();
 
 const { isUserLoggedIn } = storeToRefs(userStore);
-const { currentScrollYPosition, isSidebarOpened } = storeToRefs(authModalStore);
+const { currentScrollYPosition, isSidebarOpened } = storeToRefs(utilsStore);
 
 const homepageElement: Ref<HTMLElement | null> = ref(null);
-
-const dummyCQLCommands = computed(() => {
-  return cassandraTerminalConstants.dummyCQL
-});
 
 const handleScrollEvent = (): void => {
   if (homepageElement.value) {

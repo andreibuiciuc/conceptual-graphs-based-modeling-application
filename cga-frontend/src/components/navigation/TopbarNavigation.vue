@@ -52,8 +52,8 @@
 <script setup lang="ts">
 import { Toolbar, toolbar} from "./navigationConstants";
 import { useUserStore } from '../../stores/user';
-import useConnectionStore from '../../stores/connection';
-import useAuthModalStore from '../../stores/authModal';
+import { useConnectionStore } from '../../stores/connection';
+import { useUtilsStore } from '../../stores/utils';
 import { Ref, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
@@ -63,11 +63,11 @@ const currentNavigationIndex: Ref<number> = ref(0);
 
 const userStore = useUserStore();
 const connectionStore = useConnectionStore();
-const authModalStore = useAuthModalStore();
+const utilsStore = useUtilsStore();
 
 const { isUserLoggedIn } = storeToRefs(userStore);
 const { cassandraServerCredentials } = storeToRefs(connectionStore);
-const { currentScrollYPosition } = storeToRefs(authModalStore);
+const { currentScrollYPosition } = storeToRefs(utilsStore);
 
 const router = useRouter();
 

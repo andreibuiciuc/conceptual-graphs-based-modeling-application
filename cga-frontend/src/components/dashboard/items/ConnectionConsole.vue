@@ -73,8 +73,8 @@
 <script lang="js">
 import constants from '@/constants/constants';
 import { mapActions, mapWritableState } from "pinia";
-import useConnectionStore from "@/stores/connection";
-import useAuthModalStore from "@/stores/authModal";
+import { useConnectionStore } from "@/stores/connection";
+import { useUtilsStore} from "@/stores/utils";
 
 export default {
   name: "ConnectionConsole",
@@ -83,7 +83,7 @@ export default {
   }),
   computed: {
     ...mapWritableState(useConnectionStore, ["cassandraServerCredentials", "currentKeyspace", "availableKeyspaces"]),
-    ...mapWritableState(useAuthModalStore, ["isSidebarOpened", "forceGraph"]),
+    ...mapWritableState(useUtilsStore, ["isSidebarOpened", "forceGraph"]),
     connectionPanelExpandedTitle: function () {
       if (!this.cassandraServerCredentials.isCassandraServerConnected) return constants.inputValues.empty;
       return this.cassandraServerCredentials.ipAddress + " : " + this.cassandraServerCredentials.port;

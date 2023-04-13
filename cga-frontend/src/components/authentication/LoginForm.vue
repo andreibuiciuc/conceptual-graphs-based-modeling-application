@@ -33,14 +33,9 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import { LoginCredentials } from '../../types/types';
-
-import useAuthModalStore from '../../stores/authModal';
 import { useUserStore } from '../../stores/user';
-
 import { useUtils } from '../../composables/utils';
-
 import { Ref, ref } from 'vue';
-import { storeToRefs } from 'pinia';
 
 const loginValidationSchema = {
   email: 'required|min:3|max:50|email',
@@ -53,8 +48,6 @@ const isLoginInSubmission: Ref<boolean> = ref(false);
 
 // Store state and actions mappings
 const userStore = useUserStore();
-const authModalStore = useAuthModalStore();
-const { isModalOpened } = storeToRefs(authModalStore);
 
 // Composables
 const { openNotificationToast } = useUtils();
@@ -75,7 +68,6 @@ const login = async (): Promise<void> => {
 
 const handleSuccessfulLogin = (): void => {
   isLoginInSubmission.value = false;
-  isModalOpened.value = false;
   openNotificationToast(constants.snackbarMessages.loginSuccess, 'success');
 };
 

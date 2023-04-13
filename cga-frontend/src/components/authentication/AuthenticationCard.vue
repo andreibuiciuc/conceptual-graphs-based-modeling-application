@@ -6,10 +6,10 @@
       <div class="authentication-card-second-half">
         <div class="authentication-card-content">
           <div class="authentication-card-title">
-            <span>{{ isRegisterModalActive ? 'register' : 'login' }}</span>
-            <i class="pi pi-arrow-right" style="font-size: 1.5rem; margin-left: 1.5rem;" @click="isRegisterModalActive = !isRegisterModalActive"></i>
+            <span>{{ isRegisterFormActive ? 'register' : 'login' }}</span>
+            <i class="pi pi-arrow-right" style="font-size: 1.5rem; margin-left: 1.5rem;" @click="isRegisterFormActive = !isRegisterFormActive"></i>
           </div>
-          <RegisterForm key="register-form" v-if="isRegisterModalActive" />
+          <RegisterForm key="register-form" v-if="isRegisterFormActive" />
           <LoginForm key="login-form" v-else />
         </div>
       </div>
@@ -19,19 +19,14 @@
 
 <script setup lang="ts">
 import { useMouseInElement } from '@vueuse/core';
-import useAuthModalStore from '../../stores/authModal';
-import { storeToRefs } from "pinia";
 
 import RegisterForm from './RegisterForm.vue';
 import LoginForm from "./LoginForm.vue";
-import { ref } from 'vue';
+import { Ref, ref } from 'vue';
 import { computed } from '@vue/reactivity';
 import constants from '../../constants/constants';
 
-
-// Store state mappings
-const authModalStore = useAuthModalStore();
-const { isRegisterModalActive } = storeToRefs(authModalStore);
+const isRegisterFormActive: Ref<boolean> = ref(true);
 
 // Tilt functionality
 const target = ref(null);
