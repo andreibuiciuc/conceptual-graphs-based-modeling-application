@@ -101,8 +101,8 @@ const emit = defineEmits(['remove', 'add']);
 // Data and functions mapped from composables
 const { getCQLWhereOperatorsByColumnKind } = useMetadata();
 
+// Stores
 const queryStore = useQueryStore();
-
 const items = computed((): QueryItem[] => {
     switch (props.clause) {
         case QueryClause.WHERE:

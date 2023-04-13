@@ -1,5 +1,5 @@
-import { defineStore } from "pinia";
 import constants from "@/constants/constants";
+import { defineStore } from "pinia";
 
 export default defineStore("notification", {
   state: () => ({

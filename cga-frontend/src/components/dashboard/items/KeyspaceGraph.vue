@@ -9,7 +9,7 @@ import { manageRequest } from '../../../includes/requests';
 import ConceptualGraph from '../../graphic/graph/ConceptualGraph.vue';
 import { ConfigurableConcept, GraphMetadata } from '../../../types/types';
 import { useMetadata } from '../../../composables/metadata';
-import useNotificationStore from '../../../stores/notification';
+import { useUtils } from '../../../composables/utils';
 import { nextTick } from 'vue';
 
 interface Props {
@@ -29,7 +29,8 @@ const defaultGraphMetadata: GraphMetadata = {
 const graphMetadata: Ref<GraphMetadata> = ref(defaultGraphMetadata);
 const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
 
-const notificationStore = useNotificationStore();
+// Composables
+const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
 
 const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
@@ -80,10 +81,10 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
       if (response.data.status === constants.requestStatus.SUCCESS) {
         parseKeyspaceMetadata(response.data.keyspace_metadata);
       } else {
-        notificationStore.setUpSnackbarState(false, response.data.message);
+        openNotificationToast(response.data.message, 'error');
       }
     } else {
-      notificationStore.setUpSnackbarState(false, "Unexpected error occured.");
+      openNotificationToast('Unexpected error occured', 'warning');
     }
 
     isKeyspaceRetrieveInProgress.value = false;

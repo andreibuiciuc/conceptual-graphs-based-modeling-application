@@ -57,31 +57,6 @@ section
 .flex-center
     justify-content: center
 
-.action-button
-    border-color: variables.$cassandra-gradient-blue
-    background-color: variables.$cassandra-white
-    color: variables.$cassandra-gradient-blue
-
-    &:hover
-        border-color: variables.$cassandra-gradient-blue
-        background-color: variables.$cassandra-gradient-blue
-        color: variables.$cassandra-white
-
-.action-button--discard
-    border-color: variables.$cassandra-red
-    background-color: variables.$cassandra-white
-    color: variables.$cassandra-red
-
-    &:hover
-        border-color: variables.$cassandra-red
-        background-color: variables.$cassandra-red
-        color: variables.$cassandra-white
-
-.action-button-active
-    border-color: variables.$cassandra-gradient-blue
-    background-color: variables.$cassandra-gradient-blue
-    color: variables.$cassandra-white
-
 .text--cassandra-blue
     color: variables.$cassandra-gradient-blue
 
@@ -110,26 +85,8 @@ section
 .v-text-field .v-input__details
     padding-inline-start: 0
 
-.v-expansion-panel-title--active:hover > .v-expansion-panel-title__overlay,
-.v-expansion-panel-title:hover > .v-expansion-panel-title__overlay,
-.v-expansion-panel-title__overlay 
-    background-color: variables.$cassandra-white
-
-.v-expansion-panel--active > .v-expansion-panel-title
-    border-bottom: 1px solid variables.$cassandra-light-gray
-    min-height: 48px !important
-
-.v-expansion-panel-text__wrapper
-    padding: 20px
-
-.v-btn__overlay
-    border-radius: 0px
-
 .v-overlay__content.v-select__content
     max-height: 400px !important
-
-.v-expansion-panel--active
-    max-height: 400px
 
 .elevation-1
     box-shadow: 0px 2px 1px -1px variables.$cassandra-light-gray !important
@@ -143,3 +100,10 @@ section
 .p-dialog .p-dialog-content
     background: none !important
     padding: 0 !important
+
+// PrimeVue classes are overwritten here
+
+// Confirmation Popup
+.p-confirm-popup .flex
+    display: flex
+    padding: 1.25rem

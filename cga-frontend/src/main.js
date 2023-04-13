@@ -44,6 +44,8 @@ import ConfirmationService from 'primevue/confirmationservice';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel";
 import Dialog from 'primevue/dialog';
+import Toast from 'primevue/toast';
+import ToastService from 'primevue/toastservice';
 
 const vuetify = createVuetify({
   components,
@@ -64,6 +66,7 @@ auth.onAuthStateChanged(() => {
     app.use(VeeValidatePlugin);
     app.use(ConfirmationService);
     app.use(PrimeVue, { ripple: true });
+    app.use(ToastService);
 
     app.component('Card', Card);
     app.component('Button', Button);
@@ -78,6 +81,7 @@ auth.onAuthStateChanged(() => {
     app.component('Splitter', Splitter);
     app.component('SplitterPanel', SplitterPanel);
     app.component('Dialog', Dialog);
+    app.component('Toast', Toast);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

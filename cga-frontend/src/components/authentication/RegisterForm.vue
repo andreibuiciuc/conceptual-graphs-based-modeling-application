@@ -58,9 +58,9 @@ import { RegisterCredentials } from "../../types/types";
 
 import useAuthModalStore from "../../stores/authModal";
 import useUserStore from "../../stores/user";
-import useNotificationStore from "../../stores/notification";
 import { Ref, ref } from "vue";
 import { storeToRefs } from "pinia";
+import { useUtils } from "../../composables/utils";
 
 // Data
 const registerValidationSchema = {
@@ -74,8 +74,10 @@ const registerCredentials: Ref<RegisterCredentials> = ref({ ... constants.defaul
 const showPassword: Ref<boolean> = ref(false);
 const isRegistrationInSubmission: Ref<boolean> = ref(false);
 
+// Composables
+const { openNotificationToast } = useUtils();
+
 // Store state and actions mappings
-const notificationStore = useNotificationStore();
 const userStore = useUserStore();
 const authModalStore = useAuthModalStore();
 const { isModalOpened } = storeToRefs(authModalStore);
@@ -95,12 +97,12 @@ const register = async (): Promise<void> => {
 const handleSuccessfulRegister = (): void => {
   isRegistrationInSubmission.value = false;
   isModalOpened.value = false;
-  notificationStore.setUpSnackbarState(true, constants.snackbarMessages.registerSuccess);
+  openNotificationToast(constants.snackbarMessages.registerSuccess, 'success');
 };
 
 const handleUnsuccessfulRegister = (error: Error | any): void => {
   isRegistrationInSubmission.value = false;
-  notificationStore.setUpSnackbarState(false, error.message);
+  openNotificationToast(error.message, 'error');
 };
 
 </script>

@@ -36,7 +36,8 @@ import { LoginCredentials } from '../../types/types';
 
 import useAuthModalStore from '../../stores/authModal';
 import useUserStore from '../../stores/user';
-import useNotificationStore from '../../stores/notification';
+
+import { useUtils } from '../../composables/utils';
 
 import { Ref, ref } from 'vue';
 import { storeToRefs } from 'pinia';
@@ -51,10 +52,12 @@ const showPassword: Ref<boolean> = ref(false);
 const isLoginInSubmission: Ref<boolean> = ref(false);
 
 // Store state and actions mappings
-const notificationStore = useNotificationStore();
 const userStore = useUserStore();
 const authModalStore = useAuthModalStore();
 const { isModalOpened } = storeToRefs(authModalStore);
+
+// Composables
+const { openNotificationToast } = useUtils();
 
 
 // Functions related to the Login flow
@@ -73,12 +76,13 @@ const login = async (): Promise<void> => {
 const handleSuccessfulLogin = (): void => {
   isLoginInSubmission.value = false;
   isModalOpened.value = false;
-  notificationStore.setUpSnackbarState(true, constants.snackbarMessages.loginSuccess);
+  debugger
+  openNotificationToast(constants.snackbarMessages.loginSuccess, 'success');
 };
 
 const handleUnsuccessfulLogin = (error: Error): void => {
   isLoginInSubmission.value = false;
-  notificationStore.setUpSnackbarState(false, error.message);
+  openNotificationToast(error.message, 'error');
 };
 
 </script>

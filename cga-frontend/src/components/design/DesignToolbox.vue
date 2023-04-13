@@ -140,13 +140,13 @@
 <script lang="js">
 import constants from "@/constants/constants";
 import designToolboxConstants from "../design/designToolboxConstants";
-import useNotificationStore from "../../stores/notification";
 import useConnectionStore from '../../stores/connection';
 import { manageRequest } from "@/includes/requests";
 import { conceptualGraphsCollection } from "../../includes/firebase";
-import { mapActions, mapWritableState } from "pinia";
+import { mapWritableState } from "pinia";
 import { useQuery } from "../../composables/query";
 import { useConfetti } from '../../composables/confetti';
+import { useUtils } from "../../composables/utils";
 
 export default {
   name: "DesignToolbox",
@@ -157,7 +157,8 @@ export default {
   setup: () => {
    const { generateQueryAsCommands } = useQuery();
    const { createConfetti } = useConfetti();
-   return { generateQueryAsCommands, createConfetti };
+   const { openNotificationToast } = useUtils();
+   return { generateQueryAsCommands, createConfetti, openNotificationToast };
   },
   data: () => ({
     // This data is related to the current configuration inside the Toolbox
@@ -178,8 +179,6 @@ export default {
     isProcessTriggered: false
   }),
   methods: {
-    // These methods are actions mapped from the notification store
-    ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
     // These methods handle the clear events of components
     setupToolboxData: function () {
       this.currentTableConcept = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
@@ -213,7 +212,7 @@ export default {
         keyspace_name: this.currentKeyspace
       });
       if (response.data.flag) {
-        this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} already exists in the current keyspace`, 'bottom left');
+        this.openNotificationToast(`Table ${this.currentTableConcept.conceptName} already exists in the current keyspace`, 'error')
         this.isTableNameDuplicated = true;
       } else {
         this.addTableConceptToGraph();
@@ -223,11 +222,11 @@ export default {
       try {
         const snapshot = await conceptualGraphsCollection.where("tableName", "==", this.currentTableConcept.conceptName).get();
         if (!snapshot.empty) {
-          this.setUpSnackbarState(false, `Table ${this.currentTableConcept.conceptName} is already saved in your CGs`);
+          this.openNotificationToast(`Table ${this.currentTableConcept.conceptName} is already saved in your CGs`, 'error');
           return true;
         }
       } catch (error) {
-        this.setUpSnackbarState(false, error.message);
+        this.openNotificationToast(error.message, 'error');
       }
     },
     // These methods handle the rendering of the graph
@@ -273,7 +272,7 @@ export default {
         const commands = this.generateQueryAsCommands(this.keyspace, this.tableConcepts, this.columnConcepts, this.dataTypeConcepts, this.currentClusteringOrderOptions);
         this.$emit("openTerminal", commands);
       } else {
-        this.setUpSnackbarState(false, errorMessage);
+        this.openNotificationToast(errorMessage, 'error');
       }
     },
     // These methods handle the saving of the conceptual graph
@@ -281,7 +280,7 @@ export default {
       this.isSaveTriggered = true;
       const [isConceptualGraphValid, errorMessage] = this.validateConceptualGraph();
       if (!isConceptualGraphValid) {
-        this.setUpSnackbarState(false, errorMessage);
+        this.openNotificationToast(errorMessage, 'error');
         this.isSaveTriggered = false;
         return;
       }
@@ -299,11 +298,11 @@ export default {
         });
       } catch (error) {
         this.isSaveTriggered = false;
-        this.setUpSnackbarState(false, error.message);
+        this.openNotificationToast(errorMessage, 'error');
         return;
       }
       this.isSaveTriggered = false;
-      this.setUpSnackbarState(true, designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE);
+      this.openNotificationToast(designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE, 'success');
       this.createConfetti();
     },
     generateTable: function () {

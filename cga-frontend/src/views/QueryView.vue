@@ -70,7 +70,7 @@
           />
           <ConfirmPopup group="clear">
             <template #message="slotProps">
-              <div class="flex p-4">
+              <div class="flex align-content-center p-4">
                 <i :class="slotProps.message.icon" style="font-size: 1.5rem;"></i>
                 <p class="pl-2">{{ slotProps.message.message }}</p>
               </div>
@@ -79,7 +79,7 @@
           <Button label="clear" text severity="secondary" :disabled="isQueryActionDisabled" @click="openConfirmationPopup($event)" />
           <Divider layout="vertical" />
           <Button label="command" outlined severity="primary" :disabled="isQueryActionDisabled" @click="openQueryTerminal" />
-          <Button label="run" outlined severity="primary" :disabled="isQueryActionDisabled" />
+          <Button label="run" outlined severity="primary" :disabled="isQueryActionDisabled" @click="runQuery" />
         </div>
       </div>
       <v-divider></v-divider>
@@ -116,16 +116,17 @@
 
 <script setup lang="ts">
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryItem, QueryConcepts, ColumnMetadata, GraphMetadata } from '../types/types';
+import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata } from '../types/types';
 
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 
 import useConnectionStore from '../stores/connection';
-import useNotificationStore from '../stores/notification';
+
 import { useMetadata } from '../composables/metadata';
 import { useConfirm } from "primevue/useconfirm";
+import { useUtils } from '../composables/utils';
 
 import { storeToRefs } from 'pinia';
 import { manageRequest } from '../includes/requests';
@@ -151,11 +152,11 @@ const selectedClauseType: Ref<QueryClause | null> = ref(null);
 
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
-const { getRelationTypeForColumnConcept, getConceptReferentValue } = useMetadata();
+const { getRelationTypeForColumnConcept, getConceptReferentValue, validateWhereQuery } = useMetadata();
+const { openNotificationToast } = useUtils();
 
 // Store state and action mappings
 const connectionStore = useConnectionStore();
-const notificationStore = useNotificationStore();
 const queryStore = useQueryStore();
 
 const { currentKeyspace } = storeToRefs(connectionStore); 
@@ -207,10 +208,10 @@ const retrieveAvailableTables = async (): Promise<void> => {
     if (response.data.status === constants.requestStatus.SUCCESS) {
       availableTables.value = JSON.parse(JSON.stringify(response.data.tables));
     } else {
-      notificationStore.setUpSnackbarState(false, response.data.message);
+      openNotificationToast(response.data.message, 'error')
     }
   } else {
-    notificationStore.setUpSnackbarState(false, "Unexpected error occured.");
+    openNotificationToast('Unexpected error occured', 'error');
   }
 };
 
@@ -236,10 +237,10 @@ const retrieveTableMetadata = async (): Promise<void> => {
       queryGraph.value.drawArrowsForConcepts();
 
     } else {
-      notificationStore.setUpSnackbarState(false, response.data.message);
+      openNotificationToast(response.data.message, 'error');
     }
   } else {
-    notificationStore.setUpSnackbarState(false, "Unexpected error occured.");
+    openNotificationToast('Unexpectedf error occured', 'error');
   }
   isTableRetrieveInProgress.value = false;
 };
@@ -282,7 +283,7 @@ const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
     queryGraph.value.removeArrows();
     queryGraph.value.drawArrowsForConcepts();
   } else {
-    notificationStore.setUpSnackbarState(false, "Column already added to the query");
+    openNotificationToast('Column already added to the query', 'error');
   }
 };
 
@@ -374,6 +375,12 @@ const openQueryTerminal = (): void => {
   isQueryTerminalOpened.value = true;
 };
 
+const runQuery = (): void => {
+  openNotificationToast('test', 'success');
+  // const result = validateWhereQuery(tableMetadata.value, whereClauseItems.value);
+  
+};
+
 // Functions related to some utilities
 const confirm = useConfirm();
 const openConfirmationPopup = (event: any): void => {
@@ -399,7 +406,7 @@ watch(currentKeyspace, (newKeyspace, _) => {
 if (currentKeyspace.value) {
   retrieveAvailableTables();
 } else {
-  notificationStore.setUpSnackbarState(false, "No selected keyspace.");
+  openNotificationToast('no selected keyspace', 'error');
 }
 
 </script>

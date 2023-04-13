@@ -57,15 +57,16 @@ export function useMetadata() {
 
     // Functions for validating Cassandra query clauses
     const validateWhereQuery = (tableMetadata: GraphMetadata, whereQueryItems: QueryItem[]): string => {
-      let [error, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
+      let [status, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
       
-      [error, errorMessage] = checkUnrestrictedColumns('partition_key', tableMetadata, whereQueryItems);
-      if (error) {
+      [status, errorMessage] = checkUnrestrictedColumns('partition_key', tableMetadata, whereQueryItems);
+      if (status) {
+        debugger
         return errorMessage;
       }
 
-      [error, errorMessage] = checkUnrestrictedColumns(constants.columnKinds.clustering, tableMetadata, whereQueryItems);
-      if (error) {
+      [status, errorMessage] = checkUnrestrictedColumns(constants.columnKinds.clustering, tableMetadata, whereQueryItems);
+      if (!status) {
         return errorMessage;
       }
 
@@ -87,14 +88,15 @@ export function useMetadata() {
         return [false, 'no column provided for querying data.'];
       }
 
-      currentColumns.forEach((column: Concept) => {
+      for (let index = 0; index < currentColumns.length; index ++) {
+        const column = currentColumns[index];
         if (column.columnKind === columnKind) {
           const indexFromQuery = whereQueryItems.findIndex(x => x.column === column.conceptName);
           if (indexFromQuery < 0) {
             return [false, 'cassandra require to restrict all partition key columns. The query will be rejected when run'];
           }
         }
-      });
+      }
 
       return [true, constants.inputValues.empty];
     }
@@ -102,6 +104,7 @@ export function useMetadata() {
     return {
       getConceptReferentValue,
       getCQLWhereOperatorsByColumnKind,
-      getRelationTypeForColumnConcept
+      getRelationTypeForColumnConcept,
+      validateWhereQuery
     };
 };

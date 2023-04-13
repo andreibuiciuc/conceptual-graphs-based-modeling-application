@@ -36,9 +36,9 @@ interface ColumnMetadata {
 };
 
 enum QueryClause {
-    WHERE = "where",
-    ORDER_BY = "orderBy",
-    GROUP_BY = "groupBy",
+    WHERE = 'where',
+    ORDER_BY = 'orderBy',
+    GROUP_BY = 'groupBy',
 };
 
 interface QueryConcepts {
@@ -73,6 +73,9 @@ interface Command {
     lineNumber: number
 };
 
+type ToastSeverity = 'success' | 'warning' | 'error' | 'info';
+type ToastPosition = 'center' | 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
 export {
     LoginCredentials,
     RegisterCredentials,
@@ -85,5 +88,7 @@ export {
     QueryItem,
     GraphMetadata,
     //
-    Command
+    Command,
+    ToastSeverity,
+    ToastPosition
 };

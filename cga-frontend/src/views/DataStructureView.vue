@@ -57,13 +57,12 @@
 import designToolboxConstants from '../components/design/designToolboxConstants';
 import useUserStore from "../stores/user";
 import useConnectionStore from "../stores/connection";
-import useNotificationStore from "../stores/notification";
 import DesignToolbox from "../components/design/DesignToolbox.vue";
 import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";
 import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.vue";
 import Placeholder from '../components/graphic/Placeholder.vue';
-import { useClipboard } from '../composables/clipboard';
-import { mapState, mapActions } from "pinia"
+import { useUtils } from '../composables/utils';
+import { mapState } from "pinia"
 import { useQuery } from '../composables/query';
 
 export default {
@@ -76,8 +75,8 @@ export default {
   },
   setup: () => {
     const { generateQueryAsString } = useQuery();
-    const { copyToClipboard } = useClipboard(); 
-    return { generateQueryAsString, copyToClipboard };
+    const { copyToClipboard, openNotificationToast } = useUtils(); 
+    return { generateQueryAsString, copyToClipboard, openNotificationToast };
   },
   data: () => ({
     // This data is related to the Slide Card components
@@ -105,8 +104,6 @@ export default {
     isTransitionFinished: function () { return this.isTransformTransitionFinished; }
   },
   methods: {
-    // These methods are mapped from the notification store.
-    ...mapActions(useNotificationStore, ["setUpSnackbarState"]),
     // These methods are related to the Slide Card components
     selectDesignCard: function () {
         if (this.isCardSelected) {
@@ -124,7 +121,8 @@ export default {
       this.isTerminalOpened = false;
       const queryString = this.generateQueryAsString(this.commands);
       this.copyToClipboard(queryString);
-      this.setUpSnackbarState(true, designToolboxConstants.COPY_QUERY_CLIPBOARD_MESSAGE);
+      this.openNotificationToast(designToolboxConstants.COPY_QUERY_CLIPBOARD_MESSAGE, 'info');
+      
     },
     // These methods handle the rendering og the Conceptual Graph
     renderConceptualGraph: function (conceptualGraphData) {

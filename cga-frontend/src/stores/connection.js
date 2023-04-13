@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
-import useNotificationStore from "./notification";
 import constants from "@/constants/constants";
 import { manageRequest } from "@/includes/requests";
+import { useUtils } from "../composables/utils";
 
 export default defineStore("connection", {
   state: () => ({
@@ -15,7 +15,7 @@ export default defineStore("connection", {
   }),
   actions: {
     connect: function () {
-      const notificationStore = useNotificationStore();
+      // const { openNotificationToast } = useUtils();
       this.isConnectionButtonTriggered = true;
       manageRequest(constants.requestTypes.GET, "connection/on", {
         host: this.cassandraServerCredentials.ipAddress,
@@ -26,35 +26,35 @@ export default defineStore("connection", {
             if (response.data) {
               const status =
                 response.data.status === constants.requestStatus.SUCCESS
-                  ? true
-                  : false;
+                  ? 'success'
+                  : "error";
               let message = response.data.message;
               if (status) {
                 this.cassandraServerCredentials.isCassandraServerConnected = true;
                 message = `Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} established.`;
                 this.retrieveKeyspaces();
               }
-              notificationStore.setUpSnackbarState(status, message);
+              // openNotificationToast(message, status);
             }
           }
         })
         .catch((error) => {
-          notificationStore.setUpSnackbarState(false, error);
+          openNotificationToast(error.message, 'error');
         })
         .finally(() => {
           this.isConnectionButtonTriggered = false;
         });
     },
     disconnect: function () {
-      const notificationStore = useNotificationStore();
+      const { openNotificationToast } = useUtils();
       this.isConnectionButtonTriggered = true;
       manageRequest(constants.requestTypes.POST, "connection/off")
         .then((response) => {
           if (response) {
             const status =
               response.data.status === constants.requestStatus.SUCCESS
-                ? true
-                : false;
+                ? 'success'
+                : 'error';
             let message = response.data.message;
             if (status) {
               this.cassandraServerCredentials = Object.assign(
@@ -64,18 +64,18 @@ export default defineStore("connection", {
               this.currentKeyspace = null;
               message = `Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} discarded.`;
             }
-            notificationStore.setUpSnackbarState(status, message);
+            openNotificationToast(status, message);
           }
         })
         .catch((error) => {
-          notificationStore.setUpSnackbarState(false, error);
+          openNotificationToast(error.message, 'error');
         })
         .finally(() => {
           this.isConnectionButtonTriggered = false;
         });
     },
     retrieveKeyspaces: function () {
-      const notificationStore = useNotificationStore();
+      // const { openNotificationToast } = useUtils();
       manageRequest(constants.requestTypes.GET, "keyspaces").then(
         (response) => {
           if (response) {
@@ -86,10 +86,7 @@ export default defineStore("connection", {
             if (status) {
               this.availableKeyspaces = response.data.keyspaces;
             } else {
-              notificationStore.setUpSnackbarState(
-                false,
-                response.data.message
-              );
+              // openNotificationToast(response.data.message, 'error');
             }
           }
         }
