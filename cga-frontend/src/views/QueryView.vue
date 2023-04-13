@@ -115,24 +115,30 @@
 </template>
 
 <script setup lang="ts">
+// Constants, types and utility imports
 import constants from '../constants/constants';
 import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata } from '../types/types';
+import { manageRequest } from '../includes/requests';
 
+// Component imports
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 
+// Store imports
 import useConnectionStore from '../stores/connection';
+import { useQueryStore } from '../stores/query';
 
+// Composable imports
 import { useMetadata } from '../composables/metadata';
 import { useConfirm } from "primevue/useconfirm";
 import { useUtils } from '../composables/utils';
 
+// Vue imports
 import { storeToRefs } from 'pinia';
-import { manageRequest } from '../includes/requests';
 import { Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
-import { useQueryStore } from '../stores/query';
+
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -147,9 +153,7 @@ const queryGraph = ref();
 const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
-
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
-
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept, getConceptReferentValue, validateWhereQuery } = useMetadata();
@@ -158,7 +162,6 @@ const { openNotificationToast } = useUtils();
 // Store state and action mappings
 const connectionStore = useConnectionStore();
 const queryStore = useQueryStore();
-
 const { currentKeyspace } = storeToRefs(connectionStore); 
 const { whereClauseItems, orderByClauseItems, groupByClauseItems } = storeToRefs(queryStore);
 
@@ -240,7 +243,7 @@ const retrieveTableMetadata = async (): Promise<void> => {
       openNotificationToast(response.data.message, 'error');
     }
   } else {
-    openNotificationToast('Unexpectedf error occured', 'error');
+    openNotificationToast('unexpected error occured', 'error');
   }
   isTableRetrieveInProgress.value = false;
 };
@@ -283,7 +286,7 @@ const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
     queryGraph.value.removeArrows();
     queryGraph.value.drawArrowsForConcepts();
   } else {
-    openNotificationToast('Column already added to the query', 'error');
+    openNotificationToast('column already added to the query', 'error');
   }
 };
 
@@ -406,7 +409,7 @@ watch(currentKeyspace, (newKeyspace, _) => {
 if (currentKeyspace.value) {
   retrieveAvailableTables();
 } else {
-  openNotificationToast('no selected keyspace', 'error');
+  openNotificationToast('no selected keyspace', 'warn');
 }
 
 </script>

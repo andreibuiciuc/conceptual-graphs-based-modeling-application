@@ -57,7 +57,7 @@ import constants from "../../constants/constants";
 import { RegisterCredentials } from "../../types/types";
 
 import useAuthModalStore from "../../stores/authModal";
-import useUserStore from "../../stores/user";
+import { useUserStore } from "../../stores/user";
 import { Ref, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useUtils } from "../../composables/utils";

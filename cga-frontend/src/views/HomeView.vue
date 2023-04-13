@@ -61,15 +61,13 @@
 </template>
 
 <script setup lang="ts">
-import dummyCG from '../constants/dummyCG';
 import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
 
 import useAuthModalStore from '../stores/authModal';
-import useUserStore from '../stores/user';
+import { useUserStore } from '../stores/user';
 import { storeToRefs } from 'pinia';
 import { Ref, computed, ref } from '@vue/reactivity';
 
-import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
 import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
 import AuthenticationCard from '../components/authentication/AuthenticationCard.vue';

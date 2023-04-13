@@ -90,7 +90,6 @@ import constants from '../../../constants/constants';
 import { QueryClause, Concept, ConfigurableConcept, GraphMetadata } from "../../../types/types";
 
 import arrowCreate from 'arrows-svg';
-import { svg } from 'd3-fetch';
 
 interface Props {
   graphMetadata: GraphMetadata

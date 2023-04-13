@@ -35,7 +35,7 @@ import constants from '../../constants/constants';
 import { LoginCredentials } from '../../types/types';
 
 import useAuthModalStore from '../../stores/authModal';
-import useUserStore from '../../stores/user';
+import { useUserStore } from '../../stores/user';
 
 import { useUtils } from '../../composables/utils';
 
@@ -76,7 +76,6 @@ const login = async (): Promise<void> => {
 const handleSuccessfulLogin = (): void => {
   isLoginInSubmission.value = false;
   isModalOpened.value = false;
-  debugger
   openNotificationToast(constants.snackbarMessages.loginSuccess, 'success');
 };
 

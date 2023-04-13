@@ -46,7 +46,7 @@ export default defineStore("connection", {
         });
     },
     disconnect: function () {
-      const { openNotificationToast } = useUtils();
+      // const { openNotificationToast } = useUtils();
       this.isConnectionButtonTriggered = true;
       manageRequest(constants.requestTypes.POST, "connection/off")
         .then((response) => {
@@ -64,11 +64,11 @@ export default defineStore("connection", {
               this.currentKeyspace = null;
               message = `Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} discarded.`;
             }
-            openNotificationToast(status, message);
+            // openNotificationToast(status, message);
           }
         })
         .catch((error) => {
-          openNotificationToast(error.message, 'error');
+          // openNotificationToast(error.message, 'error');
         })
         .finally(() => {
           this.isConnectionButtonTriggered = false;

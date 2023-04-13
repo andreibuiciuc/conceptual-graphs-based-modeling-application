@@ -1,5 +1,5 @@
 <template>
-  <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
+  <conceptual-graph v-if="graphMetadata.tables.length" graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
 </template>
 
 <script setup lang="ts">
@@ -84,7 +84,7 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
         openNotificationToast(response.data.message, 'error');
       }
     } else {
-      openNotificationToast('Unexpected error occured', 'warning');
+      openNotificationToast('Unexpected error occured', 'error');
     }
 
     isKeyspaceRetrieveInProgress.value = false;

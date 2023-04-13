@@ -55,7 +55,7 @@
 
 <script>
 import designToolboxConstants from '../components/design/designToolboxConstants';
-import useUserStore from "../stores/user";
+import { useUserStore } from "../stores/user";
 import useConnectionStore from "../stores/connection";
 import DesignToolbox from "../components/design/DesignToolbox.vue";
 import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";

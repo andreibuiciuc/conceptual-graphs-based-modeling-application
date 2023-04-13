@@ -50,8 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { Toolbar, toolbar} from "./navigationConstants.js";
-import useUserStore from '../../stores/user';
+import { Toolbar, toolbar} from "./navigationConstants";
+import { useUserStore } from '../../stores/user';
 import useConnectionStore from '../../stores/connection';
 import useAuthModalStore from '../../stores/authModal';
 import { Ref, ref } from "vue";

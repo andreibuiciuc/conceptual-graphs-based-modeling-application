@@ -73,7 +73,7 @@ interface Command {
     lineNumber: number
 };
 
-type ToastSeverity = 'success' | 'warning' | 'error' | 'info';
+type ToastSeverity = 'success' | 'warn' | 'error' | 'info';
 type ToastPosition = 'center' | 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
 
 export {
