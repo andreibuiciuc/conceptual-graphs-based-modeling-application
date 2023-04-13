@@ -8,10 +8,12 @@ export const useConnectionStore = defineStore('connection', () => {
   const cassandraServerCredentials: Ref<any> = ref(null);
   const currentKeyspace: Ref<string> = ref(constants.inputValues.empty);
   const availableKeyspaces: Ref<string[]> = ref([]);
+  const isConnectionButtonTriggerd: Ref<boolean> = ref(false);
 
   const { openNotificationToast } = useUtils();
 
   async function connect (): Promise<void> {
+    isConnectionButtonTriggerd.value = true;
     const response = await manageRequest(constants.requestTypes.GET, 'connection/on', {
       host: cassandraServerCredentials.value.ipAddress,
       port: cassandraServerCredentials.value.port
@@ -23,11 +25,13 @@ export const useConnectionStore = defineStore('connection', () => {
         retrieveKeyspaces();
       } else {
         openNotificationToast(response.data.message, 'error');
+        isConnectionButtonTriggerd.value = false;
       }
-    } 
+    }
   }
 
   async function disconnect (): Promise<void> {
+    isConnectionButtonTriggerd.value = true;
     const response = await manageRequest(constants.requestTypes.POST, 'connection/off');
     if (response && response.data) {
       if (response.data.status === constants.requestStatus.SUCCESS) {
@@ -38,6 +42,7 @@ export const useConnectionStore = defineStore('connection', () => {
         openNotificationToast(response.data.message, 'error');
       }
     }
+    isConnectionButtonTriggerd.value = false;
   }
 
   async function retrieveKeyspaces (): Promise<void> {
@@ -46,8 +51,10 @@ export const useConnectionStore = defineStore('connection', () => {
       if (response.data.status === constants.requestStatus.SUCCESS) {
         availableKeyspaces.value = JSON.parse(JSON.stringify(response.data.keyspaces));
         openNotificationToast('keyspaces were successfully retrieved', 'success');
+        isConnectionButtonTriggerd.value = false;
       } else {
-      openNotificationToast(response.data.message, 'error');
+        openNotificationToast(response.data.message, 'error');
+        isConnectionButtonTriggerd.value = false;
       }
     }
   }

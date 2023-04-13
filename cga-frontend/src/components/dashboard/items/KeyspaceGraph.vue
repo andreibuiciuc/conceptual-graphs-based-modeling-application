@@ -10,15 +10,11 @@ import ConceptualGraph from '../../graphic/graph/ConceptualGraph.vue';
 import { ConfigurableConcept, GraphMetadata } from '../../../types/types';
 import { useMetadata } from '../../../composables/metadata';
 import { useUtils } from '../../../composables/utils';
+import { useConnectionStore } from '../../../stores/connection';
 import { nextTick } from 'vue';
+import { storeToRefs } from 'pinia';
 
-interface Props {
-  selectedKeyspace: string,
-};
-
-const props = defineProps<Props>();
 const keyspaceGraph = ref();
-
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],
@@ -28,6 +24,10 @@ const defaultGraphMetadata: GraphMetadata = {
 
 const graphMetadata: Ref<GraphMetadata> = ref(defaultGraphMetadata);
 const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
+
+// Store mappings
+const connectionStore = useConnectionStore();
+const { currentKeyspace } = storeToRefs(connectionStore);
 
 // Composables
 const { openNotificationToast } = useUtils();
@@ -63,7 +63,7 @@ const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
 };
 
 const resetKeyspaceMetadata = (): void => {
-  const defaultConcept = { conceptName: props.selectedKeyspace, conceptType: constants.conceptTypes.keyspace };
+  const defaultConcept = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
   graphMetadata.value.keyspace = { ... defaultConcept };
   graphMetadata.value.tables = [];
   graphMetadata.value.columns = new Map<string, ConfigurableConcept[]>();
@@ -71,11 +71,11 @@ const resetKeyspaceMetadata = (): void => {
 };
 
 const retrieveKeyspaceMetadata = async (): Promise<void> => {
-  if (props.selectedKeyspace) {
+  if (currentKeyspace.value) {
     isKeyspaceRetrieveInProgress.value = true;
 
     resetKeyspaceMetadata();
-    const response = await manageRequest(constants.requestTypes.GET, "keyspace", { keyspace_name: props.selectedKeyspace });
+    const response = await manageRequest(constants.requestTypes.GET, "keyspace", { keyspace_name: currentKeyspace.value });
     
     if (response && response.data) {
       if (response.data.status === constants.requestStatus.SUCCESS) {
@@ -91,7 +91,7 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
   }
 };
 
-watch(() => props.selectedKeyspace, async () => {
+watch(currentKeyspace, async () => {
   await retrieveKeyspaceMetadata();
   await nextTick();
   keyspaceGraph.value.removeArrows();

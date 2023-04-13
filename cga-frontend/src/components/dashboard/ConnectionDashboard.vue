@@ -1,17 +1,16 @@
 <template>
   <div class="dashboard">
-    <connection-console @changekeyspace="selectedKeyspace = $event" />
-    <keyspace-graph :selected-keyspace="selectedKeyspace" />
+    <keyspace-graph :selected-keyspace="currentKeyspace" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue';
-import constants from '../../constants/constants';
-import ConnectionConsole from "./items/ConnectionConsole.vue";
 import KeyspaceGraph from "./items/KeyspaceGraph.vue";
+import { useConnectionStore } from "../../stores/connection";
+import { storeToRefs } from "pinia";
 
-const selectedKeyspace: Ref<string> = ref(constants.inputValues.empty);
+const connectionStore = useConnectionStore();
+const { currentKeyspace } = storeToRefs(connectionStore);
 
 </script>
 
