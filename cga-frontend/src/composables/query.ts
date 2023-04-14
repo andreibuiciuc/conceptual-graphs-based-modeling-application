@@ -34,10 +34,11 @@ export function useQuery() {
     let tableConceptName: string;
     let clusteringOptions: ClusteringOptions;
 
+    // Functions related to the generating of the Data Structure CQL commands
     const initializeQueryHelperData = (currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts, currentClusteringOptons) => {
         keyspace = currentKeyspace;
         
-        tableConcepts = { ... currentTableConcepts};
+        tableConcepts = { ... currentTableConcepts };
         columnConcepts = { ... currentColumnConcepts };
         dataTypeConcepts = { ... currentDataTypeConcepts };
         clusteringOptions = { ... currentClusteringOptons };

@@ -109,8 +109,8 @@
     <CassandraTerminal 
       :is-terminal-opened="isQueryTerminalOpened"
       :is-terminal-readonly="false"
-      :commands="[]"
-      @close="isQueryTerminalOpened = false" 
+      :commands="cqlQueryCommands"
+      @close="closeCassandraTerminal" 
     />
   </Dialog>
 </template>
@@ -118,7 +118,7 @@
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept } from '../types/types';
+import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command } from '../types/types';
 import { manageRequest } from '../includes/requests';
 
 // Component imports
@@ -162,7 +162,7 @@ const { getRelationTypeForColumnConcept,
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
         validateWhereQuery } = useMetadata();
-const { openNotificationToast } = useUtils();
+const { openNotificationToast, copyToClipboard } = useUtils();
 
 // Store state and action mappings
 const connectionStore = useConnectionStore();
@@ -381,7 +381,9 @@ const removeColumnFromQuery = (columnMetadata) => {
 
 // Functions related to the query actions
 const isQueryTerminalOpened: Ref<boolean> = ref(false);
+const cqlQueryCommands: Ref<Command[]> = ref([]);
 const openQueryTerminal = (): void => {
+  cqlQueryCommands.value = queryStore.generateCQLQueryCommands(tableMetadata.value, queryMetadata.value);
   isQueryTerminalOpened.value = true;
 };
 
@@ -405,6 +407,13 @@ const openConfirmationPopup = (event: any): void => {
     }
   });
 };
+
+const closeCassandraTerminal = (): void => {
+  const cqlQuery = queryStore.generateCQLQuery(tableMetadata.value, queryMetadata.value);
+  copyToClipboard(cqlQuery);
+  openNotificationToast('cql query was copied to clipboard', 'info');
+  isQueryTerminalOpened.value = false;
+}
 
 // Watches
 watch(currentKeyspace, (newKeyspace, _) => {
