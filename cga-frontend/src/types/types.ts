@@ -50,21 +50,20 @@ interface QueryConcepts {
 };
 
 interface QueryItem {
-    // Configuration
     column: string
     availableColumns?: Concept[]
+    operators?: string[],
     relation?: string
+    type?: QueryItemColumnType,
     value?: string 
     valueSelect?: string,
-    tooltip?: string
-    toQuery?: boolean
-    operators?: string[],
     currentChipValue?: string,
     chipValues?: any,
+    tooltip?: string
+    toQuery?: boolean
     // Validation
-    isColumnValid?: boolean,
-    isOperatorValid?: boolean,
     isValueValid?: boolean
+    valueErrorMessage?: string
 };
 
 // Utility types
@@ -75,6 +74,18 @@ interface Command {
 
 type ToastSeverity = 'success' | 'warn' | 'error' | 'info';
 type ToastPosition = 'center' | 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
+type QueryItemColumnType = 'boolean' | 'float' | 'integer' | 'null' | 'other' | 'string';
+
+interface D3Node {
+    id: string,
+    type: string,
+}
+
+interface D3Link {
+    source: string,
+    target: string
+}
 
 export {
     LoginCredentials,
@@ -87,8 +98,11 @@ export {
     QueryConcepts,
     QueryItem,
     GraphMetadata,
+    QueryItemColumnType,
     //
     Command,
     ToastSeverity,
-    ToastPosition
+    ToastPosition,
+    D3Link,
+    D3Node,
 };

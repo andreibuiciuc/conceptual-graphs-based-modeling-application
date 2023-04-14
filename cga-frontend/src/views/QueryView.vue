@@ -87,6 +87,7 @@
         <div class="query-panel-item">
           <query-items 
             v-if="whereClauseItems.length" 
+            :table-metadata="tableMetadata"
             :clause="QueryClause.WHERE" 
             :columns="columnConcepts" 
             @add="addQueryConcept"
@@ -117,7 +118,7 @@
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata } from '../types/types';
+import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept } from '../types/types';
 import { manageRequest } from '../includes/requests';
 
 // Component imports
@@ -156,7 +157,11 @@ const isTableGraphReady: Ref<boolean> = ref(false);
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
-const { getRelationTypeForColumnConcept, getConceptReferentValue, validateWhereQuery } = useMetadata();
+const { getRelationTypeForColumnConcept, 
+        getConceptReferentValue, 
+        getColumnInputType, 
+        getCQLWhereOperatorsByColumnKind,
+        validateWhereQuery } = useMetadata();
 const { openNotificationToast } = useUtils();
 
 // Store state and action mappings
@@ -286,7 +291,7 @@ const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
     queryGraph.value.removeArrows();
     queryGraph.value.drawArrowsForConcepts();
   } else {
-    openNotificationToast('column already added to the query', 'error');
+    openNotificationToast(`column ${columnConcept.conceptName} already added to the query`, 'error');
   }
 };
 
@@ -305,15 +310,17 @@ const addClauseToQuery = (clause: QueryClause | null): void => {
   selectedClauseType.value = null;
   switch (clause) {
     case QueryClause.WHERE:
+      const tableConcept: Concept | undefined = queryMetadata.value.tables.at(0);
+      const firstColumnConcept: ConfigurableConcept | undefined = tableConcept ? queryMetadata.value.columns.get(tableConcept.conceptName)?.at(0) : undefined;
       whereClauseItems.value.push({ 
-        column: constants.inputValues.empty, 
+        column: firstColumnConcept ? firstColumnConcept.conceptName : constants.inputValues.empty, 
         relation: "==", 
         value: constants.inputValues.empty, 
         chipValues: null, 
         currentChipValue: '',
-        isColumnValid: true,
-        isOperatorValid: true,
-        isValueValid: true
+        isValueValid: true,
+        operators: firstColumnConcept ? getCQLWhereOperatorsByColumnKind(firstColumnConcept.columnKind) : [],
+        type: firstColumnConcept ? getColumnInputType(firstColumnConcept, tableMetadata.value) : 'other'
       });
       break;
     case QueryClause.GROUP_BY:
@@ -381,7 +388,6 @@ const openQueryTerminal = (): void => {
 const runQuery = (): void => {
   openNotificationToast('test', 'success');
   // const result = validateWhereQuery(tableMetadata.value, whereClauseItems.value);
-  
 };
 
 // Functions related to some utilities
@@ -459,7 +465,7 @@ if (currentKeyspace.value) {
           margin-right: 20px
 
         .v-progress-circular
-          color: variables.$cassandra-blue
+          color: variables.$cassandra-app-blue
 
   .query-toolbox
     height: calc(100% - variables.$cga-topbar-height)
@@ -485,7 +491,7 @@ if (currentKeyspace.value) {
             margin-right: 5px
 
           & > span:last-of-type
-            color: variables.$cassandra-blue
+            color: variables.$cassandra-app-blue
 
           & > .v-icon + span
             color: variables.$cassandra-black

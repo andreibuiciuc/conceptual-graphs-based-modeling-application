@@ -1,6 +1,6 @@
 import constants from "../constants/constants";
-import { Concept } from "../types/types";
-import { GraphMetadata, QueryConcepts, QueryItem } from "../types/types";
+import { Concept, QueryItemColumnType } from "../types/types";
+import { GraphMetadata, QueryItem } from "../types/types";
 
 export function useMetadata() {
 
@@ -28,6 +28,30 @@ export function useMetadata() {
       
       result = result.slice(0, result.length - 4);
       return result;
+    };
+
+    const getColumnInputType = (column: Concept, tableMetadata?: GraphMetadata): QueryItemColumnType => {
+      if (!tableMetadata) {
+        return 'other';
+      }
+
+      const typeConcept = tableMetadata.dataTypes.get(column.conceptName);
+      if (!typeConcept) {
+        return 'other';
+      }
+
+      if (['int', 'bigint', 'smallint', 'tinyint'].includes(typeConcept.conceptName)) {
+        return 'integer';
+      } else if (['float', 'double', 'float'].includes(typeConcept.conceptName)) {
+        return 'float';
+      } else if (['string', 'ascii', 'text'].includes(typeConcept.conceptName)) {
+        return 'string';
+      } else if (typeConcept.conceptName === 'boolean') {
+        return 'boolean';
+      } else {
+        return 'other';
+      }
+
     };
 
     const getCQLWhereOperatorsByColumnKind = (columnKind: string | undefined): string[] => {
@@ -105,6 +129,7 @@ export function useMetadata() {
       getConceptReferentValue,
       getCQLWhereOperatorsByColumnKind,
       getRelationTypeForColumnConcept,
+      getColumnInputType,
       validateWhereQuery
     };
 };

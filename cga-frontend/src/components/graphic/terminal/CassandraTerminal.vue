@@ -56,7 +56,7 @@ const closeTerminal = (): void => {
   height: 32px
   border-top-left-radius: 10px
   border-top-right-radius: 10px
-  border-bottom: 2px solid variables.$cassandra-white
+  margin-bottom: 2px
   padding: 0 16px
 
   .dot
