@@ -1,6 +1,6 @@
 <template>
     <v-layout>
-      <v-app-bar :elevation="currentScrollYPosition > 0 ? 1 : 0" height="88" :class="currentScrollYPosition > 0 ? 'app-bar--transparent' : ''">
+      <v-app-bar :elevation="elevation" height="88">
         <template #prepend>
           <RouterLink :to="{ name: appToolbar.navigationHeader.pathTo }">
             <v-list-item
@@ -54,9 +54,10 @@ import { Toolbar, toolbar} from "./navigationConstants";
 import { useUserStore } from '../../stores/user';
 import { useConnectionStore } from '../../stores/connection';
 import { useUtilsStore } from '../../stores/utils';
-import { Ref, ref } from "vue";
+import { ComputedRef, Ref, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
+import { computed } from "@vue/reactivity";
 
 const appToolbar: Ref<Toolbar> = ref( { ... toolbar });
 const currentNavigationIndex: Ref<number> = ref(0);
@@ -70,6 +71,14 @@ const { cassandraServerCredentials } = storeToRefs(connectionStore);
 const { currentScrollYPosition } = storeToRefs(utilsStore);
 
 const router = useRouter();
+
+const elevation: ComputedRef<number> = computed(() => {
+  let elevation = 1;
+  if (!isUserLoggedIn.value) {
+    elevation = currentScrollYPosition.value > 0 ? 1 : 0;
+  }
+  return elevation;
+});
 
 // Functions related to the navigation flow
 const onNavigationItemClick = (isHomeLink: boolean, navigationItemKey?: string): void => {
@@ -117,9 +126,5 @@ const onAccountItemClick = (): void => {
 
 .navigation-item--active
   color: variables.$cassandra-blue
-
-.app-bar--transparent
-  background-color: hsla(0,0%,100%,.8)
-  backdrop-filter: saturate(180%) blur(5px)
 
 </style>

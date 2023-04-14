@@ -388,8 +388,10 @@ const openQueryTerminal = (): void => {
 };
 
 const runQuery = (): void => {
-  openNotificationToast('test', 'success');
-  // const result = validateWhereQuery(tableMetadata.value, whereClauseItems.value);
+  const result = validateWhereQuery(tableMetadata.value, whereClauseItems.value);
+  if (result) {
+    openNotificationToast(result, 'error');
+  }
 };
 
 // Functions related to some utilities

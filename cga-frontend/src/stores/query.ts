@@ -34,13 +34,13 @@ export const useQueryStore  = defineStore('query', () => {
         let whereClauseSnippet: string = constants.inputValues.empty;
         whereClauseItems.value.forEach(item => {
             if (item.toQuery) {
-                whereClauseSnippet = whereClauseSnippet.concat(`${item.column} ${item.relation} ${item.value} AND `);
+                let columnValue = getColumnValueForWhereClauseItem(item);
+                whereClauseSnippet = whereClauseSnippet.concat(`${item.column} ${item.relation} ${columnValue} AND `);
             }
         });
 
-        debugger
         if (whereClauseSnippet) {
-            whereClauseSnippet = whereClauseSnippet.slice(0, whereClauseSnippet.length - 4);
+            whereClauseSnippet = 'WHERE '.concat(whereClauseSnippet.slice(0, whereClauseSnippet.length - 5));
         }
 
         return whereClauseSnippet;
@@ -60,6 +60,18 @@ export const useQueryStore  = defineStore('query', () => {
         return { currentTable, tableColumns, queryColumns };
     }
 
+    function getColumnValueForWhereClauseItem (item: QueryItem): boolean | number | string | undefined {
+        if (item.value) {
+            return item.value;
+        } else if (item.valueSelect) {
+            return item.valueSelect;
+        } else if (item.chipValues) {   
+            let chipValuesAsString = '( ';
+            item.chipValues?.forEach((chip: string) => chipValuesAsString = chipValuesAsString.concat(chip).concat(', '));
+            return chipValuesAsString.slice(0, chipValuesAsString.length - 2).concat(')');
+        }
+    }
+
     function generateCQLQuery (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata): string {
         const { currentTable, tableColumns, queryColumns } = getColumnsFromTableAndQueryMetadata(tableMetadata, queryMetadata);
 
@@ -70,7 +82,7 @@ export const useQueryStore  = defineStore('query', () => {
         const cqlQuery = 'SELECT '
             .concat(computeColumnSelectionSnippet(tableColumns, queryColumns))
             .concat(` FROM ${connectionStore.currentKeyspace}.${currentTable.conceptName}`)
-            .concat(` WHERE ${computeWhereClauseSnippet()}`)
+            .concat(computeWhereClauseSnippet())
 
         return cqlQuery;
     }
@@ -97,12 +109,12 @@ export const useQueryStore  = defineStore('query', () => {
 
         // Compute the next command line from the Cassandra Terminal
         // In this case, it is the WHERE clause snippet
-        lineContent = 
-            designToolboxConstants.CQL_BASH_BLANK_COMMAND
-            .concat('WHERE ')
-            .concat(computeWhereClauseSnippet());
-        lineNumber = lineNumber + 1;
-        commands.push({ lineContent, lineNumber });
+        const whereClauseSnippet = whereClauseItems.value.length ? computeWhereClauseSnippet() : constants.inputValues.empty;
+        if (whereClauseSnippet) {
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(whereClauseSnippet);
+            lineNumber = lineNumber + 1;
+            commands.push({ lineContent, lineNumber });
+        }
 
         return commands;
     }

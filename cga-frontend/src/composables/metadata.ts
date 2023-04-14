@@ -64,14 +64,13 @@ export function useMetadata() {
       switch (columnKind) {
         // TODO: Check the constants and refactor
         case 'partition_key':
-          operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.NOT_EQUAL, 
-                       constants.cqlOperators.IN, constants.cqlOperators.NOT_IN, 
-                       constants.cqlOperators.CONTAINS, constants.cqlOperators.NOT_CONTAINS];
+          operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN, constants.cqlOperators.CONTAINS];
           break;
         case constants.columnKinds.clustering:
           operators = Object.values(constants.cqlOperators);
+          break;
         case constants.columnKinds.regular:
-          operators = Object.values(constants.cqlOperators).filter((operator: string) => ![constants.cqlOperators.IN, constants.cqlOperators.NOT_IN].includes(operator));
+          operators = Object.values(constants.cqlOperators).filter((operator: string) => ![constants.cqlOperators.IN].includes(operator));
         default:
           break;
       }

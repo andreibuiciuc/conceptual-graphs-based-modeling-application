@@ -79,11 +79,8 @@ export default {
     GREATER: '>',
     GREATER_EQUAL: ">=",
     EQUAL: "=",
-    NOT_EQUAL: "!=",
     IN: "IN",
-    NOT_IN: "NOT_IN",
     CONTAINS: "CONTAINS",
-    NOT_CONTAINS: "DOES NOT CONTAIN"
   },
   defaultQueryConcepts: {
     where: {

@@ -56,7 +56,7 @@
                     </Dropdown>
                     <template v-if="[constants.cqlOperators.IN, constants.cqlOperators.NOT_IN].includes(item.relation!)">
                         <div class="card p-fluid">
-                            <Chips v-model="item.chipValues" />
+                            <Chips v-model="item.chipValues" separator=" " :disabled="item.toQuery" :max="5" />
                         </div>
                     </template>
                     <template v-else>
@@ -170,6 +170,7 @@ const items = computed((): QueryItem[] => {
 // Functions related to the item actions
 const addToQuery = (clause: QueryClause, item: QueryItem): void => {
     const isQueryItemValid = validateItem(clause, item);
+    debugger
     if (isQueryItemValid) {
         if (!item.toQuery) {
             item.toQuery = true;
@@ -221,8 +222,12 @@ const removeItem = (clause: QueryClause, item: QueryItem): void => {
 };
 
 const validateItem = (clause: QueryClause, item: QueryItem): boolean => {
-    if (clause === QueryClause.WHERE) {
-        item.isValueValid = !!item.value;
+    if (clause === QueryClause.WHERE && item.relation) {
+        if (['IN', 'NOT IN'].includes(item.relation)) {
+            item.isValueValid = !!item.chipValues.length;
+        } else {
+            item.isValueValid = !!item.value;
+        }
         return item.isValueValid;
     }
     return true;
@@ -273,6 +278,7 @@ const queryPanelTitle: ComputedRef<string> = computed(() => {
 
     .query-panel-item-clause
         @include containers.flex-container($align-items: baseline)
+        flex-wrap: wrap
         padding: 8px 0
         
         .pi.pi-info
@@ -286,11 +292,10 @@ const queryPanelTitle: ComputedRef<string> = computed(() => {
             width: 80px
 
         .p-inputtext, .p-dropdown
-            width: 240px
+            width: 12.5rem
 
         .p-chips
-            min-width: 400px
-            max-width: 480px
+            width: 35rem
 
             ul > li
                 margin-bottom: 8px !important
