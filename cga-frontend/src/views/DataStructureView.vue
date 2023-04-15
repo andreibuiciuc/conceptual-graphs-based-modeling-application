@@ -2,19 +2,25 @@
   <div class="design-section">
     <div class="header-container elevation-1">
       <div>
-        <span>Table CG Design</span>
+        <span>cassandra data structure design</span>
       </div>
       <div class="header-actions">
-        <v-btn variant="text">
-          Command
-        </v-btn>
-        <v-btn variant="text">
-          Save
-        </v-btn>
-        <v-divider vertical></v-divider>
-        <v-btn variant="text">
-          Run
-        </v-btn>
+        <Button
+          outlined
+          severity="primary"
+          label="command" 
+        />
+        <Button
+          outlined
+          severity="primary"
+          label="save" 
+        />
+        <Divider layout="vertical" />
+        <Button
+          outlined
+          severity="primary"
+          label="run">
+        </Button>
       </div>
     </div>
     <div class="design-container">

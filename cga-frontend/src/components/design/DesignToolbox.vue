@@ -1,139 +1,101 @@
 <template>
   <div class="design-toolbox-container">
-    <v-card
-      variant="outlined"
+    <Card
       class="toolbox"
       :class="{ 'toolbox-warning': !keyspace }"
     >
-      <v-card-text>
-        <div class="d-flex">
-          <v-text-field v-model="currentTableConcept.conceptName"
-            variant="outlined"
-            label="Table name"
-            :clearable="true"
-            :readonly="isGraphRendered"
-            :hide-details="true"
-            :disabled="!keyspace"
-            @click:clear="setupToolboxData"
-          >
-          </v-text-field>
-          <v-btn
-            variant="text"
-            class="icon-button"
-            :class="{ 'icon-button--disabled': isGraphRendered }"
-            :disabled="!isAddTableConceptButtonEnabled"
-            @click.prevent="validateTableName"
-          >
-            <v-icon v-if="isGraphRendered">mdi-check</v-icon>
-            <v-icon v-else>mdi-plus</v-icon>
-          </v-btn>
-        </div>
-        <v-divider></v-divider>
-        <div class="column-concept-container">
-          <div class="column-concept-config">
-            <v-text-field v-model="currentColumnConcept.conceptName"
-              variant="outlined"
-              label="New column name"
-              :hide-details="true"
-              :error="doesColumnConceptAlreadyExists"
-              :disabled="!currentTableConcept.conceptName || !isGraphRendered"
-            >
-            </v-text-field>
-            <span class="error-message">{{ getErrorMessage }}</span>
-            <div class="column-selects">
-              <v-select v-model="currentColumnConcept.kind"
-                variant="outlined"
-                class="data-type-select"
-                label="Column Option"
-                :hide-details="true"
-                :disabled="
-                  !currentColumnConcept.conceptName ||
-                  doesColumnConceptAlreadyExists
-                "
-                :items="columnOptionsItems"
-              >
-              </v-select>
-              <v-select v-model="currentDataTypeConcept.conceptName"
-                variant="outlined"
-                class="data-type-select"
-                label="Data Type"
-                :hide-details="true"
-                :disabled="
-                  !currentColumnConcept.conceptName ||
-                  doesColumnConceptAlreadyExists
-                "
-                :items="columnDataTypeItems"
-              >
-              </v-select>
-            </div>
+      <template #title>
+        data structure config
+      </template>
+      <template #content>
+        
+        <!-- Table concept input -->
+        <div class="design-toolbox-input-container">
+          <div class="design-toolbox-input-group">
+              <InputText
+                v-model="currentTableConcept.conceptName"
+                placeholder="table name"
+                :disabled="!keyspace"
+                :readonly="isGraphRendered"
+              />
           </div>
-          <v-btn
-            variant="text"
-            class="icon-button--double"
+          <div class="design-toolbox-action-group">
+            <Button 
+              severity="secondary"
+              text
+              icon="pi pi-times"
+              @click="setupToolboxData"
+            />
+            <Button 
+              severity="primary"
+              text
+              :icon="isGraphRendered ? 'pi pi-check' : 'pi pi-plus'"
+              :disabled="!isAddTableConceptButtonEnabled"
+              @click="validateTableName"
+            />
+          </div>
+        </div>
+
+        <Divider />
+
+        <!-- Column and type concepts input -->
+
+        <div class="design-toolbox-input-container">
+          <div class="design-toolbox-input-group">
+            <div class="flex flex-column gap-2">
+              <InputText
+                v-model="currentColumnConcept.conceptName"
+                :class="{ 'p-invalid': doesColumnConceptAlreadyExists }"
+                placeholder="column name"
+                :disabled="!currentTableConcept.conceptName"
+              />
+              <small class="p-error">{{ getErrorMessage }}</small>
+            </div>
+            <Dropdown 
+              v-model="currentColumnConcept.kind"
+              placeholder="column kind"
+              optionLabel="title"
+              :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
+              :options="columnOptionsItems"
+            />
+            <Dropdown 
+              v-model="currentDataTypeConcept.conceptName"
+              placeholder="column type"
+              optionLabel="title"
+              :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
+              :options="columnDataTypeItems"
+            />
+          </div>
+          <Button 
+            icon="pi pi-plus"
+            text
             :disabled="!isAddColumnConceptButtonEnabled"
             @click.prevent="addColumnConceptToGraph"
-          >
-            <v-icon>mdi-plus</v-icon>
-          </v-btn>
+          />
         </div>
-        <v-divider></v-divider>
-        <div class="clustering-options-container">
-          <v-select v-model="currentClusteringOrderOptions.clusteringColumn"
-            variant="outlined"
-            style="margin-right: 1rem;"
-            label="Clustering Column"
-            :clearable="true"
-            :hide-details="true"
-            :items="clusteringColumnItems"
-            :disabled="!isClusteringSectionEnabled"
-            @click:clear="clearClusteringColumn">
-          </v-select>
-          <v-select v-model="currentClusteringOrderOptions.clusteringOrder"
-            variant="outlined"
-            label="Order"
-            :hide-details="true"
-            :items="clusteringOrderItems"
-            :disabled="!isClusteringSectionEnabled"
-            :loading="isSaveTriggered">
-          </v-select>
+
+        <Divider />
+
+        <!-- Clustering column concepts options input -->
+
+        <div class="design-toolbox-input-container">
+          <div class="design-toolbox-input-group">
+            <Dropdown
+              v-model="currentClusteringOrderOptions.clusteringColumn"
+              placeholder="clustering column"
+              showClear="true"
+              :disabled="!isClusteringSectionEnabled"
+            />
+            <Dropdown 
+              v-model="currentClusteringOrderOptions.clusteringOrder"
+              placeholder="clustering order"
+              :disabled="!isClusteringSectionEnabled"
+            />
+          </div>
         </div>
-      </v-card-text>
-    </v-card>
-    <v-card
-      variant="outlined"
-      class="toolbox"
-      style="margin-top: 40px;"
-      :class="{ 'toolbox-warning': !keyspace }"
-    >
-      <v-card-title class="d-flex justify-center">Design Toolbox Actions</v-card-title>
-      <v-card-text class="action-row">
-        <v-btn
-          class="action-button"
-          variant="outlined"
-          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered"
-          @click.prevent="generateQuery(false)"
-        >
-          COMMAND
-        </v-btn>
-        <v-btn
-          class="action-button"
-          variant="outlined"
-          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered"
-          :loading="isSaveTriggered"
-          @click.prevent="saveTableConceptualGraph"
-        >
-          SAVE
-        </v-btn>
-        <v-btn
-          class="action-button"
-          variant="outlined"
-          :disabled="!isQueryGeneratorButtonEnabled || isSaveTriggered || true"
-          :loading="isProcessTriggered"
-          @click.prevent="generateTable">
-          COMING SOON
-        </v-btn>
-      </v-card-text>
-    </v-card>
+
+      </template>
+    </Card>
   </div>
 </template>
 
@@ -398,29 +360,27 @@ export default {
 @use '@/assets/styles/_containers.sass'
 @use '@/assets/styles/_variables.sass'
 
-.toolbox-warning
-  // border-color: variables.$cassandra-yellow
-
 .toolbox
-  // border-color: variables.$cassandra-blue
-  border: none
+  box-shadow: none
 
-  .v-card-title
-    margin-bottom: 1rem
+  .design-toolbox-input-container
+    @include containers.flex-container($justify-content: space-between, $align-items: flex-end)
 
-    .v-icon
-      color: variables.$cassandra-yellow
+    .design-toolbox-input-group
+      @include containers.flex-container($flex-direction: column)
 
-  .actions-row
-    @include containers.flex-container($justify-content: center)
-    width: 100%
+      .flex.flex-column
+        margin-bottom: 1rem
+        
+      .p-dropdown
+        width: 100%
 
-    &:first-of-type
-      margin-bottom: 1rem
+      .p-dropdown:not(:last-of-type)
+        margin-bottom: 1rem
 
-    .v-btn
-      width: 100%
-      height: 56px
+    .design-toolbox-action-group
+      @include containers.flex-container
+
 
   .v-btn.icon-button, .v-btn.icon-button--double
     border: 1px solid variables.$cassandra-black
