@@ -32,17 +32,27 @@
             </cga-card>
             <cga-card title="Query Cassandra Tables">
               <span>Query your database tables and get results in real time, without touching your Cassandra bash terminal.</span>
-              <span></span>
             </cga-card>
           </div>
         </div>
       </div>
     </section>
     <section class="homepage-section">
-      <cga-banner-card title="Conceptual Graphs" id="banner">
-        <span class="banner-card-text">"With their direct mapping to language, conceptual graphs can serve as an</span>
-        <span class="banner-card-text">intermediate language for translating computer-oriented formalisms to and from natural languages."</span>  
-      </cga-banner-card>
+      <div class="landing-section-splitter-container">
+        <Splitter>
+          <SplitterPanel :size="100">
+            <CassandraTerminal 
+              :is-terminal-opened="true"
+              :is-terminal-readonly="true"
+              :commands="cassandraTerminalConstants.dummyCQL" 
+            />
+          </SplitterPanel>
+          <SplitterPanel :size="-10">
+            <ConceptualGraph :graph-metadata="dummyGraphMetadata" graph-key="dummyGraph"
+             />
+          </SplitterPanel>
+        </Splitter>
+      </div>
     </section>
     <section class="homepage-section homepage-section__last" id="auth">
       <AuthenticationCard />
@@ -60,16 +70,19 @@
 </template>
 
 <script setup lang="ts">
+import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
+import { dummyGraphMetadata } from '../constants/dummyCG'
 import { useUtilsStore } from '../stores/utils';
 import { useUserStore } from '../stores/user';
 import { storeToRefs } from 'pinia';
 import { Ref, ref } from '@vue/reactivity';
 
 import CgaCard from '../components/graphic/cards/CgaCard.vue';
-import CgaBannerCard from '../components/graphic/cards/CgaBannerCard.vue';
 import AuthenticationCard from '../components/authentication/AuthenticationCard.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
 import { onMounted } from 'vue';
+import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
+import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 
 // Store state mappings
 const userStore = useUserStore();
@@ -79,10 +92,15 @@ const { isUserLoggedIn } = storeToRefs(userStore);
 const { currentScrollYPosition, isSidebarOpened } = storeToRefs(utilsStore);
 
 const homepageElement: Ref<HTMLElement | null> = ref(null);
+const bannerElement: Ref<HTMLElement | null> = ref(null);
+const bannerElementYPosition: Ref<number> = ref(0);
 
 const handleScrollEvent = (): void => {
   if (homepageElement.value) {
     currentScrollYPosition.value = homepageElement.value.scrollTop;
+    if (currentScrollYPosition.value >= bannerElementYPosition.value - 3 * window.innerHeight / 4) {
+      bannerElement.value?.classList.add('banner-card--fade-in');
+    }
   } else {
     currentScrollYPosition.value = 0;
   }
@@ -90,8 +108,12 @@ const handleScrollEvent = (): void => {
 
 onMounted(() => {
   homepageElement.value = document.getElementById('homepage');
-  if (homepageElement) {
-    homepageElement.value?.addEventListener('scroll', handleScrollEvent);
+  if (homepageElement.value) {
+    homepageElement.value.addEventListener('scroll', handleScrollEvent);
+    bannerElement.value = document.getElementById('banner');
+    if (bannerElement.value) {
+      bannerElementYPosition.value = homepageElement.value.scrollTop + bannerElement.value.getBoundingClientRect().top;
+    }
   }
 });
 
@@ -273,8 +295,23 @@ model-viewer
               @include containers.flex-container($flex-direction: column, $justify-content: flex-start)
               color: variables.$cassandra-white
 
-  .homepage-section:nth-of-type(2), .homepage-section:nth-of-type(3)
-    height: 120vh
+    .landing-section-splitter-container
+      @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+      height: 100%
+      width: 100%
+
+      .p-splitter
+        width: 50%
+        border: none
+
+        .p-splitter-panel
+          @include containers.flex-container($justify-content: center, $align-items: center)
+          overflow: auto
+        
+          &:nth-of-type(2)
+            flex-basis: 0% !important
+            
+
 
 .console-section
   margin-top: variables.$cga-topbar-height

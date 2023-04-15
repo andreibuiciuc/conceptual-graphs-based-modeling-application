@@ -113,18 +113,22 @@
       @close="closeCassandraTerminal" 
     />
   </Dialog>
+  <Dialog v-model:visible="isQueryResultsModalOpened" header="query results" :style="{ width: '50vw'}" modal maximizable>
+    <CgaTable :columns="queryResultsTableHeaders" :items="queryResults" />
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command } from '../types/types';
+import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn } from '../types/types';
 import { manageRequest } from '../includes/requests';
 
 // Component imports
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '../components/design/QueryItems.vue';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
+import CgaTable from '../utilities/CgaTable.vue';
 
 // Store imports
 import { useConnectionStore } from '../stores/connection';
@@ -161,6 +165,8 @@ const { getRelationTypeForColumnConcept,
         getConceptReferentValue, 
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
+        getQuerySelectionConceptNames,
+        getHeadersForQueryResults,
         validateWhereQuery } = useMetadata();
 const { openNotificationToast, copyToClipboard } = useUtils();
 
@@ -314,7 +320,7 @@ const addClauseToQuery = (clause: QueryClause | null): void => {
       const firstColumnConcept: ConfigurableConcept | undefined = tableConcept ? queryMetadata.value.columns.get(tableConcept.conceptName)?.at(0) : undefined;
       whereClauseItems.value.push({ 
         column: firstColumnConcept ? firstColumnConcept.conceptName : constants.inputValues.empty, 
-        relation: "==", 
+        relation: "=", 
         value: constants.inputValues.empty, 
         chipValues: null, 
         currentChipValue: '',
@@ -382,15 +388,53 @@ const removeColumnFromQuery = (columnMetadata) => {
 // Functions related to the query actions
 const isQueryTerminalOpened: Ref<boolean> = ref(false);
 const cqlQueryCommands: Ref<Command[]> = ref([]);
+
+const queryResults: Ref<any[]> = ref([]);
+const queryResultsTableHeaders: Ref<DataTableColumn[]> = ref([]);
+const isQueryResultsModalOpened: Ref<boolean> = ref(false);
+
 const openQueryTerminal = (): void => {
   cqlQueryCommands.value = queryStore.generateCQLQueryCommands(tableMetadata.value, queryMetadata.value);
   isQueryTerminalOpened.value = true;
 };
 
+const fetchQueryResuls = async (): Promise<void> => {
+  const response = await manageRequest(constants.requestTypes.GET, 'query_results', {
+    query: queryStore.generateCQLQuery(tableMetadata.value, queryMetadata.value)
+  });
+  if (response && response.data) {
+    if (response.data.status === constants.requestStatus.SUCCESS) {
+      parseQueryResults(response.data.results);
+    } else {
+      openNotificationToast(response.data.message, 'error');
+    }
+  }
+};
+
+const parseQueryResults = (results: any[]) => {
+  queryResultsTableHeaders.value = [];
+  queryResults.value = [];
+
+  const currentColumns = getQuerySelectionConceptNames(queryMetadata.value);
+  queryResultsTableHeaders.value = getHeadersForQueryResults(queryMetadata.value);
+
+  results.forEach(resultItem => {
+    let resultForTable = {};
+    for (let index = 0; index < resultItem.length; index ++) {
+      resultForTable[currentColumns[index]] = resultItem[index];
+    }
+    queryResults.value.push(resultForTable);
+  });
+
+  isQueryResultsModalOpened.value = true;
+};
+
 const runQuery = (): void => {
-  const result = validateWhereQuery(tableMetadata.value, whereClauseItems.value);
-  if (result) {
-    openNotificationToast(result, 'error');
+  const error = validateWhereQuery(tableMetadata.value, whereClauseItems.value);
+  if (error) {
+    openNotificationToast(error, 'error');
+  } else {
+    fetchQueryResuls();
   }
 };
 

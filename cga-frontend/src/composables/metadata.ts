@@ -1,5 +1,5 @@
 import constants from "../constants/constants";
-import { Concept, QueryItemColumnType } from "../types/types";
+import { Concept, DataTableColumn, QueryItemColumnType } from "../types/types";
 import { GraphMetadata, QueryItem } from "../types/types";
 
 export function useMetadata() {
@@ -78,6 +78,29 @@ export function useMetadata() {
       return operators;
     };
 
+    const getQuerySelectionConceptNames = (queryMetadata: GraphMetadata): string[] => {
+      
+      const currentTable: Concept | undefined = queryMetadata.tables.at(0);
+      if (!currentTable) {
+        return [];
+      }
+      
+      const currentColumns: Concept[] | undefined = queryMetadata.columns.get(currentTable.conceptName);
+      if (!currentColumns) {
+        return [];
+      }
+
+      return currentColumns.map(columnConcept => columnConcept.conceptName);
+    };
+
+    const getHeadersForQueryResults = (queryMetadata: GraphMetadata): DataTableColumn[] => {
+      const columnNames: string[] = getQuerySelectionConceptNames(queryMetadata);
+      const tableColumns: DataTableColumn[] = columnNames.map(column => {
+        return { field: column, header: column } 
+      });
+      return tableColumns;
+    }
+
     // Functions for validating Cassandra query clauses
     const validateWhereQuery = (tableMetadata: GraphMetadata, whereQueryItems: QueryItem[]): string => {
       let [status, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
@@ -129,6 +152,8 @@ export function useMetadata() {
       getCQLWhereOperatorsByColumnKind,
       getRelationTypeForColumnConcept,
       getColumnInputType,
+      getQuerySelectionConceptNames,
+      getHeadersForQueryResults,
       validateWhereQuery
     };
 };

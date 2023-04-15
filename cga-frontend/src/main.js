@@ -46,6 +46,8 @@ import SplitterPanel from "primevue/splitterpanel";
 import Dialog from 'primevue/dialog';
 import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
 const vuetify = createVuetify({
   components,
@@ -82,6 +84,8 @@ auth.onAuthStateChanged(() => {
     app.component('SplitterPanel', SplitterPanel);
     app.component('Dialog', Dialog);
     app.component('Toast', Toast);
+    app.component('DataTable', DataTable);
+    app.component('Column', Column);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

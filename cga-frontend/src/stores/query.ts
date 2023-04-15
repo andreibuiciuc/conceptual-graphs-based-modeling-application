@@ -40,7 +40,7 @@ export const useQueryStore  = defineStore('query', () => {
         });
 
         if (whereClauseSnippet) {
-            whereClauseSnippet = 'WHERE '.concat(whereClauseSnippet.slice(0, whereClauseSnippet.length - 5));
+            whereClauseSnippet = ' WHERE '.concat(whereClauseSnippet.slice(0, whereClauseSnippet.length - 5));
         }
 
         return whereClauseSnippet;
@@ -62,7 +62,11 @@ export const useQueryStore  = defineStore('query', () => {
 
     function getColumnValueForWhereClauseItem (item: QueryItem): boolean | number | string | undefined {
         if (item.value) {
-            return item.value;
+            if (item.type === 'string') {
+                return `'${item.value}'`;
+            } else {
+                return item.value;
+            }
         } else if (item.valueSelect) {
             return item.valueSelect;
         } else if (item.chipValues) {   
@@ -83,6 +87,7 @@ export const useQueryStore  = defineStore('query', () => {
             .concat(computeColumnSelectionSnippet(tableColumns, queryColumns))
             .concat(` FROM ${connectionStore.currentKeyspace}.${currentTable.conceptName}`)
             .concat(computeWhereClauseSnippet())
+            .concat(';');
 
         return cqlQuery;
     }

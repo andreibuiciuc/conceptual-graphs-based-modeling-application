@@ -54,6 +54,7 @@ const closeTerminal = (): void => {
   @include containers.flex-container($align-items: center)
   background-color: variables.$cassandra-black
   height: 32px
+  width: 600px
   border-top-left-radius: 10px
   border-top-right-radius: 10px
   margin-bottom: 2px

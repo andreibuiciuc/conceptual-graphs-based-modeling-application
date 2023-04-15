@@ -31,16 +31,15 @@ const props = defineProps<Props>();
 .banner-card-wrapper
     visibility: hidden
     position: relative
-    top: -10%
-    width: 100%
-    padding: 0 15%
+    z-index: 999
+    width: 40rem
 
     .banner-card
         @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
         background-color: variables.$cassandra-white
         border-radius: 3rem
         box-shadow: 0px 7px 13px rgb(0 0 0 / 13%)
-        padding: 40px 80px
+        padding: 2.5rem
         z-index: 4
 
         .banner-card-title

@@ -77,15 +77,20 @@ type ToastPosition = 'center' | 'top-left' | 'top-center' | 'top-right' | 'botto
 
 type QueryItemColumnType = 'boolean' | 'float' | 'integer' | 'null' | 'other' | 'string';
 
+interface DataTableColumn {
+    field: string,
+    header: string
+};
+
 interface D3Node {
     id: string,
     type: string,
-}
+};
 
 interface D3Link {
     source: string,
     target: string
-}
+};
 
 export {
     LoginCredentials,
@@ -101,6 +106,7 @@ export {
     QueryItemColumnType,
     //
     Command,
+    DataTableColumn,
     ToastSeverity,
     ToastPosition,
     D3Link,
