@@ -101,7 +101,11 @@
                     text
                     @click="addToQuery(clause, item)"
                 />
-                <i class="pi pi-info" v-tooltip="item.tooltip"></i>
+                <i 
+                    v-if="!item.toQuery"
+                    class="pi pi-info" 
+                    v-tooltip="item.tooltip">
+                </i>
             </div>
         </template>
     </Card>

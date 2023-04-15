@@ -113,7 +113,13 @@ section
 // Confirmation Popup
 .p-confirm-popup .flex
     display: flex
+    align-items: center
     padding: 1.25rem
+
+.p-confirm-popup .p-button.p-confirm-popup-accept
+    background-color: transparent !important
+    color: #3B82F6 !important
+    border: 1px solid !important
 
 // Splitter
 .p-splitter
@@ -124,3 +130,7 @@ section
 // Icons
 .pi
     font-size: 1.25rem
+
+// Progress Spinner
+.p-progress-spinner > .p-progress-spinner-svg > .p-progress-spinner-circle
+    stroke: variables.$cassandra-app-blue !important

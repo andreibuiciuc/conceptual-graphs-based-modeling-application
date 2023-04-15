@@ -6,29 +6,37 @@
         <span>cassandra query design</span>
       </div>
       <div class="header-actions">
-        <Dropdown v-model="selectedTable"
+        <Dropdown 
+          v-model="selectedTable"
           placeholder="table"
           :disabled="!currentKeyspace"
           :options="availableTables"
           @change="changeTable">
         </Dropdown>
-        <Button label="save" outlined severity="primary" />
-        <Button label="generate query" outlined severity="primary"></Button>
+        <Button 
+          label="save"  
+          outlined 
+          severity="primary" 
+          :disabled="true"
+        />
       </div>
     </div>
     <Splitter class="query-canvas-wrapper">
       <SplitterPanel>
-        <conceptual-graph v-if="selectedTable && !isTableRetrieveInProgress" 
+        <ConceptualGraph
+          v-if="selectedTable && !isTableRetrieveInProgress" 
           ref="tableGraph"
           graph-key="tableGraph"
           :graph-metadata="tableMetadata"
           :are-columns-selectable="true"
           :are-tables-collapsable="false"
-          @select="addColumnToQuery" />
-        <v-progress-circular indeterminate v-else-if="isTableRetrieveInProgress"></v-progress-circular>
+          @select="addColumnToQuery" 
+        />
+        <ProgressSpinner v-else-if="isTableRetrieveInProgress" />
       </SplitterPanel>
       <SplitterPanel>
-        <conceptual-graph v-if="queryMetadata && queryMetadata.columns" 
+        <ConceptualGraph 
+          v-if="queryMetadata && queryMetadata.columns && queryMetadata.columns.size" 
           ref="queryGraph"
           graph-key="queryGraph"
           :graph-metadata="queryMetadata"
@@ -37,7 +45,8 @@
           :are-column-concepts-deletable="true"
           :query-concepts="queryConcepts"
           :is-query-graph="true"
-          @remove="removeColumnFromQuery" />
+          @remove="removeColumnFromQuery"
+        />
       </SplitterPanel>
     </Splitter>
     </div>
@@ -48,7 +57,7 @@
             <span>keyspace:</span>
             <span v-if="currentKeyspace">{{ currentKeyspace }}</span>
             <template v-else>
-              <i class="pi pi-exclamation-circle" style="color: red; font-size: 1.25rem;"></i>
+              <i class="pi pi-exclamation-circle" style="color: red; font-size: 1rem;"></i>
               <span>no keyspace selected</span>
             </template>
           </div>
@@ -56,7 +65,7 @@
             <span>table:</span>
             <span v-if="isTableGraphReady">{{ tableMetadata.tables[0]?.conceptName }}</span>
             <template v-else>
-              <i class="pi pi-exclamation-circle" style="color: red; font-size: 1.25rem;"></i>
+              <i class="pi pi-exclamation-circle" style="color: red; font-size: 1rem;"></i>
               <span>no table concept selected</span>
             </template>
           </div>
@@ -64,22 +73,39 @@
         <div class="query-panel-header-actions">
           <Dropdown v-model="selectedClauseType"
             placeholder="add to query" 
-            :disabled="isQueryActionDisabled"
+            :disabled="!areQueryActionsEnabled"
             :options="[QueryClause.WHERE, QueryClause.GROUP_BY, QueryClause.ORDER_BY]"
             @change="addClauseToQuery(selectedClauseType)"
           />
           <ConfirmPopup group="clear">
             <template #message="slotProps">
               <div class="flex align-content-center p-4">
-                <i :class="slotProps.message.icon" style="font-size: 1.5rem;"></i>
+                <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
                 <p class="pl-2">{{ slotProps.message.message }}</p>
               </div>
             </template>
           </ConfirmPopup>
-          <Button label="clear" text severity="secondary" :disabled="isQueryActionDisabled" @click="openConfirmationPopup($event)" />
+          <Button 
+            label="clear" 
+            text 
+            severity="secondary" 
+            :disabled="!areQueryActionsEnabled" 
+            @click="openConfirmationPopup($event)" 
+          />
           <Divider layout="vertical" />
-          <Button label="command" outlined severity="primary" :disabled="isQueryActionDisabled" @click="openQueryTerminal" />
-          <Button label="run" outlined severity="primary" :disabled="isQueryActionDisabled" @click="runQuery" />
+          <Button 
+            label="command" 
+            outlined 
+            severity="primary" 
+            :disabled="!areQueryActionsEnabled" 
+            @click="openQueryTerminal" />
+          <Button 
+            label="run" 
+            outlined 
+            severity="primary" 
+            :disabled="!areQueryActionsEnabled" 
+            @click="runQuery" 
+          />
         </div>
       </div>
       <v-divider></v-divider>
@@ -106,7 +132,7 @@
     </div>
   </div>
   <Dialog v-model:visible="isQueryTerminalOpened" :show-header="false" modal>
-    <CassandraTerminal 
+    <CassandraTerminal
       :is-terminal-opened="isQueryTerminalOpened"
       :is-terminal-readonly="false"
       :commands="cqlQueryCommands"
@@ -141,7 +167,7 @@ import { useUtils } from '../composables/utils';
 
 // Vue imports
 import { storeToRefs } from 'pinia';
-import { Ref, nextTick, ref, watch } from 'vue';
+import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
 
 
@@ -274,9 +300,14 @@ const setConceptualGraphMetadata = (metadata: Ref<GraphMetadata>, tables: Concep
 }
 
 // Query builder functionalities
-const isQueryActionDisabled = computed(() => {
-  return !currentKeyspace.value || !tableMetadata.value.tables.length || !tableMetadata.value.columns.size;
-})
+const isTableMetadataReady: ComputedRef<boolean> = computed(() => {
+  return !!currentKeyspace.value && !!tableMetadata.value.tables.length && !!tableMetadata.value.columns.size && !!tableMetadata.value.dataTypes.size;
+});
+
+const areQueryActionsEnabled: ComputedRef<boolean> = computed(() => {
+  return !!isTableMetadataReady.value && !!queryMetadata.value.tables.length && !!queryMetadata.value.columns.size;
+});
+
 
 const columnConcepts = computed(() => {
   return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
@@ -507,20 +538,8 @@ if (currentKeyspace.value) {
       height: 100%
       width: 100%
 
-      .query-canvas
-        @include containers.flex-container($justify-content: center, $align-items: center)
-        border: 1px solid variables.$cassandra-light-gray
-        position: relative
-        resize: horizontal
-        overflow: auto
-        height: 100%
-        width: 50%
-
-        &:first-of-type
-          margin-right: 20px
-
-        .v-progress-circular
-          color: variables.$cassandra-app-blue
+      .p-splitter-panel
+        @include containers.flex-container($align-items: center, $justify-content: center)
 
   .query-toolbox
     height: calc(100% - variables.$cga-topbar-height)
@@ -536,20 +555,22 @@ if (currentKeyspace.value) {
       padding: 10px 0
 
       .query-panel-header-info
-        @include containers.flex-container
+        @include containers.flex-container($align-items: center)
       
         & > .info-block
-          @include containers.flex-container
-          margin-right: 20px
+          @include containers.flex-container($align-items: center)
+          margin-right: 1.25rem
 
           & > span:first-of-type
-            margin-right: 5px
+            margin-right: 0.5rem
 
           & > span:last-of-type
             color: variables.$cassandra-app-blue
 
-          & > .v-icon + span
-            color: variables.$cassandra-black
+          & > .pi 
+            margin-right: 0.5rem
+          & > .pi + span
+            color: variables.$cassandra-red
       
       .query-panel-header-actions
         @include containers.flex-container()
@@ -566,13 +587,5 @@ if (currentKeyspace.value) {
         position: relative
         margin: 10px 0
         width: 100%
-
-        .v-dialog
-          position: absolute
-          top: -180px
-          left: 180px
-
-          .v-overlay__scrim
-            display: none !important
 
 </style>
