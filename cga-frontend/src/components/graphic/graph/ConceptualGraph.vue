@@ -165,6 +165,7 @@ const drawArrowsForConcept = async (tableConcept: Concept): Promise<void> => {
 
 const drawArrowsForConcepts = async (): Promise<void> => {
   await nextTick();
+  debugger
   for (let tableIndex in props.graphMetadata?.tables) {
     const currentTableConcept = props.graphMetadata.tables[parseInt(tableIndex, 10)];
     let tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${tableIndex}`);

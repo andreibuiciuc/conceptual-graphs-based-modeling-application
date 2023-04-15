@@ -16,14 +16,22 @@ const routes = [
     path: "/data-structure",
     name: "data-structure",
     component: DataStructureView,
+    beforeRouteEnter: function (_from, _to, next) {
+      const userStore = useUserStore();
+      if (userStore.isUserLoggedIn) {
+        next();
+      } else {
+        next({ name: "home" });
+      }
+    }
   },
   {
     path: "/query",
     name: "query",
     component: QueryView,
     beforeEnter: (_to, _from, next) => {
-      const store = useUserStore();
-      if (store.isUserLoggedIn) {
+      const userStore = useUserStore();
+      if (userStore.isUserLoggedIn) {
         next();
       } else {
         next({ name: "home" });

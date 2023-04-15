@@ -2,7 +2,7 @@
   <div class="design-toolbox-container">
     <Card
       class="design-toolbox"
-      :class="{ 'toolbox-warning': !keyspace }"
+      :class="{ 'toolbox-warning': !currentKeyspace }"
     >
       <template #title>data structure config</template>
       <template #content>
@@ -14,7 +14,7 @@
                 v-model="currentTableConcept.conceptName"
                 placeholder="table name"
                 :class="{ 'p-invalid': !isTableConceptValid }"
-                :disabled="!keyspace"
+                :disabled="!currentKeyspace"
                 :readonly="isGraphRendered"
               />
           </div>
@@ -46,21 +46,19 @@
                 v-model="currentColumnConcept.conceptName"
                 :class="{ 'p-invalid': doesColumnConceptAlreadyExists }"
                 placeholder="column name"
-                :disabled="!currentTableConcept.conceptName"
+                :disabled="!currentTableConcept.conceptName || !isGraphRendered"
               />
               <small class="p-error">{{ getColumnNameErrorMessage }}</small>
             </div>
             <Dropdown 
               v-model="currentColumnConcept.columnKind"
               placeholder="column kind"
-              optionLabel="title"
               :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
               :options="designToolboxConstants.CQL_COLUMN_OPTIONS"
             />
             <Dropdown 
               v-model="currentDataTypeConcept.conceptName"
               placeholder="column type"
-              optionLabel="title"
               :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
               :options="designToolboxConstants.CQL_DATA_TYPES"
             />
@@ -117,9 +115,6 @@ import { ComputedRef, Ref, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { computed } from '@vue/reactivity';
 
-interface Props {
-  keyspace: string
-};
 
 type ClusteringOption = {
   clusteringColumn: string
@@ -127,8 +122,7 @@ type ClusteringOption = {
 };
 
 // Props and emits definitions
-const props = defineProps<Props>();
-const emit = defineEmits(['openTerminal', 'render']);
+const emit = defineEmits(['render']);
 
 // Functions mapped from composables
 const { generateQueryAsCommands } = useQuery();
@@ -183,7 +177,8 @@ const resetToolbox = (): void => {
   isTableConceptValid.value = true;
   currentTableConcept.value = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
   resetColumnConceptGroup();
-  renderConceptualGraph();
+  renderConceptualGraph(true);
+  setClusteringOptionGroupEnabledState();
   isGraphRendered.value = false;
 };
 
@@ -217,7 +212,7 @@ const checkIfTableExistsInCollection = async (): Promise<boolean> => {
 };
 
 const checkIfTableExistsInKeyspace = async (): Promise<boolean> => {
-  const response = await manageRequest(constants.relationTypes.GET, 'table', { 
+  const response = await manageRequest(constants.requestTypes.GET, 'table', { 
     table_name: currentTableConcept.value.conceptName,
     keyspace_name: currentKeyspace.value
   });
@@ -262,8 +257,8 @@ const areColumnConceptFieldsCompleted: ComputedRef<boolean> = computed(() => {
 });
 
 const doesColumnConceptAlreadyExists: ComputedRef<boolean> = computed(() => {
-  return tableMetadata.value.columns && tableMetadata.value.columns[currentTableConcept.value.conceptName] &&
-    tableMetadata.value.columns.get(currentTableConcept.value.conceptName)?.some(x => x.conceptName === currentColumnConcept.value.conceptName);
+  return !!tableMetadata.value.columns && !!tableMetadata.value.columns[currentTableConcept.value.conceptName] &&
+    !!tableMetadata.value.columns.get(currentTableConcept.value.conceptName)?.some(x => x.conceptName === currentColumnConcept.value.conceptName);
 });
 
 const isAddColumnConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
@@ -272,24 +267,40 @@ const isAddColumnConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
 
 
 const addTableConceptToGraph = (): void => {
-  tableMetadata.value.tables = [currentColumnConcept.value];
+  tableMetadata.value.keyspace = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
+  tableMetadata.value.tables = [{ ... currentTableConcept.value, relation: constants.relationTypes.hasMore }];
   tableMetadata.value.columns = new Map<string, Concept[]>();
   tableMetadata.value.columns.set(currentTableConcept.value.conceptName, []);
   renderConceptualGraph();
 };
 
 const addColumnConceptToGraph = (): void => {
-  if (!doesColumnConceptAlreadyExists && currentColumnConcept.value.columnKind) {
+  if (!doesColumnConceptAlreadyExists.value && currentColumnConcept.value.columnKind) {
     tableMetadata.value.columns.get(currentTableConcept.value.conceptName)?.push({ ... currentColumnConcept.value, relation: getRelationTypeForColumnConcept(currentColumnConcept.value.columnKind) });
     tableMetadata.value.dataTypes.set(currentColumnConcept.value.conceptName, currentDataTypeConcept.value);
+    setClusteringOptionGroupEnabledState();
     resetColumnConceptGroup();
     renderConceptualGraph();
   }
 };
 
-const renderConceptualGraph = (): void => {
-  emit('render', tableMetadata.value);
-  isGraphRendered.value = true;
+const setClusteringOptionGroupEnabledState = (): void => {
+  const { _, clusteringColumnCount } = getPartitionAndClusteringColumnsCount();
+    if (clusteringColumnCount > 0) {
+      isClusteringSectionEnabled.value = true;
+      clusteringColumnOptions.value = tableMetadata.value.columns.get(currentTableConcept.value.conceptName)!
+        .filter(concept => concept.columnKind === constants.columnKinds.clustering)
+        .map(concept => concept.conceptName);
+    } else {
+      isClusteringSectionEnabled.value = false;
+    }
+};
+
+const renderConceptualGraph = (onInitialLoad?: boolean): void => {
+  if (!onInitialLoad) {
+    emit('render', tableMetadata.value);
+    isGraphRendered.value = true;
+  }
 };
 
 // Functions related to the main screen actions
@@ -297,7 +308,6 @@ const generateCQLQuery = (): void => {
   const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
     if (isConceptualGraphValid) {
       // const commands = generateQueryAsCommands(currentKeyspace.value, tableMetadata.value.tables, tableMetadata.value.columns, tableMetadata.value.dataTypes, currentClusteringOrderOption.value);
-      emit("openTerminal", []);
     } else {
       openNotificationToast(errorMessage, 'error');
     }
@@ -352,22 +362,6 @@ const saveTableMetadata = async (): Promise<void> => {
     openNotificationToast(error.message, 'error');
   }
 };
-
-watch(tableMetadata.value.columns, () => {
-  if (!currentTableConcept.value || !tableMetadata.value.columns.size) {
-    isClusteringSectionEnabled.value = false;
-  } else {
-    const { partitionColumnsCount, clusteringColumnCount } = getPartitionAndClusteringColumnsCount();
-    if (partitionColumnsCount > 1 && clusteringColumnCount > 0) {
-      isClusteringSectionEnabled.value = true;
-      clusteringColumnOptions.value = tableMetadata.value.columns.get(currentTableConcept.value.conceptName)!
-        .filter(concept => concept.columnKind === constants.columnKinds.clustering)
-        .map(concept => concept.conceptName);
-    } else {
-      isClusteringSectionEnabled.value = false;
-    }
-  }
-});
 
 resetToolbox();
 
