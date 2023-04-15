@@ -132,14 +132,14 @@ export default {
     },
     // These methods handle the rendering og the Conceptual Graph
     renderConceptualGraph: function (conceptualGraphData) {
-      this.tableConcepts = JSON.parse(JSON.stringify(conceptualGraphData.tableConcepts));
-      this.columnConcepts = { ... conceptualGraphData.columnConcepts };
-      this.dataTypeConcepts = { ... conceptualGraphData.dataTypeConcepts };
-      if (!conceptualGraphData.onInitialLoad) {
-        this.isGraphRendered = true;
-      } else {
-        this.isGraphRendered = false;
-      }
+      // this.tableConcepts = JSON.parse(JSON.stringify(conceptualGraphData.tableConcepts));
+      // this.columnConcepts = { ... conceptualGraphData.columnConcepts };
+      // this.dataTypeConcepts = { ... conceptualGraphData.dataTypeConcepts };
+      // if (!conceptualGraphData.onInitialLoad) {
+      //   this.isGraphRendered = true;
+      // } else {
+      //   this.isGraphRendered = false;
+      // }
     },
     removeColumnConcept: function (tableAndColumnConcepts) {
       if (tableAndColumnConcepts) {
