@@ -41,6 +41,11 @@ enum QueryClause {
     GROUP_BY = 'groupBy',
 };
 
+enum ClusteringOrder {
+    ASCENDING = 'ASC',
+    DESCENDING = 'DESC'
+};
+
 interface QueryConcepts {
     [QueryClause.WHERE]: {
         conceptReferent: string
@@ -66,6 +71,11 @@ interface QueryItem {
     valueErrorMessage?: string
 };
 
+type ClusteringOption = {
+    clusteringColumn: string
+    clusteringOrder: string
+};
+  
 // Utility types
 interface Command {
     lineContent: string
@@ -104,6 +114,7 @@ export {
     QueryItem,
     GraphMetadata,
     QueryItemColumnType,
+    ClusteringOption,
     //
     Command,
     DataTableColumn,

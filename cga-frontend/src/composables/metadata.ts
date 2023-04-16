@@ -101,13 +101,35 @@ export function useMetadata() {
       return tableColumns;
     }
 
+    const getPartitionAndClusteringColumnsCount = (tableMetadata: GraphMetadata): { [key: string]: number } => {
+      const initialCount = { partitionColumnsCount: 0, clusteringColumnCount: 0 };
+      
+      const currentTableConcept: Concept | undefined = tableMetadata.tables.at(0);
+      if (!currentTableConcept) {
+        return initialCount;
+      }
+
+      const columnConcepts: Concept[] | undefined = tableMetadata.columns.get(currentTableConcept.conceptName)
+      if (!columnConcepts) {
+        return initialCount;
+      }
+    
+      return columnConcepts.reduce((accumulator, currentValue) => {
+        if (currentValue.columnKind === 'partition_key') {
+          accumulator.partitionColumnsCount += 1;
+        } else if (currentValue.columnKind === constants.columnKinds.clustering) {
+          accumulator.clusteringColumnCount += 1;
+        }
+        return accumulator;
+      }, initialCount);
+    };
+
     // Functions for validating Cassandra query clauses
     const validateWhereQuery = (tableMetadata: GraphMetadata, whereQueryItems: QueryItem[]): string => {
       let [status, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
       
       [status, errorMessage] = checkUnrestrictedColumns('partition_key', tableMetadata, whereQueryItems);
       if (status) {
-        debugger
         return errorMessage;
       }
 
@@ -154,6 +176,7 @@ export function useMetadata() {
       getColumnInputType,
       getQuerySelectionConceptNames,
       getHeadersForQueryResults,
+      getPartitionAndClusteringColumnsCount,
       validateWhereQuery
     };
 };

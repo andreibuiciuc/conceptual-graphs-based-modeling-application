@@ -23,6 +23,7 @@
               severity="secondary"
               text
               icon="pi pi-times"
+              :disabled="!isGraphRendered"
               @click="resetToolbox"
             />
             <Button 
@@ -100,13 +101,11 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import designToolboxConstants from "../design/designToolboxConstants";
-import { Concept, GraphMetadata } from '../../types/types';
+import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
 
 import { useConnectionStore } from '../../stores/connection';
 
-import { useConfetti } from '../../composables/confetti';
 import { useMetadata } from '../../composables/metadata';
-import { useQuery } from "../../composables/query";
 import { useUtils } from "../../composables/utils";
 
 import { manageRequest } from '../../includes/requests';
@@ -114,22 +113,15 @@ import { conceptualGraphsCollection } from "../../includes/firebase";
 import { ComputedRef, Ref, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { computed } from '@vue/reactivity';
+import { nextTick } from 'process';
 
-
-type ClusteringOption = {
-  clusteringColumn: string
-  clusteringOrder: string
-};
 
 // Props and emits definitions
 const emit = defineEmits(['render']);
 
 // Functions mapped from composables
-const { generateQueryAsCommands } = useQuery();
 const { openNotificationToast } = useUtils();
-const { createConfetti } = useConfetti();
-const { getRelationTypeForColumnConcept } = useMetadata();
-
+const { getRelationTypeForColumnConcept, getPartitionAndClusteringColumnsCount } = useMetadata();
 
 // Local constants
 // TODO: Move this to the constants file
@@ -161,9 +153,6 @@ const clusteringColumnOptions: Ref<string[]> = ref([]);
 const tableMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
 const isGraphRendered: Ref<boolean> = ref(false);
 
-// Reactive data related to the main screen actions
-const isSaveInProgress: Ref<boolean> = ref(false);
-
 
 // Functions related to the initial configurations
 const resetColumnConceptGroup = (): void => {
@@ -172,7 +161,7 @@ const resetColumnConceptGroup = (): void => {
   currentClusteringOrderOption.value = { ... defaultClusteringOption };
 };
 
-const resetToolbox = (): void => {
+const resetToolbox = async (): Promise<void> => {
   tableMetadata.value = { ... defaultGraphMetadata };
   isTableConceptValid.value = true;
   currentTableConcept.value = { ... constants.defaultConcept, conceptType: constants.conceptTypes.table };
@@ -285,7 +274,7 @@ const addColumnConceptToGraph = (): void => {
 };
 
 const setClusteringOptionGroupEnabledState = (): void => {
-  const { _, clusteringColumnCount } = getPartitionAndClusteringColumnsCount();
+  const { _, clusteringColumnCount } = getPartitionAndClusteringColumnsCount(tableMetadata.value);
     if (clusteringColumnCount > 0) {
       isClusteringSectionEnabled.value = true;
       clusteringColumnOptions.value = tableMetadata.value.columns.get(currentTableConcept.value.conceptName)!
@@ -298,68 +287,10 @@ const setClusteringOptionGroupEnabledState = (): void => {
 
 const renderConceptualGraph = (onInitialLoad?: boolean): void => {
   if (!onInitialLoad) {
-    emit('render', tableMetadata.value);
+    emit('render', tableMetadata.value, clusteringColumnOptions.value);
     isGraphRendered.value = true;
-  }
-};
-
-// Functions related to the main screen actions
-const generateCQLQuery = (): void => {
-  const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
-    if (isConceptualGraphValid) {
-      // const commands = generateQueryAsCommands(currentKeyspace.value, tableMetadata.value.tables, tableMetadata.value.columns, tableMetadata.value.dataTypes, currentClusteringOrderOption.value);
-    } else {
-      openNotificationToast(errorMessage, 'error');
-    }
-};
-
-const getPartitionAndClusteringColumnsCount = (): { [key: string]: number } => {
-  const initialCount = { partitionColumnsCount: 0, clusteringColumnCount: 0 };
-  
-  const columnConcepts: Concept[] | undefined = tableMetadata.value.columns.get(currentTableConcept.value.conceptName)
-  if (!columnConcepts) {
-    return initialCount;
-  }
-
-  return columnConcepts.reduce((accumulator, currentValue) => {
-    if (currentValue.columnKind === 'partition_key') {
-      accumulator.partitionColumnsCount += 1;
-    } else if (currentValue.columnKind === constants.columnKinds.clustering) {
-      accumulator.clusteringColumnCount += 1;
-    }
-    return accumulator;
-  }, initialCount);
-};
-
-const validateConceptualGraph = (): [boolean, string] => {
-  const { partitionColumnsCount, _ } = getPartitionAndClusteringColumnsCount();
-  const errorMessage = partitionColumnsCount > 0 ? constants.inputValues.empty : "Cannot create primary key without any partition keys";
-  return [partitionColumnsCount > 0, errorMessage];
-};
-
-const saveTableMetadata = async (): Promise<void> => {
-  isSaveInProgress.value = true;
-  
-  const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
-  if (!isConceptualGraphValid) {
-    openNotificationToast(errorMessage, 'error');
-    isSaveInProgress.value = false;
-    return;
-  }
-
-  try {
-    await conceptualGraphsCollection.add({
-      tableName: currentTableConcept.value.conceptName,
-      tableConcepts: tableMetadata.value.tables,
-      columnConcepts: Object.fromEntries(tableMetadata.value.columns),
-      dataTypeConcepts: Object.fromEntries(tableMetadata.value.dataTypes)
-    });
-    isSaveInProgress.value = false;
-    openNotificationToast(designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE, 'success');
-    createConfetti();
-  } catch (error) {
-    isSaveInProgress.value = false;
-    openNotificationToast(error.message, 'error');
+  } else {
+    emit('render', null, null);
   }
 };
 

@@ -1,174 +1,169 @@
 
 import constants from "../constants/constants";
+import { Concept, Command, GraphMetadata } from "../types/types";
+import { ClusteringOption } from '../types/types';
 import designToolboxConstants from "../components/design/designToolboxConstants";
+import { useConnectionStore } from "../stores/connection";
+import { useMetadata } from '../composables/metadata';
 
 enum CassandraKeyType {
-    PARTITION_KEY = "partitionKey",
+    PARTITION_KEY = "partition_key",
     CLUSTERING_KEY = "clustering"
 };
 
-enum ClusteringOrder {
-    ASCENDING = "ASC",
-    DESCENDING = "DESC"
-};
-
-interface Concept {
-    conceptName: string,
-    conceptType: string
-};
-
-interface ClusteringOptions {
-    clusteringColumn: string,
-    clusteringOrder: ClusteringOrder
-}
-
-interface Command {
-    lineNumber: number,
-    lineContent: string
-};
-
 export function useQuery() {
-    let keyspace: string, tableConcepts: Concept[], columnConcepts: object, dataTypeConcepts: object;
-    let commands: Command[] = [];
-    let currentLine: number = 0;
-    let tableConceptName: string;
-    let clusteringOptions: ClusteringOptions;
 
-    // Functions related to the generating of the Data Structure CQL commands
-    const initializeQueryHelperData = (currentKeyspace, currentTableConcepts: Concept[], currentColumnConcepts, currentDataTypeConcepts, currentClusteringOptons) => {
-        keyspace = currentKeyspace;
-        
-        tableConcepts = { ... currentTableConcepts };
-        columnConcepts = { ... currentColumnConcepts };
-        dataTypeConcepts = { ... currentDataTypeConcepts };
-        clusteringOptions = { ... currentClusteringOptons };
-        
-        tableConceptName = tableConcepts[0].conceptName;
-        commands = [];
-        currentLine = 0;
-    }
+    // Composable responsible for generating CQL queries
 
-    const addCQLLineToCommandsArray = (cqlLineContent: string): void => {
-        commands.push({ lineNumber: currentLine, lineContent: cqlLineContent });
-        currentLine = currentLine + 1;
+    const connectionStore = useConnectionStore();
+    const { getPartitionAndClusteringColumnsCount } = useMetadata();
+    
+    // Helper functions related to the generating of the CREATE TABLE CQL statement 
+
+    const addCQLCommandLine = (commands: Command[], lineContent: string): void => {
+        const lineNumber = commands.length;
+        commands.push({ lineNumber, lineContent });
     };
 
-    const computeCQLStarterLine = (): void => {
-        const definitionCommandContent = designToolboxConstants.CQL_BASH_COMMAND
-          .concat(designToolboxConstants.CQL_CREATE_TABLE_SNIPPET)
-          .concat(keyspace)
-          .concat(designToolboxConstants.CQL_PUNCTUATION.DOT)
-          .concat(tableConceptName)
-          .concat(" (");
+    const computeCreateTableDefinitionLine = (tableMetadata: GraphMetadata, commands: Command[]): void => {
 
-        addCQLLineToCommandsArray(definitionCommandContent);
-    };
+        /*
+         * Computes the first line of the CREATE TABLE CQL statement
+         */
 
-    const computeCQLColumnDefinitionLines = (): void => {
-        columnConcepts[tableConceptName].forEach(columnConcept => {
-            const columnConceptCommandContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND
-              .concat(columnConcept.conceptName)
-              .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE)
-              .concat(dataTypeConcepts[columnConcept.conceptName].conceptName.toUpperCase())
-              .concat(designToolboxConstants.CQL_PUNCTUATION.COMMA);
+        const currentTable: Concept | undefined = tableMetadata.tables.at(0);
+        let createTableDefinitionLine: string;
         
-            addCQLLineToCommandsArray(columnConceptCommandContent);
-        });
-    };
-
-    const computeKeysSnippetFromTokens = (tokens: string[]): string => {
-        let snippet: string = constants.inputValues.empty;
-        if (tokens.length === 0) {
-            return snippet;
-        } else if (tokens.length === 1) {
-            return tokens[0];
+        if (!currentTable) {
+            createTableDefinitionLine = constants.inputValues.empty;
         } else {
-            snippet = "(";
-            tokens.forEach(token => {
-                snippet = snippet.concat(token)
-                    .concat(designToolboxConstants.CQL_PUNCTUATION.COMMA)
-                    .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE);
-            });
-            snippet = snippet.slice(0, snippet.length - 2).concat(")");
-        }
-        return snippet;
-    }
-
-    const getTokensForCassandraKeys = (): [string[], string[]] => {
-        let partitionKeyTokens: string[] = [];
-        let clusteringTokens: string[] = [];
-
-        columnConcepts[tableConceptName].forEach((columnConcept: { kind: CassandraKeyType, conceptName: string }) => {
-            if (columnConcept.kind === CassandraKeyType.PARTITION_KEY) {
-              partitionKeyTokens.push(columnConcept.conceptName);
-            } else if (columnConcept.kind === CassandraKeyType.CLUSTERING_KEY) {
-              clusteringTokens.push(columnConcept.conceptName);
-            }
-          });
-
-        return [partitionKeyTokens, clusteringTokens];
-    }
-
-    const computeCQLKeysDefinitionLines = (): void => {
-        let [partitionKeyTokens, clusteringTokens] = getTokensForCassandraKeys();
-        let partitionKeysSnippet = computeKeysSnippetFromTokens(partitionKeyTokens);
-        let clusteringKeysSnippet = computeKeysSnippetFromTokens(clusteringTokens);
-        let primaryKeyCommandSnippet = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat("PRIMARY KEY (");
-        
-        if (partitionKeysSnippet !== constants.inputValues.empty && !clusteringKeysSnippet) {
-            // This is the case when the primary key is built with no explicit clustering columns, only partition keys.
-            // In this case, the first column in the primary key is the partition key, and the others become clustering columns.
-            // We will remove the starting and ending paranthesis from the newly created snipppet if there are multiple partition keys declared.
-            if (partitionKeyTokens.length > 1) {
-                partitionKeysSnippet = partitionKeysSnippet.substring(1, partitionKeysSnippet.length - 1);
-            }
-            primaryKeyCommandSnippet = primaryKeyCommandSnippet.concat(partitionKeysSnippet).concat(")");
+            createTableDefinitionLine = designToolboxConstants.CQL_BASH_COMMAND
+                    .concat(designToolboxConstants.CQL_CREATE_TABLE_SNIPPET)
+                    .concat(`${connectionStore.currentKeyspace}.${currentTable.conceptName} (`);
         }
 
-        if (partitionKeysSnippet !== constants.inputValues.empty && clusteringKeysSnippet) {
-            // This is the case when the primary key is built with both explicit partition and clustering columns.
-            // In this case, the primary key snippet is 
-            partitionKeysSnippet = partitionKeysSnippet.concat(designToolboxConstants.CQL_PUNCTUATION.COMMA).concat(designToolboxConstants.CQL_PUNCTUATION.SPACE);
-            primaryKeyCommandSnippet = primaryKeyCommandSnippet
-                .concat(partitionKeysSnippet)
-                .concat(designToolboxConstants.CQL_PUNCTUATION.SPACE)
-                .concat(clusteringKeysSnippet)
-                .concat(")");
-        }
-        
-        addCQLLineToCommandsArray(primaryKeyCommandSnippet);
+        addCQLCommandLine(commands, createTableDefinitionLine);
     };
 
-    const computeCQLClusteringOptionsLines = (): void => {
-        addCQLLineToCommandsArray(designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(")"));
-        const clusteringOptionsLine = `WITH CLUSTERING ORDER BY (${clusteringOptions.clusteringColumn} ${clusteringOptions.clusteringOrder})`;
-        addCQLLineToCommandsArray(designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(clusteringOptionsLine));
-    }
-
-    const computeCQLEndingLine = () => {
-        const cqlEndingLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(");");
-        addCQLLineToCommandsArray(cqlEndingLine);
-    }
-
-    const generateQueryAsCommands = (currentKeyspace: string, 
-                                     currentTableConcepts: Concept[], 
-                                     currentColumnConcepts: object, 
-                                     currentDataTypeConcepts: object,
-                                     currentClusteringOptons: ClusteringOptions): Command[] => {
-                                        
-        initializeQueryHelperData(currentKeyspace, currentTableConcepts, currentColumnConcepts, currentDataTypeConcepts, currentClusteringOptons);
+    const computeColumnDefinitionLines = (tableMetadata: GraphMetadata, commands: Command[]): void => {
         
-        computeCQLStarterLine();
-        computeCQLColumnDefinitionLines();
-        computeCQLKeysDefinitionLines();
-        
-        if (currentClusteringOptons.clusteringColumn) {
-            computeCQLClusteringOptionsLines();
+        /*
+         * Computes the column definition lines of the CREATE TABLE CQL statement
+         */
+
+        const currentTable: Concept | undefined = tableMetadata.tables.at(0);
+        if (!currentTable) {
+            return ;
         }
         
-        computeCQLEndingLine();
-        return commands;
+        const currentColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
+        if (!currentColumns) {
+            return ;
+        }
+
+        currentColumns.forEach((columnConcept: Concept) => {
+            const dataTypeConcept: Concept | undefined = tableMetadata.dataTypes.get(columnConcept.conceptName);
+            let columnDefinitionLine: string;
+            
+            if (!dataTypeConcept) {
+                columnDefinitionLine = constants.inputValues.empty;
+            } else {
+                columnDefinitionLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND
+                    .concat(columnConcept.conceptName)
+                    .concat(` ${dataTypeConcept.conceptName.toUpperCase()},`)
+            }
+
+            addCQLCommandLine(commands, columnDefinitionLine);
+        });
+        
+    };
+
+    const computePrimaryKeyDefinitionLine = (tableMetadata: GraphMetadata, commands: Command[]): void => { 
+        
+        /*
+         * Computes the primary key definition line of the CREATE TABLE CQL statement
+         */
+
+
+        const currentTable: Concept | undefined = tableMetadata.tables.at(0);
+        if (!currentTable) {
+            return ;
+        }
+
+        const currentColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
+        if (!currentColumns) {
+            return ;
+        }
+        
+        let tableKeysDefinitionLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat('PRIMARY KEY (');
+        let partitionColumnsSnippet: string = constants.inputValues.empty, clusteringColumnsSnippet: string = constants.inputValues.empty;
+
+        const { partitionColumnsCount, clusteringColumnCount } = getPartitionAndClusteringColumnsCount(tableMetadata);
+
+        if (partitionColumnsCount) {
+            partitionColumnsSnippet = computeKeysSnippet(currentColumns, false);
+
+            if (partitionColumnsCount == 1) {
+                partitionColumnsSnippet = partitionColumnsSnippet.slice(1, partitionColumnsSnippet.length - 1);
+            }
+        } 
+
+        if (clusteringColumnCount) {
+            clusteringColumnsSnippet = computeKeysSnippet(currentColumns, true);
+
+            if (clusteringColumnCount == 1) {
+                clusteringColumnsSnippet = clusteringColumnsSnippet.slice(1, clusteringColumnsSnippet.length - 1);
+            }
+        }
+
+        tableKeysDefinitionLine = tableKeysDefinitionLine.concat(partitionColumnsSnippet).concat(', ').concat(clusteringColumnsSnippet).concat(')');
+        
+        addCQLCommandLine(commands, tableKeysDefinitionLine);
+    };
+
+    const computeKeysSnippet = (currentColumns: Concept[], isClusteringColumnsSnippet: boolean): string => {
+
+        let keySnippet: string = '(';
+
+        currentColumns.forEach((columnConcept: Concept) => {
+            if (isClusteringColumnsSnippet) {
+                if (columnConcept.columnKind === CassandraKeyType.CLUSTERING_KEY) {
+                    keySnippet = keySnippet.concat(columnConcept.conceptName).concat(', ');
+                }
+            } else {
+                if (columnConcept.columnKind === CassandraKeyType.PARTITION_KEY) {
+                    keySnippet = keySnippet.concat(columnConcept.conceptName).concat(', ');
+                }
+            }
+        });
+
+        return keySnippet.slice(0, keySnippet.length - 2).concat(')');
+    };
+
+    const computeClusteringOptionDefintionLines = (clusteringOption: ClusteringOption, commands: Command[]) => {
+        addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(')'));
+        const clusteringOptionLine = `WITH CLUSTERING ORDER BY (${clusteringOption.clusteringColumn} ${clusteringOption.clusteringOrder})`;
+        addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(clusteringOptionLine));
+
+    };
+
+    const computeCQLEndingLine = (commands: Command[]) => {
+        const cqlEndingLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(");");
+        addCQLCommandLine(commands, cqlEndingLine);
     }
+
+    // Wrapper functions related to the generating of the CREATE TABLE CQL statement
+    const generateQueryAsCommands = (tableMetadata: GraphMetadata, clusteringOption: ClusteringOption): Command[] => {
+        let commands: Command[] = [];
+        
+        computeCreateTableDefinitionLine(tableMetadata, commands);
+        computeColumnDefinitionLines(tableMetadata, commands);
+        computePrimaryKeyDefinitionLine(tableMetadata, commands);
+        computeClusteringOptionDefintionLines(clusteringOption, commands);
+        computeCQLEndingLine(commands);
+        
+        return commands;
+    };
 
     const generateQueryAsString = (commands: Command[]) => {
         const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);

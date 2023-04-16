@@ -39,9 +39,9 @@ export default {
   },
   CQL_COMMAND_REGEX: /(cqlsh >> )|( {6}>> )/gi,
   COPY_QUERY_CLIPBOARD_MESSAGE:
-    "CQL command was successfully copied to clipboard",
+    "cql command copied to clipboard",
   NO_SELECTED_KEYSPACE_MESSAGE:
-    "No keyspace selected. Please select a keyspace",
+    "no keyspace selected. please select a keyspace",
   SUCCESSFUL_TABLE_GRAPH_SAVE:
-    "Conceptual Graph successfully saved"
+    "conceptual graph successfully saved"
 };

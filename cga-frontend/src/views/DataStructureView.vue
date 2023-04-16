@@ -8,12 +8,14 @@
         <Button
           outlined
           severity="primary"
-          label="command" 
+          label="command"
+          @click="generateCQLQuery"
         />
         <Button
           outlined
           severity="primary"
-          label="save" 
+          label="save"
+          @click="saveTableMetadata"
         />
         <Divider layout="vertical" />
         <Button
@@ -64,12 +66,17 @@ import { useUtils } from '../composables/utils';
 import { storeToRefs } from "pinia"
 import { useQuery } from '../composables/query';
 import { Ref, nextTick, onMounted, ref } from 'vue';
-import { Command, Concept, GraphMetadata } from '../types/types';
+import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';
 import constants from '../constants/constants';
+import { useMetadata } from '../composables/metadata';
+import { useConfetti } from '../composables/confetti';
+import { conceptualGraphsCollection } from '../includes/firebase';
 
 // Functions mapped from composables
-const { generateQueryAsString } = useQuery();
+const { generateQueryAsString, generateQueryAsCommands } = useQuery();
 const { copyToClipboard, openNotificationToast } = useUtils();
+const { getPartitionAndClusteringColumnsCount } = useMetadata();
+const { createConfetti } = useConfetti();
 
 // Local constants
 // TODO: Move this to the constants file
@@ -80,20 +87,24 @@ const defaultGraphMetadata: GraphMetadata = {
   dataTypes: new Map<string, Concept>()
 };
 
+const defaultClusteringOption: ClusteringOption = {
+  clusteringColumn: constants.inputValues.empty,
+  clusteringOrder: constants.inputValues.empty
+};
+
 // Store mappings
 const connectionStore = useConnectionStore();
 const { currentKeyspace } = storeToRefs(connectionStore);
 
-// Reactive data related to the cassandra terminal
-const cassandraTerminalCommands: Ref<Command[]> = ref([]);
-
 // Reactive data related to the conceptual graph
 const tableGraph = ref();
 const tableMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
+const clusteringColumnOption: Ref<ClusteringOption> = ref({ ... defaultClusteringOption });
 const isGraphRendered: Ref<boolean> = ref(false);
 
 // Functions related to the cassandra terminal
 const isCassandraTerminalOpened: Ref<boolean> = ref(false);
+const cassandraTerminalCommands: Ref<Command[]> = ref([]);
 
 const openTerminal = (commads: Command[]): void => {
   cassandraTerminalCommands.value = JSON.parse(JSON.stringify(commads));
@@ -108,14 +119,22 @@ const closeTerminal = (): void => {
 };
 
 // Functions related to the conceptual graph
-
-const renderConceptualGraph = async (metadata: GraphMetadata): Promise<void> => {
-  isGraphRendered.value = true;
-  tableMetadata.value = { ... metadata };
-  await nextTick();
-  tableGraph.value.removeArrows();
-  tableGraph.value.drawInitialArrows();
-  tableGraph.value.drawArrowsForConcepts();
+const renderConceptualGraph = async (metadata: GraphMetadata, clusteringOption: ClusteringOption): Promise<void> => {
+  if (!metadata && !clusteringOption) {
+    tableMetadata.value = { ... defaultGraphMetadata };
+    clusteringColumnOption.value = { ... defaultClusteringOption };
+    await nextTick();
+    tableGraph.value.removeArrows();
+    isGraphRendered.value = false;
+  } else {
+    isGraphRendered.value = true;
+    tableMetadata.value = { ... metadata };
+    clusteringColumnOption.value = { ... clusteringOption };
+    await nextTick();
+    tableGraph.value.removeArrows();
+    tableGraph.value.drawInitialArrows();
+    tableGraph.value.drawArrowsForConcepts();
+  }
 };
 
 const removeColumnConcept = (tableAndColumnConcepts: any): void => {
@@ -123,12 +142,58 @@ const removeColumnConcept = (tableAndColumnConcepts: any): void => {
     const tableConceptIndex = tableMetadata.value.tables.findIndex((x: Concept) => x.conceptName === tableAndColumnConcepts.tableConcept.conceptName);
     if (tableConceptIndex > -1) {
       const tableConceptName = tableMetadata.value.tables[tableConceptIndex].conceptName;
-      const columnConceptIndex = tableMetadata.value.columns[tableConceptName].findIndex((x: Concept) => x.conceptName === tableAndColumnConcepts.columnConcept.conceptName);
-      if (columnConceptIndex > -1) {
+      const columnConceptIndex = tableMetadata.value.columns.get(tableConceptName)?.findIndex((x: Concept) => x.conceptName === tableAndColumnConcepts.columnConcept.conceptName);
+      if (columnConceptIndex !== undefined && columnConceptIndex > -1) {
         tableMetadata.value.columns.get(tableConceptName)?.splice(columnConceptIndex, 1);
       }
     }
   }
+};
+
+// Functions related to the main screen actions
+const isSaveInProgress: Ref<boolean> = ref(false);
+
+const saveTableMetadata = async (): Promise<void> => {
+  isSaveInProgress.value = true;
+  
+  const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
+  if (!isConceptualGraphValid) {
+    openNotificationToast(errorMessage, 'error');
+    isSaveInProgress.value = false;
+    return;
+  }
+
+  try {
+    const currentTableConcept: Concept = tableMetadata.value.tables.at(0)!;
+    await conceptualGraphsCollection.add({
+      tableName: currentTableConcept.conceptName,
+      tableConcepts: tableMetadata.value.tables,
+      columnConcepts: Object.fromEntries(tableMetadata.value.columns),
+      dataTypeConcepts: Object.fromEntries(tableMetadata.value.dataTypes)
+    });
+    isSaveInProgress.value = false;
+    openNotificationToast(designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE, 'success');
+    createConfetti();
+  } catch (error) {
+    isSaveInProgress.value = false;
+    openNotificationToast(error.message, 'error');
+  }
+};
+
+const validateConceptualGraph = (): [boolean, string] => {
+  const { partitionColumnsCount, _ } = getPartitionAndClusteringColumnsCount(tableMetadata.value);
+  const errorMessage = partitionColumnsCount > 0 ? constants.inputValues.empty : "Cannot create primary key without any partition keys";
+  return [partitionColumnsCount > 0, errorMessage];
+};
+
+const generateCQLQuery = (): void => {
+  const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
+    if (isConceptualGraphValid) {
+      const commads = generateQueryAsCommands(tableMetadata.value, clusteringColumnOption.value);
+      openTerminal(commads);
+    } else {
+      openNotificationToast(errorMessage, 'error');
+    }
 };
 
 onMounted(() => {
