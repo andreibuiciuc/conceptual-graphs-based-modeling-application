@@ -116,6 +116,7 @@
             :table-metadata="tableMetadata"
             :clause="QueryClause.WHERE" 
             :columns="columnConcepts" 
+            :state="whereClauseItemsState"
             @add="addQueryConcept"
             @remove="removeClause">
           </query-items>
@@ -123,7 +124,8 @@
             v-if="orderByClauseItems.length"
             :clause="QueryClause.ORDER_BY"
             :items="orderByClauseItems"
-            :columns="columnConcepts"
+            :columns="clusteringColumns"
+            :state="orderByClauseItemsState"
             @add="addQueryConcept"
             @remove="removeClause"
           ></query-items>
@@ -147,7 +149,7 @@
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn } from '../types/types';
+import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType } from '../types/types';
 import { manageRequest } from '../includes/requests';
 
 // Component imports
@@ -193,7 +195,7 @@ const { getRelationTypeForColumnConcept,
         getCQLWhereOperatorsByColumnKind,
         getQuerySelectionConceptNames,
         getHeadersForQueryResults,
-        validateWhereQuery } = useMetadata();
+        validateQuery } = useMetadata();
 const { openNotificationToast, copyToClipboard } = useUtils();
 
 // Store state and action mappings
@@ -309,11 +311,26 @@ const areQueryActionsEnabled: ComputedRef<boolean> = computed(() => {
 });
 
 
+// Functions related to the addition of query columns, clauses and data
+const whereClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
+const orderByClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
+
 const columnConcepts = computed(() => {
   return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
-})
+});
 
-// Functions related to the addition of query columns, clauses and data
+const clusteringColumns: ComputedRef<Concept[]> = computed(() => {
+  const currentTable: Concept | undefined = tableMetadata.value.tables.at(0);
+  if (!currentTable) {
+    return [];
+  }
+  const currentColumns: Concept[] | undefined = tableMetadata.value.columns.get(currentTable.conceptName);
+  if (!currentColumns) {
+    return [];
+  }
+  return currentColumns.filter(concept => concept.columnKind === constants.columnKinds.clustering);
+});
+
 const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
   const isColumnAlreadyAdded = checkIfColumnIsAlreadyAdded(columnConcept);
   if (!isColumnAlreadyAdded) {
@@ -333,14 +350,20 @@ const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
 };
 
 const addQueryConcept = async (queryClauseData: any): Promise<void> => {
-  if (queryClauseData.clause === QueryClause.WHERE) {
-    queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
-    queryConcepts.value[QueryClause.WHERE].conceptReferent = getConceptReferentValue(whereClauseItems.value);
-    await nextTick();
-    queryGraph.value.removeArrows();
-    queryGraph.value.drawArrowsForConcepts();
-    queryGraph.value.drawArrowsForQueryConcepts();
+  switch (queryClauseData.clause) {
+    case QueryClause.WHERE:
+      queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
+      queryConcepts.value[QueryClause.WHERE].conceptReferent = getConceptReferentValue(whereClauseItems.value);
+      break;
+    case QueryClause.ORDER_BY:
+      queryConcepts.value[QueryClause.ORDER_BY].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
+      queryConcepts.value[QueryClause.ORDER_BY].conceptReferent = getConceptReferentValue(orderByClauseItems.value);
+      break;
   }
+  await nextTick();
+  queryGraph.value.removeArrows();  
+  queryGraph.value.drawArrowsForConcepts();
+  queryGraph.value.drawArrowsForQueryConcepts();
 };
 
 const addClauseToQuery = (clause: QueryClause | null): void => {
@@ -363,7 +386,11 @@ const addClauseToQuery = (clause: QueryClause | null): void => {
     case QueryClause.GROUP_BY:
       break;
     case QueryClause.ORDER_BY:
-      orderByClauseItems.value.push({ column: constants.inputValues.empty, value: constants.inputValues.empty });
+      orderByClauseItems.value.push({ 
+        column: constants.inputValues.empty, 
+        value: constants.inputValues.empty,
+        isValueValid: true
+      });
       break;
     default:
       break;
@@ -424,9 +451,56 @@ const queryResults: Ref<any[]> = ref([]);
 const queryResultsTableHeaders: Ref<DataTableColumn[]> = ref([]);
 const isQueryResultsModalOpened: Ref<boolean> = ref(false);
 
-const openQueryTerminal = (): void => {
-  cqlQueryCommands.value = queryStore.generateCQLQueryCommands(tableMetadata.value, queryMetadata.value);
-  isQueryTerminalOpened.value = true;
+const adjustInvalidOrderByClause = (): void => {
+  // Adjustment for an invalid order by clause
+  // Case: order by used without restricting all the partition keys
+  
+  const currentTable: Concept | undefined = tableMetadata.value.tables.at(0);
+  if (!currentTable) {
+    return ;
+  }
+  const currentColumns: Concept[] | undefined = tableMetadata.value.columns.get(currentTable.conceptName);
+  if (!currentColumns) {
+    return ;
+  }
+
+  whereClauseItems.value = [];
+  currentColumns.forEach((columnConcept: Concept) => {
+    if (columnConcept.columnKind === 'partition_key') {
+      whereClauseItems.value.push({
+        column: columnConcept.conceptName,
+        relation: '=',
+        value: getDefaultValueForConcept(columnConcept).toString(),
+        chipValues: null,
+        currentChipValue: '',
+        isValueValid: true,
+        operators: getCQLWhereOperatorsByColumnKind(columnConcept.columnKind),
+        type: getColumnInputType(columnConcept, tableMetadata.value)
+      });
+      whereClauseItemsState.value = 'warn';
+    }
+  });
+
+};
+
+const getDefaultValueForConcept = (concept: Concept): boolean | number | string => {
+  const columnType: QueryItemColumnType = getColumnInputType(concept, tableMetadata.value);
+  let defaultValue: boolean | number | string;
+  switch (columnType) {
+    case 'string':
+    case 'null':
+    case 'other':
+      defaultValue = constants.inputValues.empty;
+      break;
+    case 'integer':
+    case 'float':
+      defaultValue = 0;
+      break;
+    case 'boolean':
+      defaultValue = true;
+      break;
+  }
+  return defaultValue;
 };
 
 const fetchQueryResuls = async (): Promise<void> => {
@@ -440,6 +514,11 @@ const fetchQueryResuls = async (): Promise<void> => {
       openNotificationToast(response.data.message, 'error');
     }
   }
+};
+
+const openQueryTerminal = (): void => {
+  cqlQueryCommands.value = queryStore.generateCQLQueryCommands(tableMetadata.value, queryMetadata.value);
+  isQueryTerminalOpened.value = true;
 };
 
 const parseQueryResults = (results: any[]) => {
@@ -461,9 +540,14 @@ const parseQueryResults = (results: any[]) => {
 };
 
 const runQuery = (): void => {
-  const error = validateWhereQuery(tableMetadata.value, whereClauseItems.value);
+  const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value);
   if (error) {
     openNotificationToast(error, 'error');
+    openNotificationToast('query items have been adjusted', 'warn');
+    if (errorCode == 1) {
+      // order by adjustments
+      adjustInvalidOrderByClause();
+    }
   } else {
     fetchQueryResuls();
   }

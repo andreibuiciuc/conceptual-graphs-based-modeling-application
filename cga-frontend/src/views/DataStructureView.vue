@@ -9,20 +9,16 @@
           outlined
           severity="primary"
           label="command"
+          :disabled="!isGraphRendered"
           @click="generateCQLQuery"
         />
         <Button
           outlined
           severity="primary"
           label="save"
+          :disabled="!isGraphRendered"
           @click="saveTableMetadata"
         />
-        <Divider layout="vertical" />
-        <Button
-          outlined
-          severity="primary"
-          label="run">
-        </Button>
       </div>
     </div>
     <div class="design-container">

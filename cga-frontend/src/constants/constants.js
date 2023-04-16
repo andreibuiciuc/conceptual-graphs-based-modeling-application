@@ -87,6 +87,11 @@ export default {
       conceptReferent: "",
       conceptRelation: "filter",
       columns: []
+    },
+    orderBy: {
+      conceptReferent: '',
+      conceptRelation: 'orderby',
+      columns: []
     }
   }
 };

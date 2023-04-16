@@ -64,8 +64,8 @@
                     </div>
                   </li>
                 </ul>
-                <ul v-show="columnIndex === 0 && isQueryGraph && queryConcepts && queryConcepts[QueryClause.WHERE].columns.length">
-                  <li>
+                <ul v-if="columnIndex === 0 && isQueryGraph && queryConcepts">
+                  <li v-if="queryConcepts[QueryClause.WHERE].columns.length">
                     <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_filterConcept`">
                       <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptRelation }}</span>
                     </div>
@@ -74,7 +74,27 @@
                       <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptReferent }}</span>
                     </div>
                   </li>
+                  <li v-if="queryConcepts[QueryClause.ORDER_BY].columns.length">
+                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_orderByConcept`">
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptRelation }}</span>
+                    </div>
+                    <div class="tf-nc" :id="`${graphKey}_orderByReferentConcept`">
+                      <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptReferent }}</span>
+                    </div>
+                  </li>
                 </ul>
+                <!-- <ul v-show="columnIndex === 0 && isQueryGraph && queryConcepts && queryConcepts[QueryClause.ORDER_BY].columns.length">
+                  <li>
+                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_orderByConcept`">
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptRelation }}</span>
+                    </div>
+                    <div class="tf-nc" :id="`${graphKey}_orderByReferentConcept`">
+                      <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
+                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptReferent }}</span>
+                    </div>
+                  </li>
+                </ul> -->
               </li>
             </ul>
           </li>
@@ -165,7 +185,6 @@ const drawArrowsForConcept = async (tableConcept: Concept): Promise<void> => {
 
 const drawArrowsForConcepts = async (): Promise<void> => {
   await nextTick();
-  debugger
   for (let tableIndex in props.graphMetadata?.tables) {
     const currentTableConcept = props.graphMetadata.tables[parseInt(tableIndex, 10)];
     let tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${tableIndex}`);
@@ -194,8 +213,8 @@ const drawArrowsForConcepts = async (): Promise<void> => {
   }
 };
 
-const drawArrowsForQueryConcepts = async (): Promise<void> => {
-  if (props.isQueryGraph && props.queryConcepts && props.queryConcepts[QueryClause.WHERE].columns) {
+const drawArrowsForWhereQueryConcepts = async (): Promise<void> => {
+  if (props.queryConcepts && props.queryConcepts[QueryClause.WHERE].columns) {
     await nextTick();
     const currentTableConceptName = props.graphMetadata.tables[0].conceptName;
 
@@ -210,6 +229,37 @@ const drawArrowsForQueryConcepts = async (): Promise<void> => {
       createArrow(columnConceptElement, filterConceptElement);
       createArrow(filterConceptElement, filterReferentElement);
     }
+  }
+};
+
+const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
+  if (props.queryConcepts && props.queryConcepts[QueryClause.ORDER_BY].columns) {
+    await nextTick();
+    const currentTable: Concept | undefined = props.graphMetadata.tables.at(0);
+    if (!currentTable) {
+      return ;
+    }
+
+    for (let columnIndex in props.queryConcepts[QueryClause.ORDER_BY].columns) {
+      const columnConcept: Concept | undefined = props.queryConcepts[QueryClause.ORDER_BY].columns[parseInt(columnIndex)];
+      const index = props.graphMetadata.columns.get(currentTable.conceptName)?.findIndex(concept => concept.conceptName === columnConcept?.conceptName);
+      if (columnConcept && index && index > -1) {
+        
+        const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${currentTable.conceptName}_columnConcept_${index}`);
+        const orderByConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_orderByConcept`);
+        const orderByReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_orderByReferentConcept`);
+
+        createArrow(columnConceptElement, orderByConceptElement);
+        createArrow(orderByConceptElement, orderByReferentElement);
+      }
+    }
+  }
+};
+
+const drawArrowsForQueryConcepts = async (): Promise<void> => {
+  if (props.isQueryGraph) {
+    drawArrowsForWhereQueryConcepts();
+    drawArrowsForOrderByQueryConcepts();
   }
 };
 

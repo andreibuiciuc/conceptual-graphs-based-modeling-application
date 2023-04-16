@@ -124,12 +124,40 @@ export function useMetadata() {
       }, initialCount);
     };
 
-    // Functions for validating Cassandra query clauses
-    const validateWhereQuery = (tableMetadata: GraphMetadata, whereQueryItems: QueryItem[]): string => {
+    const getColumnKindForQueryItem = (tableMetadata: GraphMetadata, queryItem: QueryItem): string | undefined => {
+      const currentTable: Concept | undefined = tableMetadata.tables.at(0);
+      if (!currentTable) {
+        return constants.inputValues.empty;
+      }
+
+      const currentColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
+      if (!currentColumns) {
+        return constants.inputValues.empty;
+      }
+
+      const columnForItem: Concept | undefined = currentColumns.find((columnConcept: Concept) => columnConcept.conceptName === queryItem.column);
+      if (!columnForItem) {
+        return constants.inputValues.empty;
+      }
+
+      return columnForItem.columnKind;
+
+    };
+
+    const getQueryItemsByColumnKind = (tableMetadata: GraphMetadata, queryItems: QueryItem[], columnKind: string): QueryItem[] => {
+      return queryItems.filter((item: QueryItem) => {
+        const columnKindForItem = getColumnKindForQueryItem(tableMetadata, item);
+        return columnKindForItem === columnKind;
+      });
+    };
+
+    // Functions for validating Cassandra 'where' query clauses
+    const validateWhereClause = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[]): string => {
+
       let [status, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
-      
+
       [status, errorMessage] = checkUnrestrictedColumns('partition_key', tableMetadata, whereQueryItems);
-      if (status) {
+      if (!status) {
         return errorMessage;
       }
 
@@ -138,36 +166,148 @@ export function useMetadata() {
         return errorMessage;
       }
 
+      const restrictedPartitionColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, 'partition_key');
+      const restrictedClusteringColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, constants.columnKinds.clustering);
+      const restrictedRegularColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, constants.columnKinds.regular);
+
+      if (restrictedClusteringColumns.length || restrictedRegularColumns.length) {
+        [status, errorMessage] = checkIfAllPartitionColumnsAreRestricted(queryMetadata, restrictedPartitionColumns);
+        if (!status) {
+          return errorMessage;
+        }
+      }
+
       return constants.inputValues.empty;
+    };
+
+    const checkIfSelectAllAndNoFiltering = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[]): boolean => {
+
+      // 
+      // Check to see if all columns are selected in the query and are not filtered
+
+      const currentTable: Concept | undefined = queryMetadata.tables.at(0);
+      if (!currentTable) {
+        return false;
+      }
+
+      const currentTableColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
+      const currentQueryColumns: Concept[] | undefined = queryMetadata.columns.get(currentTable.conceptName);
+
+      if (!currentTableColumns || !currentQueryColumns) {
+        return false;
+      }
+
+      const areAllColumnsSelected = currentTableColumns.length === currentQueryColumns.length && whereQueryItems.length === 0;
+      
+      return areAllColumnsSelected;
+
     };
 
     const checkUnrestrictedColumns = (columnKind: string, tableMetadata: GraphMetadata, whereQueryItems: QueryItem[]): [boolean, string] => {
 
       // Unrestricted columns
       // Check to see if all partition / clustering columns are selected in the query items
+      // If the where clause restricts one partition / clustering column, then it should restrict all of them
 
       const currentTable: Concept | undefined = tableMetadata.tables.at(0);
       if (!currentTable) {
-        return [false, 'no table provided for querying data.'];
+        return [false, 'no table provided for querying data'];
       }
       
       const currentColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
       if (!currentColumns || !currentColumns.length) {
-        return [false, 'no column provided for querying data.'];
+        return [false, 'no columns provided for querying data'];
       }
 
-      for (let index = 0; index < currentColumns.length; index ++) {
-        const column = currentColumns[index];
-        if (column.columnKind === columnKind) {
-          const indexFromQuery = whereQueryItems.findIndex(x => x.column === column.conceptName);
-          if (indexFromQuery < 0) {
-            return [false, 'cassandra require to restrict all partition key columns. The query will be rejected when run'];
+      // Check to see if there is any partition / clustering column restricted in the where clause items.
+      const areAnyPartitionOrClusteringColumnsRestricted = whereQueryItems.some((item: QueryItem) => {
+        const columnKindForItem = getColumnKindForQueryItem(tableMetadata, item);
+        if (columnKindForItem === columnKind) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+
+      // If there is one partition / clustering column restricted in the where clause items, then all such column should be restricted
+      if (areAnyPartitionOrClusteringColumnsRestricted) {
+        for (let index = 0; index < currentColumns.length; index ++) {
+  
+          const column = currentColumns[index];
+          if (column.columnKind === columnKind) {
+            const indexFromQuery = whereQueryItems.findIndex(x => x.column === column.conceptName);
+            if (indexFromQuery < 0) {
+              return [false, 'cassandra require to restrict all partition key columns. the query will be rejected'];
+            }
           }
         }
       }
 
       return [true, constants.inputValues.empty];
-    }
+    };
+
+    const checkIfAllPartitionColumnsAreRestricted = (queryMetadata: GraphMetadata, restrictedPartitionColumns: QueryItem[]): [boolean, string] => {
+
+      const currentTable: Concept | undefined = queryMetadata.tables.at(0);
+      if (!currentTable) {
+        return [false, 'no table selected for query'];
+      }
+
+      const currentColumns: Concept[] | undefined = queryMetadata.columns.get(currentTable.conceptName);
+      if (!currentColumns) {
+        return [false, 'no columns selected for query'];
+      }
+
+      const partitionColumnsCount = currentColumns.reduce((accumulator: number, currentConcept: Concept) => {
+        if (currentConcept.columnKind === 'partition_key') {
+          return accumulator + 1;
+        } else {
+          return accumulator;
+        }
+      }, 0);
+
+      if (partitionColumnsCount === restrictedPartitionColumns.length) {
+        return [true, constants.inputValues.empty];
+      } else {
+        return [false, 'all partition columns must be restricted in order to proceed'];
+      }
+
+    };
+
+    // Functions for validating Cassandra 'order by' query clauses
+    const validateOrderByClause = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[]): string => {
+      
+      const restrictedPartitionColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, 'partition_key');
+      const [status, errorMessage] = checkIfAllPartitionColumnsAreRestricted(queryMetadata, restrictedPartitionColumns);
+
+      if (!status) {
+        return errorMessage;
+      }
+
+      return constants.inputValues.empty;
+    };
+
+
+    // Wrapper functions for validating Cassandra queries
+    const validateQuery = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[]): [string, number] => {
+
+      const areAllColumnsSelectedAndNotRestricted = checkIfSelectAllAndNoFiltering(tableMetadata, queryMetadata, whereQueryItems);
+      if (areAllColumnsSelectedAndNotRestricted) {
+        return [constants.inputValues.empty, 0];
+      }
+
+      const whereClauseErrorMessage = validateWhereClause(tableMetadata, queryMetadata, whereQueryItems);
+      if (whereClauseErrorMessage) {
+        return [whereClauseErrorMessage, 0];
+      }
+
+      const orderByClauseErrorMessage = validateOrderByClause(tableMetadata, queryMetadata, whereQueryItems, orderByQueryItems);
+      if (orderByClauseErrorMessage) {
+        return [orderByClauseErrorMessage, 1];
+      }
+
+      return [constants.inputValues.empty, 0];
+    };
 
     return {
       getConceptReferentValue,
@@ -177,6 +317,6 @@ export function useMetadata() {
       getQuerySelectionConceptNames,
       getHeadersForQueryResults,
       getPartitionAndClusteringColumnsCount,
-      validateWhereQuery
+      validateQuery
     };
 };

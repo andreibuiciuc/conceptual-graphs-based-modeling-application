@@ -16,6 +16,7 @@
                 :class="{ 'p-invalid': !isTableConceptValid }"
                 :disabled="!currentKeyspace"
                 :readonly="isGraphRendered"
+                @change="changeTableConcept"
               />
           </div>
           <div class="design-toolbox-action-group">
@@ -110,10 +111,9 @@ import { useUtils } from "../../composables/utils";
 
 import { manageRequest } from '../../includes/requests';
 import { conceptualGraphsCollection } from "../../includes/firebase";
-import { ComputedRef, Ref, ref, watch } from 'vue';
+import { ComputedRef, Ref, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { computed } from '@vue/reactivity';
-import { nextTick } from 'process';
 
 
 // Props and emits definitions
@@ -154,7 +154,11 @@ const tableMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
 const isGraphRendered: Ref<boolean> = ref(false);
 
 
-// Functions related to the initial configurations
+// Functions related to the toolbox form
+const changeTableConcept = (): void => {
+  isTableConceptValid.value = true;
+};
+
 const resetColumnConceptGroup = (): void => {
   currentColumnConcept.value = { ... constants.defaultConcept, conceptType: constants.conceptTypes.column, columnKind: constants.columnKinds.regular };
   currentDataTypeConcept.value = { ... constants.defaultConcept, conceptType: constants.conceptTypes.dataType, relation: constants.relationTypes.hasType };

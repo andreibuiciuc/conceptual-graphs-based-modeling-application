@@ -1,5 +1,5 @@
 <template>
-    <Card class="query-panel shadow-2">
+    <Card class="query-panel shadow-2" :class="{ 'query-panel-warn': state === 'warn' }">
         <template #title>
             <div class="query-panel-title">
                 <span>{{ queryPanelTitle }}</span>
@@ -82,8 +82,14 @@
                                 placeholder="value"
                                 :class="{ 'p-invalid': !item.isValueValid }"
                                 :disabled="item.toQuery"
-                                @change="changeValue(item)" />
-                            <small class="p-error" v-if="item.valueErrorMessage">{{ item.valueErrorMessage }}</small>
+                                @change="changeValue(item)" 
+                            />
+                            <small 
+                                v-if="item.valueErrorMessage"
+                                class="p-error"
+                            >
+                                {{ item.valueErrorMessage }}
+                            </small>
                         </div>
                     </template>
                 </template>
@@ -127,14 +133,15 @@ import { storeToRefs } from 'pinia';
 interface Props {
     clause: QueryClause
     columns?: Concept[],
-    tableMetadata?: GraphMetadata
+    tableMetadata?: GraphMetadata,
+    state: string
 };
 
 const orderByOptions = [ "ASCENDING", "DESCENDING" ];
 
 const informationMessages = {
     [QueryClause.WHERE]: "due to the differences in the role that they are playing, partition key, clustering and normal columns support different sets of restrictions within this clause",
-    [QueryClause.ORDER_BY]: "TODO",
+    [QueryClause.ORDER_BY]: "the partition key must be defined in the WHERE clause and the ORDER BY clause defines the clustering column to use for ordering.",
     [QueryClause.GROUP_BY]: "TODO"
 };
 
@@ -174,7 +181,6 @@ const items = computed((): QueryItem[] => {
 // Functions related to the item actions
 const addToQuery = (clause: QueryClause, item: QueryItem): void => {
     const isQueryItemValid = validateItem(clause, item);
-    debugger
     if (isQueryItemValid) {
         if (!item.toQuery) {
             item.toQuery = true;
@@ -187,7 +193,7 @@ const changeColumn = (clause: QueryClause, item: QueryItem): void => {
     const currentColumn = props.columns?.find(x => x.conceptName === item.column);
     if (currentColumn) {
         item.operators = getCQLWhereOperatorsByColumnKind(currentColumn.columnKind);
-        item.tooltip = tooltips[clause][currentColumn.columnKind];
+        item.tooltip = props.clause === QueryClause.WHERE ? tooltips[clause][currentColumn.columnKind] : constants.inputValues.empty;
         item.type = getColumnInputType(currentColumn, props.tableMetadata);
     } else {
         item.operators = [];
@@ -265,6 +271,9 @@ const queryPanelTitle: ComputedRef<string> = computed(() => {
     padding: 16px
     width: 100%
     margin-bottom: 24px
+
+    &.query-panel-warn
+        border-left-color: variables.$cassandra-yellow
 
     .query-panel-title
         color: variables.$cassandra-black
