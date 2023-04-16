@@ -106,6 +106,7 @@ export function useQuery() {
             if (partitionColumnsCount == 1) {
                 partitionColumnsSnippet = partitionColumnsSnippet.slice(1, partitionColumnsSnippet.length - 1);
             }
+
         } 
 
         if (clusteringColumnCount) {
@@ -114,10 +115,15 @@ export function useQuery() {
             if (clusteringColumnCount == 1) {
                 clusteringColumnsSnippet = clusteringColumnsSnippet.slice(1, clusteringColumnsSnippet.length - 1);
             }
-        }
 
-        tableKeysDefinitionLine = tableKeysDefinitionLine.concat(partitionColumnsSnippet).concat(', ').concat(clusteringColumnsSnippet).concat(')');
+            tableKeysDefinitionLine = tableKeysDefinitionLine.concat(partitionColumnsSnippet).concat(', ').concat(clusteringColumnsSnippet).concat(')');
+
+        } else {
+            partitionColumnsSnippet = partitionColumnsSnippet.slice(1, partitionColumnsSnippet.length - 1);
+            tableKeysDefinitionLine = tableKeysDefinitionLine.concat(partitionColumnsSnippet).concat(')');
+        }   
         
+
         addCQLCommandLine(commands, tableKeysDefinitionLine);
     };
 
@@ -141,10 +147,11 @@ export function useQuery() {
     };
 
     const computeClusteringOptionDefintionLines = (clusteringOption: ClusteringOption, commands: Command[]) => {
-        addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(')'));
-        const clusteringOptionLine = `WITH CLUSTERING ORDER BY (${clusteringOption.clusteringColumn} ${clusteringOption.clusteringOrder})`;
-        addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(clusteringOptionLine));
-
+        if (clusteringOption.clusteringColumn && clusteringOption.clusteringOrder) {
+            addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(')'));
+            const clusteringOptionLine = `WITH CLUSTERING ORDER BY (${clusteringOption.clusteringColumn} ${clusteringOption.clusteringOrder})`;
+            addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(clusteringOptionLine));
+        }
     };
 
     const computeCQLEndingLine = (commands: Command[]) => {

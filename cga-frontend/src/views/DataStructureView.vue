@@ -123,8 +123,6 @@ const renderConceptualGraph = async (metadata: GraphMetadata, clusteringOption: 
   if (!metadata && !clusteringOption) {
     tableMetadata.value = { ... defaultGraphMetadata };
     clusteringColumnOption.value = { ... defaultClusteringOption };
-    await nextTick();
-    tableGraph.value.removeArrows();
     isGraphRendered.value = false;
   } else {
     isGraphRendered.value = true;

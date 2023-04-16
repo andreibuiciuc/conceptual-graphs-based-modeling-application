@@ -131,4 +131,5 @@ export const useQueryStore  = defineStore('query', () => {
         generateCQLQuery,
         generateCQLQueryCommands
     };
+    
 });
