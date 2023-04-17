@@ -7,11 +7,13 @@ export const useQueryStore  = defineStore('query', () => {
     const whereClauseItems: Ref<QueryItem[]> = ref([]);
     const orderByClauseItems: Ref<QueryItem[]> = ref([]);
     const groupByClauseItems: Ref<QueryItem[]> = ref([]);
+    const aggregateFunctionsItems: Ref<QueryItem[]> = ref([]);
 
     return {
         whereClauseItems,
         orderByClauseItems,
         groupByClauseItems,
+        aggregateFunctionsItems
     };
     
 });

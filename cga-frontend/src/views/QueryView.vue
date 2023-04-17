@@ -74,7 +74,7 @@
           <Dropdown v-model="selectedClauseType"
             placeholder="add to query" 
             :disabled="!areQueryActionsEnabled"
-            :options="[QueryClause.WHERE, QueryClause.GROUP_BY, QueryClause.ORDER_BY]"
+            :options="[QueryClause.WHERE, QueryClause.GROUP_BY, QueryClause.ORDER_BY, QueryClause.GET]"
             @change="addClauseToQuery(selectedClauseType)"
           />
           <ConfirmPopup group="clear">
@@ -126,9 +126,28 @@
             <query-items
               v-if="orderByClauseItems.length"
               :clause="QueryClause.ORDER_BY"
-              :items="orderByClauseItems"
               :columns="clusteringColumns"
               :state="orderByClauseItemsState"
+              @add="addQueryConcept"
+              @remove="removeClause"
+            />
+          </Transition>
+          <Transition name="pop-in" mode="out-in">
+            <query-items
+              v-if="groupByClauseItems.length"
+              :clause="QueryClause.GROUP_BY"
+              :columns="columnConcepts"
+              :state="groupByClauseItemsState"
+              @add="addQueryConcept"
+              @remove="removeClause"
+            />
+          </Transition>
+          <Transition name="pop-in" mode="out-in">
+            <query-items
+              v-if="aggregateFunctionsItems.length"
+              :clause="QueryClause.GET"
+              :columns="columnConcepts"
+              :state="aggregateFunctionsItemsState"
               @add="addQueryConcept"
               @remove="removeClause"
             />
@@ -153,7 +172,7 @@
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType } from '../types/types';
+import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType, QueryItem } from '../types/types';
 import { manageRequest } from '../includes/requests';
 
 // Component imports
@@ -200,7 +219,9 @@ const { getRelationTypeForColumnConcept,
         getCQLWhereOperatorsByColumnKind,
         getQuerySelectionConceptNames,
         getHeadersForQueryResults,
-        validateQuery } = useMetadata();
+        validateQuery 
+      } = useMetadata();
+
 const { openNotificationToast, copyToClipboard } = useUtils();
 const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
 
@@ -208,7 +229,7 @@ const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
 const connectionStore = useConnectionStore();
 const queryStore = useQueryStore();
 const { currentKeyspace } = storeToRefs(connectionStore); 
-const { whereClauseItems, orderByClauseItems, groupByClauseItems } = storeToRefs(queryStore);
+const { whereClauseItems, orderByClauseItems, groupByClauseItems, aggregateFunctionsItems } = storeToRefs(queryStore);
 
 // Retrieve and parsing of the metadata
 const availableTables: Ref<string[]> = ref([]);
@@ -320,6 +341,8 @@ const areQueryActionsEnabled: ComputedRef<boolean> = computed(() => {
 // Functions related to the addition of query columns, clauses and data
 const whereClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
 const orderByClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
+const groupByClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
+const aggregateFunctionsItemsState: Ref<string> = ref(constants.inputValues.empty);
 
 const columnConcepts = computed(() => {
   return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
@@ -390,10 +413,22 @@ const addClauseToQuery = (clause: QueryClause | null): void => {
       });
       break;
     case QueryClause.GROUP_BY:
+      groupByClauseItems.value.push({
+        column: constants.inputValues.empty,
+        value: constants.inputValues.empty,
+        isValueValid: true
+      });
       break;
     case QueryClause.ORDER_BY:
       orderByClauseItems.value.push({ 
         column: constants.inputValues.empty, 
+        value: constants.inputValues.empty,
+        isValueValid: true
+      });
+      break;
+    case QueryClause.GET:
+      aggregateFunctionsItems.value.push({
+        column: constants.inputValues.empty,
         value: constants.inputValues.empty,
         isValueValid: true
       });
@@ -425,14 +460,29 @@ const clearQueryMetadata = () => {
   queryGraph.value.drawArrowsForConcepts();
 };
 
+const getItemsByClauseType = (clause: QueryClause): QueryItem[] => {
+  switch (clause) {
+    case QueryClause.WHERE:
+      return whereClauseItems.value;
+    case QueryClause.ORDER_BY:
+      return orderByClauseItems.value;
+    case QueryClause.GROUP_BY:
+      return groupByClauseItems.value;
+    case QueryClause.GET:
+      return aggregateFunctionsItems.value;
+    default:
+      return [];
+  }
+};
+
 const removeClause = (clauseObject: any): void => {
-  const clauseArrayReference = clauseObject.clause === QueryClause.WHERE ? whereClauseItems : orderByClauseItems;
+  const clauseItems = getItemsByClauseType(clauseObject.clause)
   
-  const index = clauseArrayReference.value.findIndex(x => x.column === clauseObject.item.column);
-  const clause = clauseArrayReference.value.find(x => x.column === clauseObject.item.column);
+  const index = clauseItems.findIndex(x => x.column === clauseObject.item.column);
+  const clause = clauseItems.find(x => x.column === clauseObject.item.column);
   if (index > -1 && clause) {
-    clauseArrayReference.value.splice(index, 1);
-    if (clauseArrayReference.value.length === 0) {
+    clauseItems.splice(index, 1);
+    if (clauseItems.length === 0) {
       delete queryConcepts.value[clause.column];
     }
   }
@@ -677,5 +727,15 @@ if (currentKeyspace.value) {
         position: relative
         margin: 10px 0
         width: 100%
+
+.pop-in-enter-active 
+  transition: all 0.3s ease-out
+
+.pop-in-leave-active
+  transition: all 0.3s ease-out
+
+.pop-in-enter-from, .pop-in-leave-to
+  transform: translateX(3rem)
+  opacity: 0
 
 </style>

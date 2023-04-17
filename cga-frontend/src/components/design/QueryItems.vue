@@ -35,6 +35,9 @@
                 <span v-else-if="clause === QueryClause.GROUP_BY">
                     group by
                 </span>
+                <span v-else-if="clause === QueryClause.GET">
+                    aggregate
+                </span>
 
                 <Dropdown 
                     v-model="item.column" 
@@ -94,10 +97,19 @@
                     </template>
                 </template>
 
-                <Dropdown v-else-if="clause === QueryClause.ORDER_BY"
+                <Dropdown 
+                    v-else-if="clause === QueryClause.ORDER_BY "
                     v-model="item.valueSelect"
-                    :options="orderByOptions">
-                </Dropdown>
+                    :options="orderByOptions"
+                />
+
+                <template v-else-if="clause===QueryClause.GET">
+                    <span>using</span>
+                    <Dropdown 
+                        v-model="item.valueSelect"
+                        :options="aggregateFunctionsOptions"
+                    />
+                </template>
                 
                 <Button 
                     aria-label="Add"
@@ -138,11 +150,13 @@ interface Props {
 };
 
 const orderByOptions = [ "asc", "desc" ];
+const aggregateFunctionsOptions = [ 'max', 'min', 'sum', 'avg', 'count' ];
 
 const informationMessages = {
     [QueryClause.WHERE]: "due to the differences in the role that they are playing, partition key, clustering and normal columns support different sets of restrictions within this clause",
     [QueryClause.ORDER_BY]: "the partition key must be defined in the where clause and the order by clause defines the clustering column to use for ordering.",
-    [QueryClause.GROUP_BY]: "TODO"
+    [QueryClause.GROUP_BY]: "TODO",
+    [QueryClause.GET]: "aggregate functions work on a set of rows matching a select statement to return a single value"
 };
 
 const tooltips = {
@@ -173,6 +187,9 @@ const items = computed((): QueryItem[] => {
         case QueryClause.GROUP_BY:
             const { groupByClauseItems } = storeToRefs(queryStore);
             return groupByClauseItems.value; 
+        case QueryClause.GET:
+            const { aggregateFunctionsItems } = storeToRefs(queryStore);
+            return aggregateFunctionsItems.value;
         default:
             return [];
     }
@@ -251,6 +268,8 @@ const queryPanelTitle: ComputedRef<string> = computed(() => {
             return 'group by';
         case QueryClause.ORDER_BY:
             return 'order by';
+        case QueryClause.GET:
+            return 'aggregate';
         default:
             return constants.inputValues.empty;
     }

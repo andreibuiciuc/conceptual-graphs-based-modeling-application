@@ -39,6 +39,8 @@ enum QueryClause {
     WHERE = 'where',
     ORDER_BY = 'orderBy',
     GROUP_BY = 'groupBy',
+    OUT = 'out',
+    GET = 'get'
 };
 
 enum ClusteringOrder {

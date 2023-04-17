@@ -64,37 +64,36 @@
                     </div>
                   </li>
                 </ul>
-                <ul v-if="columnIndex === 0 && isQueryGraph && queryConcepts">
+                <ul v-if="columnIndex === 0 && isQueryGraph && queryConcepts" class="query-concepts">
                   <li v-if="queryConcepts[QueryClause.WHERE].columns.length">
                     <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_filterConcept`">
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptRelation }}</span>
+                      <span class="concept-name">{{ queryConcepts[QueryClause.WHERE].conceptRelation }}</span>
                     </div>
                     <div class="tf-nc" :id="`${graphKey}_filterReferentConcept`">
                       <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.WHERE].conceptReferent }}</span>
+                      <span class="concept-name">{{ queryConcepts[QueryClause.WHERE].conceptReferent }}</span>
                     </div>
                   </li>
                   <li v-if="queryConcepts[QueryClause.ORDER_BY].columns.length">
                     <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_orderByConcept`">
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptRelation }}</span>
+                      <span class="concept-name">{{ queryConcepts[QueryClause.ORDER_BY].conceptRelation }}</span>
                     </div>
                     <div class="tf-nc" :id="`${graphKey}_orderByReferentConcept`">
-                      <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptReferent }}</span>
+                      <span class="concept-name">{{ queryConcepts[QueryClause.ORDER_BY].conceptReferent }}</span>
                     </div>
                   </li>
-                </ul>
-                <!-- <ul v-show="columnIndex === 0 && isQueryGraph && queryConcepts && queryConcepts[QueryClause.ORDER_BY].columns.length">
                   <li>
-                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_orderByConcept`">
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptRelation }}</span>
-                    </div>
-                    <div class="tf-nc" :id="`${graphKey}_orderByReferentConcept`">
-                      <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
-                      <span class="concept-name" v-if="queryConcepts">{{ queryConcepts[QueryClause.ORDER_BY].conceptReferent }}</span>
-                    </div>
+
                   </li>
-                </ul> -->
+                  <!-- <li v-if="isOutConceptVisible">
+                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_outConcept`">
+                      <span class="concept-name" >{{ queryConcepts[QueryClause.OUT].conceptRelation }}</span>
+                    </div>
+                    <div class="tf-nc" :id="`${graphKey}_outReferentConcept`">
+                      <span class="concept-name">{{ queryConcepts[QueryClause.OUT].conceptReferent }}</span>
+                    </div>
+                  </li> -->
+                </ul>
               </li>
             </ul>
           </li>
@@ -105,11 +104,12 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, nextTick, onUnmounted, ref } from 'vue';
+import { ComputedRef, Ref, nextTick, onUnmounted, ref } from 'vue';
 import constants from '../../../constants/constants';
 import { QueryClause, Concept, ConfigurableConcept, GraphMetadata } from "../../../types/types";
 
 import arrowCreate from 'arrows-svg';
+import { computed } from '@vue/reactivity';
 
 interface Props {
   graphMetadata: GraphMetadata
@@ -257,10 +257,39 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
   }
 };
 
+const drawArrowsForOutConcept = async (): Promise<void> => {
+  if (isOutConceptVisible.value) {
+    await nextTick();
+    const currentTable: Concept | undefined = props.graphMetadata.tables.at(0);
+    if (!currentTable) {
+      return ;
+    }
+
+    const currentColumns: Concept[] | undefined = props.graphMetadata.columns.get(currentTable.conceptName);
+    if (!currentColumns) {
+      return ;
+    }
+
+    for (let columnIndex in currentColumns) {
+      const columnConcept: Concept | undefined = currentColumns[parseInt(columnIndex)];
+      if (columnConcept) {
+        
+        const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${currentTable.conceptName}_columnConcept_${columnIndex}`);
+        const outConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_outConcept`);
+        const outReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_outReferentConcept`);
+
+        createArrow(columnConceptElement, outConceptElement);
+        createArrow(outConceptElement, outReferentElement);
+      }
+    }
+  }
+};
+
 const drawArrowsForQueryConcepts = async (): Promise<void> => {
   if (props.isQueryGraph) {
     drawArrowsForWhereQueryConcepts();
     drawArrowsForOrderByQueryConcepts();
+    drawArrowsForOutConcept();
   }
 };
 
@@ -317,6 +346,11 @@ const hideOrShowArrowsForConcept = (concept: ConfigurableConcept): void => {
 const selectColumn = (columnConcept: Concept) => {
   emit("select", columnConcept);
 };
+
+const isOutConceptVisible: ComputedRef<boolean> = computed(() => {
+  return props.queryConcepts && (props.queryConcepts[QueryClause.WHERE].columns.length ||
+    props.queryConcepts[QueryClause.ORDER_BY].columns.length);
+});
 
 onUnmounted(() => {
   removeArrows();
@@ -419,5 +453,8 @@ li.column-concept-hoverable:hover .tf-nc
 .column-concept--selectable:hover
   border-radius: 10px
   cursor: pointer
+
+.query-concepts
+  margin-top: 2rem !important
 
 </style>

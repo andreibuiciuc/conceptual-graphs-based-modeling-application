@@ -84,14 +84,24 @@ export default {
   },
   defaultQueryConcepts: {
     where: {
-      conceptReferent: "",
-      conceptRelation: "filter",
+      conceptReferent: '',
+      conceptRelation: 'filter',
       columns: []
     },
     orderBy: {
       conceptReferent: '',
       conceptRelation: 'orderby',
       columns: []
+    },
+    groupBy: {
+      conceptReferent: '',
+      conceptRelation: 'groupby',
+      column: []
+    },
+    out: {
+      conceptReferent: 'out',
+      conceptRelation: 'return',
+      column: []
     }
   }
 };
