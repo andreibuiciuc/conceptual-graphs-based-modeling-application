@@ -137,17 +137,17 @@ interface Props {
     state: string
 };
 
-const orderByOptions = [ "ASCENDING", "DESCENDING" ];
+const orderByOptions = [ "asc", "desc" ];
 
 const informationMessages = {
     [QueryClause.WHERE]: "due to the differences in the role that they are playing, partition key, clustering and normal columns support different sets of restrictions within this clause",
-    [QueryClause.ORDER_BY]: "the partition key must be defined in the WHERE clause and the ORDER BY clause defines the clustering column to use for ordering.",
+    [QueryClause.ORDER_BY]: "the partition key must be defined in the where clause and the order by clause defines the clustering column to use for ordering.",
     [QueryClause.GROUP_BY]: "TODO"
 };
 
 const tooltips = {
     [QueryClause.WHERE]: {
-        partition_key: "the partition key columns support only two operators: = and IN (and the negation: != and NOT IN)",
+        partition_key: "the partition key columns support only two operators: = and IN",
         clustering: "TODO: clustering column tooltip",
         regular: "TODO: regular column tooltip"
     },

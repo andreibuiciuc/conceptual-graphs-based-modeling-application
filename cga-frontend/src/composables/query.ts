@@ -244,13 +244,32 @@ export function useQuery() {
         });
 
         if (lineContent) {
-            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat('WHERE ').concat(lineContent);
             lineContent = lineContent.slice(0, lineContent.length - 5);
-
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(' WHERE ').concat(lineContent);
             addCQLCommandLine(commands, lineContent);
         }
     };
 
+
+    /**
+     * Computes the ORDER BY clause line of the SELECT CQL statement and adds it to the commands array
+     * @param commands result array of commands
+     */
+    const computeOrderByClauseLine = (commands: Command[]): void => {
+        let lineContent: string = constants.inputValues.empty;
+
+        queryStore.orderByClauseItems.forEach((item: QueryItem) => {
+            if (item.toQuery) {
+                lineContent = lineContent.concat(`${item.column} ${item.valueSelect?.toUpperCase()} AND `);
+            }
+        });
+
+        if (lineContent) {
+            lineContent = lineContent.slice(0, lineContent.length - 5);
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(' ORDER BY ').concat(lineContent);
+            addCQLCommandLine(commands, lineContent);
+        }
+    };
 
     /**
      * Helper function that computes the column value of a WHERE clause query item as a string
@@ -304,6 +323,7 @@ export function useQuery() {
 
         computeSelectStartingLine(tableMetadata, queryMetadata, commands);
         computeWhereClauseLine(commands);
+        computeOrderByClauseLine(commands);
 
         return commands;
     };
