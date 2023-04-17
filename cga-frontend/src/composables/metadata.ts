@@ -4,7 +4,6 @@ import { GraphMetadata, QueryItem } from "../types/types";
 
 export function useMetadata() {
 
-    // Functions for computing metadata properties
     const getRelationTypeForColumnConcept = (columnKind: string, clusteringOrder: string = constants.inputValues.empty): string  =>  {
       switch (columnKind) {
           // TODOL Check the constants and refactor
@@ -151,58 +150,36 @@ export function useMetadata() {
       });
     };
 
-    // Functions for validating Cassandra 'where' query clauses
-    const validateWhereClause = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[]): string => {
 
-      let [status, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
-
-      [status, errorMessage] = checkUnrestrictedColumns('partition_key', tableMetadata, whereQueryItems);
-      if (!status) {
-        return errorMessage;
-      }
-
-      [status, errorMessage] = checkUnrestrictedColumns(constants.columnKinds.clustering, tableMetadata, whereQueryItems);
-      if (!status) {
-        return errorMessage;
-      }
-
-      const restrictedPartitionColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, 'partition_key');
-      const restrictedClusteringColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, constants.columnKinds.clustering);
-      const restrictedRegularColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, constants.columnKinds.regular);
-
-      if (restrictedClusteringColumns.length || restrictedRegularColumns.length) {
-        [status, errorMessage] = checkIfAllPartitionColumnsAreRestricted(queryMetadata, restrictedPartitionColumns);
-        if (!status) {
-          return errorMessage;
-        }
-      }
-
-      return constants.inputValues.empty;
-    };
-
-    const checkIfSelectAllAndNoFiltering = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[]): boolean => {
-
-      // 
-      // Check to see if all columns are selected in the query and are not filtered
-
+    /**
+     * Checks if column concepts were selected for querying and there are no columns restricted in the WHERE clause
+     * @param queryMetadata metadata of the query conceptual graph
+     * @param whereQueryItems items of the where clause
+     * @returns true, if columns were selected for querying and there are no columns restricted in the where clause, false otherwise
+     */
+    const checkIfColumnsAreSelectedAndNotRestricted = (queryMetadata: GraphMetadata, whereQueryItems: QueryItem[]): boolean => {
       const currentTable: Concept | undefined = queryMetadata.tables.at(0);
       if (!currentTable) {
         return false;
       }
 
-      const currentTableColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
       const currentQueryColumns: Concept[] | undefined = queryMetadata.columns.get(currentTable.conceptName);
-
-      if (!currentTableColumns || !currentQueryColumns) {
+      if (!currentQueryColumns) {
         return false;
       }
 
-      const areAllColumnsSelected = currentTableColumns.length === currentQueryColumns.length && whereQueryItems.length === 0;
-      
-      return areAllColumnsSelected;
-
+      return currentQueryColumns.length > 0 && whereQueryItems.length === 0;
     };
 
+
+    /**
+     * Checks if all columns of a given column king are restricted in the WHERE, only if there is at least one column of that kind 
+     * that is already restricted in the where clause. 
+     * @param columnKind a given column kind
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param whereQueryItems items if the where clause
+     * @returns tuple consisting of the status and the error message
+     */
     const checkUnrestrictedColumns = (columnKind: string, tableMetadata: GraphMetadata, whereQueryItems: QueryItem[]): [boolean, string] => {
 
       // Unrestricted columns
@@ -219,7 +196,6 @@ export function useMetadata() {
         return [false, 'no columns provided for querying data'];
       }
 
-      // Check to see if there is any partition / clustering column restricted in the where clause items.
       const areAnyPartitionOrClusteringColumnsRestricted = whereQueryItems.some((item: QueryItem) => {
         const columnKindForItem = getColumnKindForQueryItem(tableMetadata, item);
         if (columnKindForItem === columnKind) {
@@ -229,10 +205,8 @@ export function useMetadata() {
         }
       });
 
-      // If there is one partition / clustering column restricted in the where clause items, then all such column should be restricted
       if (areAnyPartitionOrClusteringColumnsRestricted) {
         for (let index = 0; index < currentColumns.length; index ++) {
-  
           const column = currentColumns[index];
           if (column.columnKind === columnKind) {
             const indexFromQuery = whereQueryItems.findIndex(x => x.column === column.conceptName);
@@ -246,6 +220,13 @@ export function useMetadata() {
       return [true, constants.inputValues.empty];
     };
 
+
+    /**
+     * Checks if all partition key columns are restricted in the WHERE clause
+     * @param queryMetadata metadata of the query conceptual graph
+     * @param restrictedPartitionColumns partition key columns currently restricted in the where clause
+     * @returns tuple consisting of the status and the error message
+     */
     const checkIfAllPartitionColumnsAreRestricted = (queryMetadata: GraphMetadata, restrictedPartitionColumns: QueryItem[]): [boolean, string] => {
 
       const currentTable: Concept | undefined = queryMetadata.tables.at(0);
@@ -274,7 +255,51 @@ export function useMetadata() {
 
     };
 
-    // Functions for validating Cassandra 'order by' query clauses
+    
+    /**
+     * Validates the WHERE clause
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param queryMetadata metadata of the query conceptual graph
+     * @param whereQueryItems items of the WHERE clause
+     * @returns error message, if the WHERE clause is invalid, empty otherwise
+     */
+    const validateWhereClause = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[]): string => {
+
+      let [status, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
+
+      [status, errorMessage] = checkUnrestrictedColumns('partition_key', tableMetadata, whereQueryItems);
+      if (!status) {
+        return errorMessage;
+      }
+
+      [status, errorMessage] = checkUnrestrictedColumns(constants.columnKinds.clustering, tableMetadata, whereQueryItems);
+      if (!status) {
+        return errorMessage;
+      }
+
+      const restrictedPartitionColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, 'partition_key');
+      const restrictedClusteringColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, constants.columnKinds.clustering);
+      const restrictedRegularColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, constants.columnKinds.regular);
+
+      if (restrictedClusteringColumns.length || restrictedRegularColumns.length) {
+        [status, errorMessage] = checkIfAllPartitionColumnsAreRestricted(queryMetadata, restrictedPartitionColumns);
+        if (!status) {
+          return errorMessage;
+        }
+      }
+
+      return constants.inputValues.empty;
+    };
+    
+
+    /**
+     * Validates the ORDER BY clause
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param queryMetadata metadata of the query conceptual graph
+     * @param whereQueryItems items of the WHERE clause
+     * @param orderByQueryItems items of the ORDER BY
+     * @returns error message, if the ORDER BY clause is invalid, empty otherwise
+     */
     const validateOrderByClause = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[]): string => {
       
       const restrictedPartitionColumns = getQueryItemsByColumnKind(tableMetadata, whereQueryItems, 'partition_key');
@@ -288,10 +313,17 @@ export function useMetadata() {
     };
 
 
-    // Wrapper functions for validating Cassandra queries
+    /**
+     * Validates the CQL query
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param queryMetadata metadata of the query conceptual graph
+     * @param whereQueryItems items of the WHERE clause
+     * @param orderByQueryItems items of the ORDER BY clause
+     * @returns tuple consisting of the error message and error code
+     */
     const validateQuery = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[]): [string, number] => {
 
-      const areAllColumnsSelectedAndNotRestricted = checkIfSelectAllAndNoFiltering(tableMetadata, queryMetadata, whereQueryItems);
+      const areAllColumnsSelectedAndNotRestricted = checkIfColumnsAreSelectedAndNotRestricted(queryMetadata, whereQueryItems);
       if (areAllColumnsSelectedAndNotRestricted) {
         return [constants.inputValues.empty, 0];
       }
@@ -309,6 +341,7 @@ export function useMetadata() {
       return [constants.inputValues.empty, 0];
     };
 
+    
     return {
       getConceptReferentValue,
       getCQLWhereOperatorsByColumnKind,

@@ -84,6 +84,8 @@ import { onMounted } from 'vue';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 
+import anime from 'animejs';
+
 // Store state mappings
 const userStore = useUserStore();
 const utilsStore = useUtilsStore();

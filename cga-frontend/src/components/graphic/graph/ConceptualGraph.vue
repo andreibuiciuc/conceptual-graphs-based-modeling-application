@@ -154,6 +154,7 @@ const createArrow = (sourceNode: any, targetNode: any, relatedConcept: Concept |
   if (elementRef) {
     elementRef.append(arrow.node);
   }
+  
 };
 
 const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {

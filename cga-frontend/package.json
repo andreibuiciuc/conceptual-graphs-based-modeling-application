@@ -11,6 +11,7 @@
   "dependencies": {
     "@vee-validate/rules": "^4.7.3",
     "@vueuse/core": "^9.13.0",
+    "animejs": "^3.2.1",
     "arrows-svg": "^1.5.6",
     "axios": "^1.2.2",
     "canvas-confetti": "^1.6.0",

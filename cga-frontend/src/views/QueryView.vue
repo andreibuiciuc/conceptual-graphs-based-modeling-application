@@ -111,24 +111,28 @@
       <v-divider></v-divider>
       <div class="query-panel-container">
         <div class="query-panel-item">
-          <query-items 
-            v-if="whereClauseItems.length" 
-            :table-metadata="tableMetadata"
-            :clause="QueryClause.WHERE" 
-            :columns="columnConcepts" 
-            :state="whereClauseItemsState"
-            @add="addQueryConcept"
-            @remove="removeClause">
-          </query-items>
-          <query-items
-            v-if="orderByClauseItems.length"
-            :clause="QueryClause.ORDER_BY"
-            :items="orderByClauseItems"
-            :columns="clusteringColumns"
-            :state="orderByClauseItemsState"
-            @add="addQueryConcept"
-            @remove="removeClause"
-          ></query-items>
+          <Transition name="pop-in" mode="out-in">
+            <query-items
+              v-if="whereClauseItems.length" 
+              :table-metadata="tableMetadata"
+              :clause="QueryClause.WHERE" 
+              :columns="columnConcepts" 
+              :state="whereClauseItemsState"
+              @add="addQueryConcept"
+              @remove="removeClause"
+            />
+          </Transition>
+          <Transition name="pop-in" mode="out-in">
+            <query-items
+              v-if="orderByClauseItems.length"
+              :clause="QueryClause.ORDER_BY"
+              :items="orderByClauseItems"
+              :columns="clusteringColumns"
+              :state="orderByClauseItemsState"
+              @add="addQueryConcept"
+              @remove="removeClause"
+            />
+          </Transition>
         </div>
       </div>
     </div>
@@ -543,10 +547,9 @@ const runQuery = (): void => {
   const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value);
   if (error) {
     openNotificationToast(error, 'error');
-    openNotificationToast('query items have been adjusted', 'warn');
     if (errorCode == 1) {
-      // order by adjustments
       adjustInvalidOrderByClause();
+      openNotificationToast('query items have been adjusted', 'warn', 'partition columns have been restricted with a where clause');
     }
   } else {
     fetchQueryResuls();
