@@ -1,9 +1,10 @@
 
 import constants from "../constants/constants";
-import { Concept, Command, GraphMetadata } from "../types/types";
+import { Concept, Command, GraphMetadata, QueryItem } from "../types/types";
 import { ClusteringOption } from '../types/types';
 import designToolboxConstants from "../components/design/designToolboxConstants";
 import { useConnectionStore } from "../stores/connection";
+import { useQueryStore } from "../stores/query";
 import { useMetadata } from '../composables/metadata';
 
 enum CassandraKeyType {
@@ -16,8 +17,10 @@ export function useQuery() {
     // Composable responsible for generating CQL queries
 
     const connectionStore = useConnectionStore();
+    const queryStore = useQueryStore();
+
     const { getPartitionAndClusteringColumnsCount } = useMetadata();
-    
+
 
     /**
      * Creates and adds a command to the commands array
@@ -184,11 +187,95 @@ export function useQuery() {
     const computeCQLEndingLine = (commands: Command[]) => {
         const cqlEndingLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(");");
         addCQLCommandLine(commands, cqlEndingLine);
+    };
+    
+
+    /**
+     * Computes the selection of columns line of the SELECT CQL statement and adds it to the commands array
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param queryMetadata metadata of the query conceptual graph
+     * @param commands result array of commands
+     */
+    const computeSelectStartingLine = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, commands: Command[]): void => {
+        const currentTable: Concept | undefined = queryMetadata.tables.at(0);
+        if (!currentTable) {
+            return ;
+        }
+
+        const tableColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
+        const queryColumns: Concept[] | undefined = queryMetadata.columns.get(currentTable.conceptName);
+        if (!tableColumns || !queryColumns) {
+            return ;
+        }
+
+        let lineContent: string = designToolboxConstants.CQL_BASH_COMMAND.concat(' SELECT ');
+        let columnCount: number = 0;
+
+        queryColumns.forEach((columnConcept: Concept) => {
+            columnCount = columnCount + 1;
+            lineContent = lineContent.concat(columnConcept.conceptName).concat(', ');
+        });
+
+        if (columnCount === tableColumns.length) {
+            lineContent = '*';
+        } else {
+            lineContent = lineContent.slice(0, lineContent.length - 2);
+        }
+
+        lineContent = lineContent.concat(` FROM ${connectionStore.currentKeyspace}.${currentTable.conceptName}`)
+        addCQLCommandLine(commands, lineContent);
+    };
+
+
+    /**
+     * Computes the WHERE clause line of the SELECT CQL statement and adds it to the commands array
+     * @param commands result array of commands
+     */
+    const computeWhereClauseLine = (commands: Command[]): void => {
+        let lineContent: string = constants.inputValues.empty;
+
+        queryStore.whereClauseItems.forEach((item: QueryItem) => {
+            if (item.toQuery) {
+                let itemValue = getColumnValueForWhereClauseItem(item);
+                if (itemValue) {
+                    lineContent = lineContent.concat(`${item.column} ${item.relation} ${itemValue} AND `);
+                }
+            }
+        });
+
+        if (lineContent) {
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat('WHERE ').concat(lineContent);
+            lineContent = lineContent.slice(0, lineContent.length - 5);
+
+            addCQLCommandLine(commands, lineContent);
+        }
+    };
+
+
+    /**
+     * Helper function that computes the column value of a WHERE clause query item as a string
+     * @param item WHERE clause query item
+     * @returns the value of the WHERE clause query item
+     */
+    const getColumnValueForWhereClauseItem = (item: QueryItem): string | undefined => {
+        if (item.value) {
+            if (item.type === 'string') {
+                return `'${item.value}'`;
+            } else {
+                return item.value.toString();
+            }
+        } else if (item.valueSelect) {
+            return item.valueSelect;
+        } else if (item.chipValues) {
+            let chipValuesAsString: string = '( ';
+            item.chipValues.forEach((chip: string) => chipValuesAsString = chipValuesAsString.concat(chip).concat(', '));
+            return chipValuesAsString.slice(0, chipValuesAsString.length - 2).concat(')');
+        }
     }
 
 
     /**
-     * Generates the CREATE TABLE CQL statement based on the metadata of the table conceptual graph as Commands
+     * Generates the CREATE TABLE CQL as Commands
      * @param tableMetadata metadata of the table conceptual graph
      * @param clusteringOption option regarding the clustering index
      * @returns result array of commands
@@ -207,6 +294,22 @@ export function useQuery() {
 
 
     /**
+     * Generates the SELECT CQL statement as Commands
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param queryMetadata metadata of the query conceptual graph
+     * @returns result array of commands
+     */
+    const generateSelectQueryAsCommands = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata): Command[] => {
+        let commands: Command[] = [];
+
+        computeSelectStartingLine(tableMetadata, queryMetadata, commands);
+        computeWhereClauseLine(commands);
+
+        return commands;
+    };
+
+
+    /**
      * Generates the CREATE TABLE CQL statement based on computed commands
      * @param commands commands consisting of lines of the CREATE TABLE CQL statement
      * @returns the CREATE TABLE CQL statement as a string
@@ -218,6 +321,7 @@ export function useQuery() {
 
     return {
         generateQueryAsCommands,
-        generateQueryAsString
+        generateQueryAsString,
+        generateSelectQueryAsCommands
     };
 }

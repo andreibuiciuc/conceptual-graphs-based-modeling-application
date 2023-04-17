@@ -1,4 +1,7 @@
 export function useConfetti() {
+
+    // Composable responsible for creating the confetti animation
+
     const confettiColors = ["#1287b1", "#bbe6fb", "#ffcc00"];
     const confettiBurstConfig: confetti.Options = {
         particleCount: 350, 

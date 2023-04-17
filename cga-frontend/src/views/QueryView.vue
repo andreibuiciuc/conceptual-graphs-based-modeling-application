@@ -170,6 +170,7 @@ import { useQueryStore } from '../stores/query';
 import { useMetadata } from '../composables/metadata';
 import { useConfirm } from "primevue/useconfirm";
 import { useUtils } from '../composables/utils';
+import { useQuery } from '../composables/query';
 
 // Vue imports
 import { storeToRefs } from 'pinia';
@@ -201,6 +202,7 @@ const { getRelationTypeForColumnConcept,
         getHeadersForQueryResults,
         validateQuery } = useMetadata();
 const { openNotificationToast, copyToClipboard } = useUtils();
+const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
 
 // Store state and action mappings
 const connectionStore = useConnectionStore();
@@ -487,6 +489,13 @@ const adjustInvalidOrderByClause = (): void => {
 
 };
 
+const closeCassandraTerminal = (): void => {
+  const cqlQuery = generateQueryAsString(cqlQueryCommands.value);
+  copyToClipboard(cqlQuery);
+  openNotificationToast('cql query was copied to clipboard', 'info');
+  isQueryTerminalOpened.value = false;
+}
+
 const getDefaultValueForConcept = (concept: Concept): boolean | number | string => {
   const columnType: QueryItemColumnType = getColumnInputType(concept, tableMetadata.value);
   let defaultValue: boolean | number | string;
@@ -509,7 +518,7 @@ const getDefaultValueForConcept = (concept: Concept): boolean | number | string 
 
 const fetchQueryResuls = async (): Promise<void> => {
   const response = await manageRequest(constants.requestTypes.GET, 'query_results', {
-    query: queryStore.generateCQLQuery(tableMetadata.value, queryMetadata.value)
+    query: generateQueryAsString(cqlQueryCommands.value)
   });
   if (response && response.data) {
     if (response.data.status === constants.requestStatus.SUCCESS) {
@@ -521,7 +530,7 @@ const fetchQueryResuls = async (): Promise<void> => {
 };
 
 const openQueryTerminal = (): void => {
-  cqlQueryCommands.value = queryStore.generateCQLQueryCommands(tableMetadata.value, queryMetadata.value);
+  cqlQueryCommands.value = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value);
   isQueryTerminalOpened.value = true;
 };
 
@@ -558,6 +567,7 @@ const runQuery = (): void => {
 
 // Functions related to some utilities
 const confirm = useConfirm();
+
 const openConfirmationPopup = (event: any): void => {
   confirm.require({
     target: event.currentTarget,
@@ -572,14 +582,7 @@ const openConfirmationPopup = (event: any): void => {
   });
 };
 
-const closeCassandraTerminal = (): void => {
-  const cqlQuery = queryStore.generateCQLQuery(tableMetadata.value, queryMetadata.value);
-  copyToClipboard(cqlQuery);
-  openNotificationToast('cql query was copied to clipboard', 'info');
-  isQueryTerminalOpened.value = false;
-}
-
-// Watches
+// Watchers
 watch(currentKeyspace, (newKeyspace, _) => {
   tableMetadata.value.keyspace.conceptName = newKeyspace
   queryMetadata.value.keyspace.conceptName = newKeyspace;
