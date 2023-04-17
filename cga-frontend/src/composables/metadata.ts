@@ -157,7 +157,7 @@ export function useMetadata() {
      * @param whereQueryItems items of the where clause
      * @returns true, if columns were selected for querying and there are no columns restricted in the where clause, false otherwise
      */
-    const checkIfColumnsAreSelectedAndNotRestricted = (queryMetadata: GraphMetadata, whereQueryItems: QueryItem[]): boolean => {
+    const checkIfColumnsAreSelectedAndNotRestricted = (queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[]): boolean => {
       const currentTable: Concept | undefined = queryMetadata.tables.at(0);
       if (!currentTable) {
         return false;
@@ -168,7 +168,7 @@ export function useMetadata() {
         return false;
       }
 
-      return currentQueryColumns.length > 0 && whereQueryItems.length === 0;
+      return currentQueryColumns.length > 0 && whereQueryItems.length === 0 && orderByQueryItems.length === 0;
     };
 
 
@@ -323,7 +323,7 @@ export function useMetadata() {
      */
     const validateQuery = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[]): [string, number] => {
 
-      const areAllColumnsSelectedAndNotRestricted = checkIfColumnsAreSelectedAndNotRestricted(queryMetadata, whereQueryItems);
+      const areAllColumnsSelectedAndNotRestricted = checkIfColumnsAreSelectedAndNotRestricted(queryMetadata, whereQueryItems, orderByQueryItems);
       if (areAllColumnsSelectedAndNotRestricted) {
         return [constants.inputValues.empty, 0];
       }

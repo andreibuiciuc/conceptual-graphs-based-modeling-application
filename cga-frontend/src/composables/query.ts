@@ -18,19 +18,25 @@ export function useQuery() {
     const connectionStore = useConnectionStore();
     const { getPartitionAndClusteringColumnsCount } = useMetadata();
     
-    // Helper functions related to the generating of the CREATE TABLE CQL statement 
 
+    /**
+     * Creates and adds a command to the commands array
+     * @param commands result array of commands
+     * @param lineContent the content of the current command
+     */
     const addCQLCommandLine = (commands: Command[], lineContent: string): void => {
         const lineNumber = commands.length;
         commands.push({ lineNumber, lineContent });
     };
 
+
+    /**
+     * Computes the first line of the CREATE TABLE CQL statement as a Command and adds it to the commands array
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param commands result array of commands
+     */
     const computeCreateTableDefinitionLine = (tableMetadata: GraphMetadata, commands: Command[]): void => {
-
-        /*
-         * Computes the first line of the CREATE TABLE CQL statement
-         */
-
+   
         const currentTable: Concept | undefined = tableMetadata.tables.at(0);
         let createTableDefinitionLine: string;
         
@@ -45,11 +51,13 @@ export function useQuery() {
         addCQLCommandLine(commands, createTableDefinitionLine);
     };
 
+
+    /**
+     * Computes the column definition lines of the CREATE TABLE CQL statement as Commands and adds them to the commands array
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param commands result array of commands
+     */
     const computeColumnDefinitionLines = (tableMetadata: GraphMetadata, commands: Command[]): void => {
-        
-        /*
-         * Computes the column definition lines of the CREATE TABLE CQL statement
-         */
 
         const currentTable: Concept | undefined = tableMetadata.tables.at(0);
         if (!currentTable) {
@@ -78,13 +86,14 @@ export function useQuery() {
         
     };
 
+
+    /**
+     * Computes the primary key definition line of the CREATE TABLE CQL statement as a Command and adds it to the commands array
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param commands result array of commands
+     */
     const computePrimaryKeyDefinitionLine = (tableMetadata: GraphMetadata, commands: Command[]): void => { 
         
-        /*
-         * Computes the primary key definition line of the CREATE TABLE CQL statement
-         */
-
-
         const currentTable: Concept | undefined = tableMetadata.tables.at(0);
         if (!currentTable) {
             return ;
@@ -127,6 +136,13 @@ export function useQuery() {
         addCQLCommandLine(commands, tableKeysDefinitionLine);
     };
 
+
+    /**
+     * Helper function that computes the partition / clustering columns snippet of the primary key definition line of the CREATE TABLE CQL statement
+     * @param currentColumns column concepts of the table concepual graph
+     * @param isClusteringColumnsSnippet flag for determining which primary key snippet to compute
+     * @returns the partition / clustering columns snippet of the primary key
+     */
     const computeKeysSnippet = (currentColumns: Concept[], isClusteringColumnsSnippet: boolean): string => {
 
         let keySnippet: string = '(';
@@ -146,6 +162,12 @@ export function useQuery() {
         return keySnippet.slice(0, keySnippet.length - 2).concat(')');
     };
 
+
+    /**
+     * Computes the clustering option definition lines of the CREATE TABLE CQL statement as Commands and adds them to the commands array
+     * @param clusteringOption option regarding the clustering index
+     * @param commands result array of commands
+     */
     const computeClusteringOptionDefintionLines = (clusteringOption: ClusteringOption, commands: Command[]) => {
         if (clusteringOption.clusteringColumn && clusteringOption.clusteringOrder) {
             addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(')'));
@@ -154,12 +176,23 @@ export function useQuery() {
         }
     };
 
+    
+    /**
+     * Computes the ending line of the CREATE TABLE CQL statement and adds it to the commands array
+     * @param commands result array of commands
+     */
     const computeCQLEndingLine = (commands: Command[]) => {
         const cqlEndingLine = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(");");
         addCQLCommandLine(commands, cqlEndingLine);
     }
 
-    // Wrapper functions related to the generating of the CREATE TABLE CQL statement
+
+    /**
+     * Generates the CREATE TABLE CQL statement based on the metadata of the table conceptual graph as Commands
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param clusteringOption option regarding the clustering index
+     * @returns result array of commands
+     */
     const generateQueryAsCommands = (tableMetadata: GraphMetadata, clusteringOption: ClusteringOption): Command[] => {
         let commands: Command[] = [];
         
@@ -172,7 +205,13 @@ export function useQuery() {
         return commands;
     };
 
-    const generateQueryAsString = (commands: Command[]) => {
+
+    /**
+     * Generates the CREATE TABLE CQL statement based on computed commands
+     * @param commands commands consisting of lines of the CREATE TABLE CQL statement
+     * @returns the CREATE TABLE CQL statement as a string
+     */
+    const generateQueryAsString = (commands: Command[]): string => {
         const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);
         return queryFromCommands.replace(designToolboxConstants.CQL_COMMAND_REGEX, constants.inputValues.empty);
     }
