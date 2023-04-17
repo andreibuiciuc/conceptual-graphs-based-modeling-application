@@ -11,8 +11,8 @@ export const useUserStore = defineStore('user', () => {
     const { openNotificationToast } = useUtils();
 
     async function register (registerCredentials: RegisterCredentials): Promise<void> {
-        const userCredentials = await auth.createUserWithEmailAndPassword(registerCredentials.email, registerCredentials.password);
-        await usersCollection.doc(userCredentials.user?.uid).set({
+        userCredentials.value = await auth.createUserWithEmailAndPassword(registerCredentials.email, registerCredentials.password);
+        await usersCollection.doc(userCredentials.value.user?.uid).set({
             firstname: registerCredentials.firstname,
             lastname: registerCredentials.lastname,
             email: registerCredentials.email
@@ -37,10 +37,15 @@ export const useUserStore = defineStore('user', () => {
         isUserLoggedIn.value = false;
     }
 
+    async function resetPasswordViaEmail (email: string): Promise<void> {
+        await auth.sendPasswordResetEmail(email);
+    };
+
     return {
         isUserLoggedIn,
         register,
         login,
-        signOut
+        signOut,
+        resetPasswordViaEmail
     };
 });

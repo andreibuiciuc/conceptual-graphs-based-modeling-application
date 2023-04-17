@@ -1,5 +1,5 @@
 <template>
-  <vee-form :validation-schema="loginValidationSchema" @submit="login">
+  <vee-form :validation-schema="loginValidationSchema" @submit="login" class="login-form">
     <vee-field name="email" v-slot="{ field, errors }">
       <v-text-field
         v-bind="field"
@@ -26,6 +26,7 @@
         :error-messages="errors"
       />
     </vee-field>
+    <span @click="resetPassword">forgot your password?</span>
     <Button outlined label="login" severity="primary" :disabled="isLoginInSubmission" :loading="isLoginInSubmission" @click="login" />
   </vee-form>
 </template>
@@ -52,7 +53,6 @@ const userStore = useUserStore();
 // Composables
 const { openNotificationToast } = useUtils();
 
-
 // Functions related to the Login flow
 const login = async (): Promise<void> => {
   isLoginInSubmission.value = true;
@@ -76,4 +76,32 @@ const handleUnsuccessfulLogin = (error: Error): void => {
   openNotificationToast(error.message, 'error');
 };
 
+const resetPassword = async (): Promise<void> => {
+  try {
+    await userStore.resetPasswordViaEmail(loginCredentials.value.email);
+  } catch (error: Error | any) {
+
+  }
+};
+
 </script>
+
+<style scoped lang="sass">
+@use '@/assets/styles/_variables.sass'
+@use '@/assets/styles/_containers.sass'
+
+.login-form
+  width: 100%
+  @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+
+  span
+    margin-bottom: 1rem
+
+    &:hover
+      cursor: pointer
+      color: variables.$cassandra-app-blue
+
+  .v-input, .p-button
+    width: 100%
+
+</style>
