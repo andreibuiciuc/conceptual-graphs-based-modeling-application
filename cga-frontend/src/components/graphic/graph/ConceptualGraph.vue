@@ -142,7 +142,7 @@ const createArrow = (sourceNode: any, targetNode: any, relatedConcept: Concept |
       node: targetNode,
       direction: 'top'
     },
-    updateDelay: 5
+    updateDelay: 0
   });
   arrow.relatedNode = relatedConcept;
   
