@@ -658,8 +658,7 @@ clearQueryClauses();
 
 .query-page
   overflow-y: auto
-  height: calc(100vh - variables.$cga-topbar-height)
-  margin: variables.$cga-topbar-height 0 0 0
+  height: calc(100vh)
   padding: 0
 
   .query-section

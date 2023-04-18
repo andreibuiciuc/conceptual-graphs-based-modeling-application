@@ -130,9 +130,11 @@ const emit = defineEmits(['select', 'remove']);
 const arrows: Ref<any> = ref([]);
 
 const createArrow = (sourceNode: any, targetNode: any, relatedConcept: Concept | null = null) => {
+  
   if (!sourceNode || !targetNode) {
     return;
   }
+
   const arrow = arrowCreate({
     from: {
       node: sourceNode,

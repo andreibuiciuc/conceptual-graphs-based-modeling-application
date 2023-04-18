@@ -14,6 +14,12 @@ interface Toolbar {
   navigationItems: NavigationItem[]
 };
 
+interface MenuItem {
+  label: string,
+  icon: string,
+  to: string
+};
+
 const toolbar: Toolbar = {
   navigationHeader: {
     title: "CGA",
@@ -35,15 +41,34 @@ const toolbar: Toolbar = {
       title: "query design",
       value: "query",
       icon: "mdi-database-search",
-      pathTo: "query",
+      pathTo: "query-design",
       active: false,
     },
   ]
 };
 
+const menuItems: MenuItem[] = [
+  {
+    label: 'console',
+    icon: 'pi pi-home',
+    to: 'home'
+  },
+  {
+    label: 'data structure design',
+    icon: 'pi pi-file-edit',
+    to: 'data-structure'
+  },
+  {
+    label: 'query design',
+    icon: 'pi pi-database',
+    to: 'query'
+  }
+]; 
+
 export {
   NavigationItem,
   Toolbar,
-  toolbar
+  toolbar,
+  menuItems
 };
 

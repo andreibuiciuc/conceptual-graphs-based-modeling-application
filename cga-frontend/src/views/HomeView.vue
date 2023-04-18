@@ -125,21 +125,16 @@ onMounted(() => {
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
 
-model-viewer
-  width: 800px
-  height: 800px
-
 .homepage
   overflow-y: auto
   scroll-behavior: smooth
   margin: 0
-  margin-top: variables.$cga-topbar-height
-  height: calc(100vh - variables.$cga-topbar-height)
+  height: 100vh
   
   .homepage-section
     max-width: 100%
     padding: 0 24px
-    height: calc(100vh - variables.$cga-topbar-height)
+    height: 100vh
 
     .landing-animation-wrapper
       position: absolute
@@ -316,8 +311,7 @@ model-viewer
 
 
 .console-section
-  margin-top: variables.$cga-topbar-height
-  height: calc(100vh - variables.$cga-topbar-height)
+  height: 100vh
 
 @keyframes floating-oval-animation__first
   0%

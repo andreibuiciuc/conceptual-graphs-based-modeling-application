@@ -50,6 +50,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ProgressSpinner from 'primevue/progressspinner';
 import Chip from 'primevue/chip';
+import Menubar from 'primevue/menubar';
 
 const vuetify = createVuetify({
   components,
@@ -72,6 +73,7 @@ auth.onAuthStateChanged(() => {
     app.use(PrimeVue, { ripple: true });
     app.use(ToastService);
 
+    app.component('Menubar', Menubar);
     app.component('Card', Card);
     app.component('Button', Button);
     app.component('Dropdown', Dropdown);

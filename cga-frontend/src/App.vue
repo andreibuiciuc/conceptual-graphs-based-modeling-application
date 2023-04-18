@@ -1,5 +1,5 @@
 <template>
-  <TopbarNavigation />
+  <CgaMenubar />
   <SidebarNavigation />
   <RouterView />
   <Toast />
@@ -10,15 +10,15 @@ import { auth } from "./includes/firebase";
 import { mapWritableState } from "pinia";
 import { RouterView } from "vue-router";
 import { useUserStore } from './stores/user';
-import TopbarNavigation from "./components/navigation/TopbarNavigation.vue";
 import SidebarNavigation from "./components/navigation/SidebarNavigation.vue";
+import CgaMenubar from "./components/navigation/CgaMenubar.vue";
 
 export default {
   name: "App",
   components: {
-    TopbarNavigation,
     RouterView,
-    SidebarNavigation
+    SidebarNavigation,
+    CgaMenubar
 },
   computed: {
     ...mapWritableState(useUserStore, ["isUserLoggedIn"]),
