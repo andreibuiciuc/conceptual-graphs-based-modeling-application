@@ -6,8 +6,8 @@
 
 The following restrictions of the Cassandra Query Language are mapped in the CGA application:
 
-- [x] for **partition key** columns, the only supported conditional operators are **=** and **IN(value1, value2[,...])**
-- [ ] for **clustering** columns, only the lowest level clustering column (the last clustering column in the table definition) accepts the conditional operators **>, >=, <, or <=**; the other higher level columns can only be restricted with the **=** or **IN(value1, value2[,...])**, in the same order as their definition
+- [x] :key: **partition key** columns: the only supported conditional operators are **=** and **IN(value1, value2[,...])**
+- [ ] :old_key:	**clustering** columns: only the lowest level clustering column (the last clustering column in the table definition) accepts the conditional operators **>, >=, <, or <=**; the other higher level columns can only be restricted with the **=** or **IN(value1, value2[,...])**, in the same order as their definition
 - [x] restriction for all column of the partition key is mandatory for composite keys
 
 </details>
@@ -23,8 +23,8 @@ the power of the system's design.
 
 The following restrictions of the Cassandra Query Language are mapped in the CGA application:
 
-- [x] order by clause can only be used on clustering columns
-- [x] order by clause can only be used if all parition key columns are restricted in the where clause
-- [ ] order by clause can only be used in **descending** order for clustering columns that were defined with the **desc** keyword 
+- [x] order by clause can only be used on :old_key: **clustering** columns
+- [x] order by clause can only be used if all :key: **partition key** columns are restricted in the where clause
+- [ ] order by clause can only be used in **descending** order for :old_key: **clustering** columns that were defined with the **desc** keyword 
 
 </details>
