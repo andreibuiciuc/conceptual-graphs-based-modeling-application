@@ -1,35 +1,16 @@
-# cga-frontend
+<details>
 
-This template should help get you started developing with Vue 3 in Vite.
+<summary>ORDER BY: Cassandra CQL restrictions</summary>
 
-## Recommended IDE Setup
+### ORDER BY: Cassandra CQL restrictions mapped to FE functionalities
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+In Cassandra, the CQL restricts the use of the ORDER BY clause, as its impact on performance scale together as the size of the data set. In practice, the data model needs to be optimized and built following the bluprint of the queries that are planned to be executed frequently in order to leverage
+the power of the system's design. 
 
-## Customize configuration
+The following restrictions of the Cassandra Query Language are mapped in the CGA application:
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+- [x] order by clause can only be used on clustering columns
+- [x] order by clause can only be used if all parition key columns are restricted in the where clause
+- [ ] order by clause can only be used in **descending** order for clustering columns that were defined with the **desc** keyword 
 
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+</details>
