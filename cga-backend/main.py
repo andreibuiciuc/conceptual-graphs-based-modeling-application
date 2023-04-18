@@ -57,5 +57,11 @@ def get_table_metadata(keyspace_name: str, table_name: str):
     return result
 
 
+@app.get("/query_results")
+def get_query_results(query: str):
+    result = retrieve_query_results(query)
+    return result
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8001, log_level="info", reload=True)

@@ -97,7 +97,7 @@ def does_table_exists(table_name: str, keyspace_name: str) -> dict[str, str]:
 
         result_set: ResultSet
         result_set = session.execute(query_bound)
-        return {"status": SUCCESS, "flag": result_set.one() is not None }
+        return {"status": SUCCESS, "flag": result_set.one() is not None}
 
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}
@@ -114,7 +114,7 @@ def retrieve_all_tables(keyspace_name: str):
 
         tables_list: list[str]
         tables_list = [table.table_name for table in result_set]
-        return {"status": SUCCESS, "tables": tables_list }
+        return {"status": SUCCESS, "tables": tables_list}
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}
 
@@ -137,3 +137,16 @@ def retrieve_table_metadata(keyspace_name: str, table_name: str):
     except Exception as exception:
         return {"status": ERROR, "message": str(exception)}
 
+
+def retrieve_query_results(query: str):
+    global session
+    try:
+        result_set: ResultSet = session.execute(query)
+        results = []
+        for item in result_set.current_rows:
+            results.append(item)
+
+        return {"status": SUCCESS, "results": results}
+
+    except Exception as exception:
+        return {"status": ERROR, "message": str(exception)}
