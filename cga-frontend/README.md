@@ -1,5 +1,19 @@
 <details>
 
+<summary>WHERE: Cassandra CQL restrictions</summary>
+
+### WHERE: Cassandra CQL restrictions mapped to FE functionalities
+
+The following restrictions of the Cassandra Query Language are mapped in the CGA application:
+
+- [x] for **partition key** columns, the only supported conditional operators are **=** and **IN(value1, value2[,...])**
+- [ ] for **clustering** columns, only the lowest level clustering column (the last clustering column in the table definition) accepts the conditional operators **>, >=, <, or <=**; the other higher level columns can only be restricted with the **=** or **IN(value1, value2[,...])**, in the same order as their definition
+- [x] restriction for all column of the partition key is mandatory for composite keys
+
+</details>
+
+<details>
+
 <summary>ORDER BY: Cassandra CQL restrictions</summary>
 
 ### ORDER BY: Cassandra CQL restrictions mapped to FE functionalities
