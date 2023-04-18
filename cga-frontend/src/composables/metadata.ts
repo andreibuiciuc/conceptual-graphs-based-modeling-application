@@ -92,7 +92,8 @@ export function useMetadata() {
           operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN];
           break;
         case constants.columnKinds.clustering:
-          operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN, constants.cqlOperators.LESS, constants.cqlOperators.LESS_EQUAL]
+          operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN, constants.cqlOperators.LESS, constants.cqlOperators.LESS_EQUAL, 
+                       constants.cqlOperators.GREATER, constants.cqlOperators.GREATER_EQUAL];
           break;
         case constants.columnKinds.regular:
           operators = [];

@@ -8,6 +8,7 @@ export function useUtils() {
   const TOAST_LIFETIME = 3000;
   const toast = useToast();
 
+  
   const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text);
   };

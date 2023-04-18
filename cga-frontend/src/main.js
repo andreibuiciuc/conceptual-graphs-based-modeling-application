@@ -49,6 +49,7 @@ import ToastService from 'primevue/toastservice';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ProgressSpinner from 'primevue/progressspinner';
+import Chip from 'primevue/chip';
 
 const vuetify = createVuetify({
   components,
@@ -88,6 +89,7 @@ auth.onAuthStateChanged(() => {
     app.component('DataTable', DataTable);
     app.component('Column', Column);
     app.component('ProgressSpinner', ProgressSpinner);
+    app.component('Chip', Chip);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

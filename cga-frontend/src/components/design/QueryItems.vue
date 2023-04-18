@@ -57,6 +57,10 @@
                         :disabled="item.toQuery"
                         @change="changeOperator(item)">
                     </Dropdown>
+                    <i 
+                        class="pi pi-info" 
+                        v-tooltip="item.tooltip">
+                    </i>
                     <template v-if="[constants.cqlOperators.IN, constants.cqlOperators.NOT_IN].includes(item.relation!)">
                         <div class="card p-fluid">
                             <Chips v-model="item.chipValues" separator=" " :disabled="item.toQuery" :max="5" />
@@ -111,19 +115,15 @@
                     />
                 </template>
                 
-                <Button 
-                    aria-label="Add"
-                    class="add-icon-button"
-                    :disabled="!item.isValueValid || item.toQuery"
-                    icon="pi pi-plus"
-                    text
-                    @click="addToQuery(clause, item)"
-                />
-                <i 
-                    v-if="!item.toQuery"
-                    class="pi pi-info" 
-                    v-tooltip="item.tooltip">
-                </i>
+                <Chip class="pl-0 pr-3" :class="{ 'p-chip-disabled': item.toQuery }">
+                    <div 
+                        class="chip-preppend-icon"
+                        :class="{ 'chip-preppend-icon-disabled': item.toQuery }" 
+                        @click="addToQuery(clause, item)">
+                        <i class="pi" :class="item.toQuery ? 'pi-check' : 'pi-plus'" />
+                    </div>
+                    <span class="ml-2 font-medium">{{ item.toQuery ? 'added' : 'add' }}</span>
+                </Chip>
             </div>
         </template>
     </Card>
@@ -162,7 +162,7 @@ const informationMessages = {
 const tooltips = {
     [QueryClause.WHERE]: {
         partition_key: "the partition key columns support only two operators: = and IN",
-        clustering: "TODO: clustering column tooltip",
+        clustering: "the clustering columns support only the following operators: =, IN, >, >=, <, <=",
         regular: "TODO: regular column tooltip"
     },
 };
@@ -309,7 +309,7 @@ const queryPanelTitle: ComputedRef<string> = computed(() => {
         margin-bottom: 16px
 
     .query-panel-item-clause
-        @include containers.flex-container($align-items: baseline)
+        @include containers.flex-container($align-items: center)
         flex-wrap: wrap
         padding: 8px 0
         
@@ -334,5 +334,34 @@ const queryPanelTitle: ComputedRef<string> = computed(() => {
 
         & > *
             margin-right: 20px
+
+        .p-chip
+            width: 6rem
+            hieght: 2rem !important
+        
+        .p-chip-disabled
+            width: 7.25rem
+            transition: all 0.4s ease-out
+
+        .chip-preppend-icon
+            @include containers.flex-container($align-items: center, $justify-content: center)
+            align-self: center
+            background-color: variables.$cassandra-app-blue
+            color: variables.$cassandra-white
+            border-radius: 50%
+            width: 2rem
+            height: 2rem
+            transition: transform 0.4s ease-out
+
+            &:hover
+                cursor: pointer
+                transform: scale(1.15)
+
+        .chip-preppend-icon.chip-preppend-icon-disabled
+            background-color: #dee2e6 !important
+
+            &:hover
+                cursor: default
+                transform: none
 
 </style>

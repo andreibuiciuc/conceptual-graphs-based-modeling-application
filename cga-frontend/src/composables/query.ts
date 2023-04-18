@@ -358,6 +358,7 @@ export function useQuery() {
         const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);
         return queryFromCommands.replace(designToolboxConstants.CQL_COMMAND_REGEX, constants.inputValues.empty);
     }
+    
 
     return {
         generateQueryAsCommands,
