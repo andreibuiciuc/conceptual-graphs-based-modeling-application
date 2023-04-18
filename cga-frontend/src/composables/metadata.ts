@@ -4,9 +4,16 @@ import { GraphMetadata, QueryItem } from "../types/types";
 
 export function useMetadata() {
 
-    const getRelationTypeForColumnConcept = (columnKind: string, clusteringOrder: string = constants.inputValues.empty): string  =>  {
+    // Composable responsible for validation and retrival of conceptual graph metadatum
+
+    /**
+     * Returns the relation type for the related column concept with the given column kind
+     * @param columnKind the given column kind of the related concept
+     * @param clusteringOrder the clustering order, if any, of the related column concept 
+     * @returns relation type for the related column concept
+     */
+    const getRelationTypeForColumnConcept = (columnKind: string, clusteringOrder?: string): string  =>  {
       switch (columnKind) {
-          // TODOL Check the constants and refactor
           case "partition_key":
             return constants.relationTypes.hasPartitionKey;
           case constants.columnKinds.clustering:
@@ -19,7 +26,13 @@ export function useMetadata() {
         }
     };
 
-    const getConceptReferentValue = (queryItems: QueryItem[]) => {
+
+    /**
+     * Computes the value of the referent concept for the given query items
+     * @param queryItems query items used for computing the referent value (e.g, query items using for modeling the where clause)
+     * @returns referent value computed based on the query items provided
+     */
+    const computeConceptReferentValue = (queryItems: QueryItem[]) => {
       const initialValue = constants.inputValues.empty;
       let result = queryItems.reduce((accumulator: string, currentValue: QueryItem): string => {
         return accumulator.concat(currentValue.column).concat(` ${currentValue.relation} `).concat(` ${currentValue.value} AND `);
@@ -29,6 +42,13 @@ export function useMetadata() {
       return result;
     };
 
+
+    /**
+     * Returns the input type of a column concept
+     * @param column column concept
+     * @param tableMetadata metadata of the table conceptual graph
+     * @returns the input type of the provided column concept
+     */
     const getColumnInputType = (column: Concept, tableMetadata?: GraphMetadata): QueryItemColumnType => {
       if (!tableMetadata) {
         return 'other';
@@ -53,6 +73,12 @@ export function useMetadata() {
 
     };
 
+
+    /**
+     * Returns the set of CQL operators for a column concept, based on its column kind
+     * @param columnKind column kind of a column concept
+     * @returns the set of CQL operators based on the column kind provided
+     */
     const getCQLWhereOperatorsByColumnKind = (columnKind: string | undefined): string[] => {
       let operators: string[] = [];
       
@@ -63,13 +89,13 @@ export function useMetadata() {
       switch (columnKind) {
         // TODO: Check the constants and refactor
         case 'partition_key':
-          operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN, constants.cqlOperators.CONTAINS];
+          operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN];
           break;
         case constants.columnKinds.clustering:
-          operators = Object.values(constants.cqlOperators);
+          operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN, constants.cqlOperators.LESS, constants.cqlOperators.LESS_EQUAL]
           break;
         case constants.columnKinds.regular:
-          operators = Object.values(constants.cqlOperators).filter((operator: string) => ![constants.cqlOperators.IN].includes(operator));
+          operators = [];
         default:
           break;
       }
@@ -77,6 +103,12 @@ export function useMetadata() {
       return operators;
     };
 
+
+    /**
+     * Maps the column concepts in the query metadata to their concept names and returns the result
+     * @param queryMetadata metadata of the query conceptual graph
+     * @returns the list of column concept names from the query metadata
+     */
     const getQuerySelectionConceptNames = (queryMetadata: GraphMetadata): string[] => {
       
       const currentTable: Concept | undefined = queryMetadata.tables.at(0);
@@ -92,6 +124,12 @@ export function useMetadata() {
       return currentColumns.map(columnConcept => columnConcept.conceptName);
     };
 
+    
+    /**
+     * Computes the result table header for the query results modal
+     * @param queryMetadata metadata of the query conceptual graph
+     * @returns list of header columns
+     */
     const getHeadersForQueryResults = (queryMetadata: GraphMetadata): DataTableColumn[] => {
       const columnNames: string[] = getQuerySelectionConceptNames(queryMetadata);
       const tableColumns: DataTableColumn[] = columnNames.map(column => {
@@ -100,6 +138,12 @@ export function useMetadata() {
       return tableColumns;
     }
 
+    
+    /**
+     * Computes the count of partition and clustering columns in the table metadata
+     * @param tableMetadata metadata of the table conceptual graph
+     * @returns object containing the partition and clustering columns count 
+     */
     const getPartitionAndClusteringColumnsCount = (tableMetadata: GraphMetadata): { [key: string]: number } => {
       const initialCount = { partitionColumnsCount: 0, clusteringColumnCount: 0 };
       
@@ -123,6 +167,13 @@ export function useMetadata() {
       }, initialCount);
     };
 
+
+    /**
+     * Return the column kind of a query item
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param queryItem query item 
+     * @returns column kind of the query item, if exists in the metadata, otherwise, the result is undefined
+     */
     const getColumnKindForQueryItem = (tableMetadata: GraphMetadata, queryItem: QueryItem): string | undefined => {
       const currentTable: Concept | undefined = tableMetadata.tables.at(0);
       if (!currentTable) {
@@ -143,6 +194,14 @@ export function useMetadata() {
 
     };
 
+
+    /**
+     * Filters and returns the query items with a given column kind
+     * @param tableMetadata metadata of the table conceptual graph
+     * @param queryItems query items used for filtering
+     * @param columnKind column kind used to filter the query items
+     * @returns list of query items filtered by the given column kind
+     */
     const getQueryItemsByColumnKind = (tableMetadata: GraphMetadata, queryItems: QueryItem[], columnKind: string): QueryItem[] => {
       return queryItems.filter((item: QueryItem) => {
         const columnKindForItem = getColumnKindForQueryItem(tableMetadata, item);
@@ -211,7 +270,7 @@ export function useMetadata() {
           if (column.columnKind === columnKind) {
             const indexFromQuery = whereQueryItems.findIndex(x => x.column === column.conceptName);
             if (indexFromQuery < 0) {
-              return [false, 'cassandra require to restrict all partition key columns. the query will be rejected'];
+              return [false, `cassandra require to restrict all ${columnKind} columns. the query will be rejected`];
             }
           }
         }
@@ -268,11 +327,6 @@ export function useMetadata() {
       let [status, errorMessage]: [boolean, string] = [true, constants.inputValues.empty];
 
       [status, errorMessage] = checkUnrestrictedColumns('partition_key', tableMetadata, whereQueryItems);
-      if (!status) {
-        return errorMessage;
-      }
-
-      [status, errorMessage] = checkUnrestrictedColumns(constants.columnKinds.clustering, tableMetadata, whereQueryItems);
       if (!status) {
         return errorMessage;
       }
@@ -343,7 +397,7 @@ export function useMetadata() {
 
     
     return {
-      getConceptReferentValue,
+      computeConceptReferentValue,
       getCQLWhereOperatorsByColumnKind,
       getRelationTypeForColumnConcept,
       getColumnInputType,

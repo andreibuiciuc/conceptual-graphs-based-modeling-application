@@ -217,7 +217,7 @@ export function useQuery() {
         });
 
         if (columnCount === tableColumns.length) {
-            lineContent = '*';
+            lineContent = designToolboxConstants.CQL_BASH_COMMAND.concat(' SELECT *');
         } else {
             lineContent = lineContent.slice(0, lineContent.length - 2);
         }
@@ -225,6 +225,25 @@ export function useQuery() {
         lineContent = lineContent.concat(` FROM ${connectionStore.currentKeyspace}.${currentTable.conceptName}`)
         addCQLCommandLine(commands, lineContent);
     };
+
+
+    /**
+     * Helper function that computes the aggregation functions snippet of the SELECT CQL statement
+     * @returns the aggregate functions snippet
+     */
+    const computeAggregateFunctonsSnippet = (): string => {
+        let aggregateFunctionsSnippet: string = constants.inputValues.empty;
+
+        queryStore.aggregateFunctionsItems.forEach((item: QueryItem) => {
+            if (item.toQuery) {
+                aggregateFunctionsSnippet = aggregateFunctionsSnippet.concat(`${item.valueSelect?.toString()}(${item.column}), `);   
+            }
+        });
+
+        aggregateFunctionsSnippet = aggregateFunctionsSnippet.slice(0, aggregateFunctionsSnippet.length - 2);
+
+        return aggregateFunctionsSnippet;
+    }
 
 
     /**
@@ -270,6 +289,7 @@ export function useQuery() {
             addCQLCommandLine(commands, lineContent);
         }
     };
+
 
     /**
      * Helper function that computes the column value of a WHERE clause query item as a string

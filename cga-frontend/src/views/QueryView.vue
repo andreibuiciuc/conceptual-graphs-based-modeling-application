@@ -214,7 +214,7 @@ const selectedClauseType: Ref<QueryClause | null> = ref(null);
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept, 
-        getConceptReferentValue, 
+        computeConceptReferentValue, 
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
         getQuerySelectionConceptNames,
@@ -382,11 +382,11 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
   switch (queryClauseData.clause) {
     case QueryClause.WHERE:
       queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
-      queryConcepts.value[QueryClause.WHERE].conceptReferent = getConceptReferentValue(whereClauseItems.value);
+      queryConcepts.value[QueryClause.WHERE].conceptReferent = computeConceptReferentValue(whereClauseItems.value);
       break;
     case QueryClause.ORDER_BY:
       queryConcepts.value[QueryClause.ORDER_BY].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
-      queryConcepts.value[QueryClause.ORDER_BY].conceptReferent = getConceptReferentValue(orderByClauseItems.value);
+      queryConcepts.value[QueryClause.ORDER_BY].conceptReferent = computeConceptReferentValue(orderByClauseItems.value);
       break;
   }
   await nextTick();
@@ -446,14 +446,18 @@ const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
 };
 
 // Functions related to the removal of query columns, clauses and data
-const clearQueryMetadata = () => {
-  // Clear query metadata and columns set for query
-  queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, []);
-  queryConcepts.value[QueryClause.WHERE].columns = [];
-  // Clear query clauses
+const clearQueryClauses = () => {
   whereClauseItems.value = [];
   orderByClauseItems.value = [];
   groupByClauseItems.value = [];
+  aggregateFunctionsItems.value = [];
+};
+
+const clearQueryMetadata = () => {
+  queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, []);
+  queryConcepts.value[QueryClause.WHERE].columns = [];
+  clearQueryClauses();
+
   // Re-draw the Query Conceptual Graph without the query concepts
   queryGraph.value.removeArrows();
   queryGraph.value.drawInitialArrows();
@@ -643,6 +647,8 @@ if (currentKeyspace.value) {
 } else {
   openNotificationToast('no selected keyspace', 'warn');
 }
+
+clearQueryClauses();
 
 </script>
 
