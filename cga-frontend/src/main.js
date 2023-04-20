@@ -51,6 +51,7 @@ import Column from 'primevue/column';
 import ProgressSpinner from 'primevue/progressspinner';
 import Chip from 'primevue/chip';
 import Menubar from 'primevue/menubar';
+import Tag from 'primevue/tag';
 
 const vuetify = createVuetify({
   components,
@@ -92,6 +93,7 @@ auth.onAuthStateChanged(() => {
     app.component('Column', Column);
     app.component('ProgressSpinner', ProgressSpinner);
     app.component('Chip', Chip);
+    app.component('Tag', Tag);
 
     app.directive('tooltip', Tooltip);
     app.mount("#app");

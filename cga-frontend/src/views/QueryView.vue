@@ -1,7 +1,7 @@
 <template>
   <div class="query-page">
     <div class="query-section">
-    <div class="header-container elevation-1">
+    <div class="header-container">
       <div>
         <span>cassandra query design</span>
       </div>
@@ -214,7 +214,8 @@ const selectedClauseType: Ref<QueryClause | null> = ref(null);
 const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept, 
-        computeConceptReferentValue, 
+        computeConceptReferentValue,
+        computeConceptReferentValueForOrderByItems, 
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
         getQuerySelectionConceptNames,
@@ -386,7 +387,7 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
       break;
     case QueryClause.ORDER_BY:
       queryConcepts.value[QueryClause.ORDER_BY].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
-      queryConcepts.value[QueryClause.ORDER_BY].conceptReferent = computeConceptReferentValue(orderByClauseItems.value);
+      queryConcepts.value[QueryClause.ORDER_BY].conceptReferent = computeConceptReferentValueForOrderByItems(orderByClauseItems.value);
       break;
   }
   await nextTick();
@@ -682,6 +683,7 @@ clearQueryClauses();
       padding: 10px
       height: 100%
       width: 100%
+      border-top: none
 
       .p-splitter-panel
         @include containers.flex-container($align-items: center, $justify-content: center)

@@ -32,12 +32,30 @@ export function useMetadata() {
      * @param queryItems query items used for computing the referent value (e.g, query items using for modeling the where clause)
      * @returns referent value computed based on the query items provided
      */
-    const computeConceptReferentValue = (queryItems: QueryItem[]) => {
+    const computeConceptReferentValue = (queryItems: QueryItem[]): string => {
       const initialValue = constants.inputValues.empty;
+      
       let result = queryItems.reduce((accumulator: string, currentValue: QueryItem): string => {
         return accumulator.concat(currentValue.column).concat(` ${currentValue.relation} `).concat(` ${currentValue.value} AND `);
       }, initialValue);
       
+      result = result.slice(0, result.length - 4);
+      return result;
+    };
+
+
+    /**
+     * Computes the value of the referent concept for order by items
+     * @param queryItems query items of the order by clause
+     */
+    const computeConceptReferentValueForOrderByItems = (queryItems: QueryItem[]): string => {
+      const initialValue = constants.inputValues.empty;
+      
+      let result = queryItems.reduce((accumulator: string, currentValue: QueryItem): string => {
+        const orderType = currentValue.valueSelect ? currentValue.valueSelect : constants.inputValues.empty;
+        return accumulator.concat(` ${orderType} AND `);
+      }, initialValue);
+
       result = result.slice(0, result.length - 4);
       return result;
     };
@@ -399,6 +417,7 @@ export function useMetadata() {
     
     return {
       computeConceptReferentValue,
+      computeConceptReferentValueForOrderByItems,
       getCQLWhereOperatorsByColumnKind,
       getRelationTypeForColumnConcept,
       getColumnInputType,

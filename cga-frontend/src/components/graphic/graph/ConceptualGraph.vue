@@ -26,7 +26,7 @@
               >
               <span class="concept-type">{{ tableConcept.conceptType }}:</span>
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
-              <i class="pi" :class="tableConcept.isTableExpanded ? 'pi-minus' : 'pi-plus'" style="font-size: 1.5rem;" @click="expandTable(tableConcept)"></i>
+              <!-- <i class="pi" :class="tableConcept.isTableExpanded ? 'pi-minus' : 'pi-plus'" style="font-size: 1.5rem;" @click="expandTable(tableConcept)"></i> -->
             </div>
             <ul>
               <!-- Column level -->
@@ -244,6 +244,7 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
       return ;
     }
 
+    debugger 
     for (let columnIndex in props.queryConcepts[QueryClause.ORDER_BY].columns) {
       const columnConcept: Concept | undefined = props.queryConcepts[QueryClause.ORDER_BY].columns[parseInt(columnIndex)];
       const index = props.graphMetadata.columns.get(currentTable.conceptName)?.findIndex(concept => concept.conceptName === columnConcept?.conceptName);

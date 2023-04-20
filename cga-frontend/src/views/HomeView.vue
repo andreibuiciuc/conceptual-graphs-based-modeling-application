@@ -61,8 +61,15 @@
 
   <div v-else>
     <div class="console-section">
-      <div class="header-container elevation-1">
-        <Button outlined severity="primary" label="connect" @click="isSidebarOpened = true" />
+      <div class="header-container">
+        <div class="header-division">
+          <Button 
+            outlined 
+            severity="primary" 
+            label="connect" 
+            @click="isSidebarOpened = true" 
+          />
+        </div>
       </div>
       <ConnectionDashboard />
     </div>
@@ -83,8 +90,6 @@ import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue
 import { onMounted } from 'vue';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
-
-import anime from 'animejs';
 
 // Store state mappings
 const userStore = useUserStore();
@@ -308,10 +313,9 @@ onMounted(() => {
           &:nth-of-type(2)
             flex-basis: 0% !important
             
-
-
 .console-section
-  height: 100vh
+  @include containers.flex-container($flex-direction: column)
+  height: calc(100vh - 68px)
 
 @keyframes floating-oval-animation__first
   0%

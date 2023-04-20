@@ -1,6 +1,6 @@
 <template>
   <div class="design-section">
-    <div class="header-container elevation-1">
+    <div class="header-container">
       <div>
         <span>cassandra data structure design</span>
       </div>

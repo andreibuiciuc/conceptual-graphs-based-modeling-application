@@ -1,11 +1,10 @@
 // Sass classes responsible for the fade in transition
-.fade-enter-from, .fade-leave-to
-  transform: translateY(-150%)
+.pop-in-enter-active 
+  transition: all 0.3s ease-out
+
+.pop-in-leave-active
+  transition: all 0.3s ease-out
+
+.pop-in-enter-from, .pop-in-leave-to
+  transform: translateX(3rem)
   opacity: 0
-
-.fade-enter-active, .fade-leave-active
-  transition: opacity 0.25s linear, transorm 0.25s linear
-
-.fade-enter-to, .fade-leave-from
-  transform: translateX(150%)
-  opacity: 1
