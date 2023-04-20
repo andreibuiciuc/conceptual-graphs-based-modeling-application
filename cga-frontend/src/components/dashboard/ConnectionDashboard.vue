@@ -1,20 +1,49 @@
 <template>
   <div class="dashboard">
     <div class="dashboard-tag-container">
+      
+      <Card
+        v-if="forceGraph"
+        class="concept-node-lookup-container">
+        
+        <template #title>
+          concept node lookup
+        </template>
+        <template #content>
+          <div class="info">
+            <span>concept name:</span> 
+            <span>{{ conceptForLookup ? conceptForLookup.conceptName : 'not yet' }}</span>
+          </div>
+          <div class="info">
+            <span>concept type:</span>
+            <span>{{ conceptForLookup ? conceptForLookup.conceptType : 'not yet' }}</span>
+          </div>
+        </template>
+      </Card>
+      
       <Transition name="pop-in" mode="out-in">
-        <Tag 
-          v-if="forceGraph"
+        <Tag v-if="forceGraph"
           icon="pi pi-check"
           severity="success"
-          value="Force graph is the recommended representation of higher volume keyspaces"
+          value="force graph is the recommended representation of higher volume keyspaces"
         />
         <Tag 
           v-else
           icon="pi pi-exclamation-circle"
           severity="warning"
-          value="It is recommended to use the force graph representation for higher volume keyspaces"
+          value="it is recommended to use the force graph representation for higher volume keyspaces"
         />
       </Transition>
+
+      <Transition name="pop-in" mode="out-in">
+        <Tag
+          v-if="forceGraph"
+          icon="pi pi-info"
+          severity="info"
+          value="hover over concept nodes for details"
+        />
+      </Transition>
+
     </div>
     <div class="conceptual-graph-wrapper">
       <conceptual-graph v-if="!forceGraph && graphMetadata.tables.length" graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
@@ -26,7 +55,7 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 
-import { ConfigurableConcept, GraphMetadata, D3Link, D3Node } from '../../types/types';
+import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../../types/types';
 import { manageRequest } from '../../includes/requests';
 
 import ConceptualGraph from '../graphic/graph/ConceptualGraph.vue';
@@ -65,9 +94,11 @@ const { currentKeyspace } = storeToRefs(connectionStore);
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
 
+const conceptForLookup: Ref<Concept | null> = ref(null);
+
 const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
-  // const width = 1000, height = 1000;
-  const width = window.innerWidth / 2;
+
+  const width = window.innerWidth;
   const height = window.innerHeight;
   const svg = d3.select('.svg-container').style('width', width).style('height', height);
 
@@ -86,8 +117,8 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
     .data(links)
     .enter()
     .append('line')
-    .attr('stroke-width', 3)
-    .style('stroke', 'pink');
+    .attr('stroke-width', 1)
+    .style('stroke', 'black');
 
   const node = svg
     .selectAll<SVGCircleElement, any>('circle')
@@ -95,8 +126,10 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
     .enter()
     .append('circle')
     .attr('r', 5)
-    .attr('fill', 'orage')
-    .attr('stroke', 'yellow')
+    .attr('fill', '#3B82F6')
+    .attr('stroke', '#3B82F6')
+    .on('mouseover', mouseover)
+    .on('mouseout', mouseout)
     .call(d3.drag<SVGCircleElement, any>()
       .on('start', dragstarted)
       .on('drag', dragged)
@@ -114,23 +147,37 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
       .attr('cy', d => d.y);
   });
 
-  function dragstarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
+  function dragstarted(event: d3.D3DragEvent<SVGCircleElement, any, any>, d: any) {
+    if (!event.active) {
+      simulation.alphaTarget(0.3).restart();
+    }
     d.fx = d.x;
     d.fy = d.y;
   }
 
-  function dragged(event, d) {
+  function dragged(event: d3.D3DragEvent<SVGCircleElement, any, any>, d: any) {
     d.fx = event.x;
     d.fy = event.y;
+    d3.select(this).style('cursor', 'grabbing');
   }
 
-  function dragended(event, d) {
-    if (!event.active) simulation.alphaTarget(0);
+  function dragended(event: d3.D3DragEvent<SVGCircleElement, any, any>, d: any) {
+    if (!event.active) {
+      simulation.alphaTarget(0);
+    }
     d.fx = null;
     d.fy = null;
   }
 
+  function mouseover(_: MouseEvent, d: any) {
+    d3.select(this).style('cursor', 'grab');
+    conceptForLookup.value = { conceptName: d.conceptName, conceptType: d.conceptType };    
+  }
+
+  function mouseout(_event: MouseEvent, _: any) {
+    conceptForLookup.value = null;
+  }
+ 
 };
 
 const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
@@ -167,7 +214,7 @@ const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: any): { [key: strin
   let links: any[] = [];
   let currentNodeIndex =0;
 
-  nodes.push({ name: currentKeyspace.value });
+  nodes.push({ conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace });
   currentNodeIndex = currentNodeIndex + 1;
 
   let tableIndex = 0;
@@ -177,17 +224,17 @@ const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: any): { [key: strin
     tableIndex = currentNodeIndex;
     links.push({ source: 0, target: tableIndex });
 
-    nodes.push({ name: table.table  });
+    nodes.push({ conceptName: table.table, conceptType: constants.conceptTypes.table });
     currentNodeIndex = currentNodeIndex + 1;
 
     table.columns.forEach((column: any) => {
       columnIndex = currentNodeIndex;
 
-      nodes.push({ name: column.column_name });
+      nodes.push({ conceptName: column.column_name, conceptType: constants.conceptTypes.column });
       currentNodeIndex = currentNodeIndex + 1;
       links.push({ source: tableIndex, target: columnIndex });
 
-      nodes.push({ name: column.column_type });
+      nodes.push({ conceptName: column.column_type, conceptType: constants.conceptTypes.dataType });
       links.push({ source: columnIndex, target: currentNodeIndex });
       currentNodeIndex = currentNodeIndex + 1;
     });
@@ -254,21 +301,42 @@ watch(forceGraph, () => {
 
 <style scoped lang="sass">
 @use "@/assets/styles/_containers.sass"
+@use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_transitions.sass"
 
 .dashboard
   @include containers.flex-container($flex-direction: column, $align-items: flex-start, $justify-content: flex-start)
+  position: relative
   padding: 1rem
   height: 100%
   width: 100%
 
+  .concept-node-lookup-container
+    position: absolute
+    box-shadow: none !important
+    border: 1px solid #e9ecef
+    top: 0
+    left: 0
+
+    .info span:first-of-type
+      margin-right: 0.5rem
+
+    .info span:last-of-type
+      color: variables.$cassandra-app-blue
+
   .dashboard-tag-container
-    @include containers.flex-container($justify-content: flex-end)
+    @include containers.flex-container($flex-direction: column, $align-items: flex-end)
     width: 100%
+
+    .p-tag
+      margin-bottom: 0.5rem
 
   .conceptual-graph-wrapper
     @include containers.flex-container($flex-direction: column, $align-items: center, $justify-content: center)
     flex-grow: 1
     width: 100%
+
+    .svg .circle
+      cursor: move
 
 </style>

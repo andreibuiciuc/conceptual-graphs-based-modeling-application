@@ -1,7 +1,7 @@
 <template>
   <Sidebar v-model:visible="isSidebarOpened" class="w-full md:w-25rem lg:w-30rem">
     <template #header>
-      <InputSwitch v-model="forceGraph" />
+      <InputSwitch v-model="forceGraph" :disabled="!currentKeyspace" />
       <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
     </template>
     <div class="panel-container">
