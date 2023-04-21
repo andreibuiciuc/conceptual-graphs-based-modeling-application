@@ -366,23 +366,20 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
       openNotificationToast('Unexpected error occured', 'error');
     }
 
+    await nextTick();
     isKeyspaceRetrieveInProgress.value = false;
+
+    keyspaceGraph.value.removeArrows();
+    keyspaceGraph.value.drawInitialArrows();
   }
 };
 
 watch(currentKeyspace, async () => {
   await retrieveKeyspaceMetadata();
-  await nextTick();
-  if (!forceGraph.value) {
-    keyspaceGraph.value.removeArrows();
-    keyspaceGraph.value.drawInitialArrows();
-  }
 });
 
 watch(forceGraph, () => {
-  if (forceGraph.value) {
-    retrieveKeyspaceMetadata();
-  }
+  retrieveKeyspaceMetadata();
 });
 
 </script>
