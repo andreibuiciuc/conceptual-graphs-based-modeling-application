@@ -9,14 +9,24 @@
         <template #title>
           concept node lookup
         </template>
+
         <template #content>
           <div class="info">
-            <span>concept name:</span> 
-            <span>{{ conceptForLookup ? conceptForLookup.conceptName : 'not yet' }}</span>
+            <div class="relation-dummy"></div>
+            <div class="concept-dummy"></div>
+            <div class="relation-dummy"></div>
           </div>
           <div class="info">
             <span>concept type:</span>
-            <span>{{ conceptForLookup ? conceptForLookup.conceptType : 'not yet' }}</span>
+            <span>{{ conceptForLookup ? conceptTypeInfoText : 'not selected yet' }}</span>
+          </div>
+          <div class="info">
+            <span>concept name:</span> 
+            <span>{{ conceptForLookup ? conceptForLookup.conceptName : 'not selected yet' }}</span>
+          </div>
+          <div class="info">
+            <span>children count:</span>
+            <span>{{ conceptForLookup ? `${conceptForLookup.childrenCount} child concepts` : 'not selected yet'}}</span>
           </div>
         </template>
       </Card>
@@ -66,10 +76,11 @@ import { useUtilsStore } from "../../stores/utils";
 import { useMetadata } from '../../composables/metadata';
 import { useUtils } from '../../composables/utils';
 
-import { Ref, ref, watch, nextTick } from 'vue';
+import { Ref, ref, watch, nextTick, ComputedRef } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import * as d3 from 'd3';
+import { computed } from '@vue/reactivity';
 
 const utilsStore = useUtilsStore();
 const { forceGraph } = storeToRefs(utilsStore);
@@ -94,15 +105,36 @@ const { currentKeyspace } = storeToRefs(connectionStore);
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
 
-const conceptForLookup: Ref<Concept | null> = ref(null);
+// Functionalities related to the Force Graph representation of the keyspace metadata
+const conceptForLookup: Ref<Concept | any | null> = ref(null);
+
+const conceptTypeNameForCurrentLookupConcept: ComputedRef<string> = computed(() =>{
+  switch (conceptForLookup.value.conceptType) {
+    case constants.conceptTypes.keyspace:
+      return 'keyspace';
+    case constants.conceptTypes.table:
+      return 'table';
+    case constants.conceptTypes.column:
+      return 'column';
+    case constants.conceptTypes.dataType:
+      return 'data type';
+    default:
+      return constants.inputValues.empty;
+  }
+});
+
+const conceptTypeInfoText: ComputedRef<string> = computed(() => {
+  const typeText = conceptTypeNameForCurrentLookupConcept.value;
+  return typeText ? `${conceptForLookup.value.conceptType} (${typeText})` : constants.inputValues.empty;
+});
 
 const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
-
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const svg = d3.select('.svg-container').style('width', width).style('height', height);
-
-  const simulation = d3.forceSimulation(nodes)
+    
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const svg = d3.select('.svg-container').style('width', width).style('height', height);
+    
+    const simulation = d3.forceSimulation(nodes)
     // Apply a 'link' force in order to attract the related nodes
     .force('link', d3.forceLink(links).id((d: any) => d.index))
     // Apply a 'charge' force in order to space out the nodes
@@ -125,7 +157,7 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
     .data(nodes)
     .enter()
     .append('circle')
-    .attr('r', 5)
+    .attr('r', 8)
     .attr('fill', '#3B82F6')
     .attr('stroke', '#3B82F6')
     .on('mouseover', mouseover)
@@ -146,6 +178,17 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
       .attr('cx', d => d.x)
       .attr('cy', d => d.y);
   });
+
+
+  function findChildren(currentNode: any, links: any[]): any[] {
+    const linksWithCurrentNodeAsSource = links.filter((link: any) => link.source.index === currentNode.index);
+    const childNodes = linksWithCurrentNodeAsSource.map((link: any) => nodes[link.target.index]);
+
+    const children = childNodes.flatMap((node: any) => findChildren(node, links));
+
+    return [ ... childNodes, ... children ];
+  };
+
 
   function dragstarted(event: d3.D3DragEvent<SVGCircleElement, any, any>, d: any) {
     if (!event.active) {
@@ -170,16 +213,25 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
   }
 
   function mouseover(_: MouseEvent, d: any) {
-    d3.select(this).style('cursor', 'grab');
-    conceptForLookup.value = { conceptName: d.conceptName, conceptType: d.conceptType };    
+    d3.select(this).attr('cursor', 'grab').attr('r', 10);
+
+    const childNodes = findChildren(d, links);
+    node.filter(n => childNodes.includes(n)).attr('fill', '#ffcc00');
+
+    conceptForLookup.value = <any>{ conceptName: d.conceptName, conceptType: d.conceptType, childrenCount: childNodes.length };
   }
 
-  function mouseout(_event: MouseEvent, _: any) {
+  function mouseout(_: MouseEvent, d: any) {
     conceptForLookup.value = null;
+
+    const childNodes = findChildren(d, links);
+    d3.select(this).attr('r', 8);
+    node.filter(n => childNodes.includes(n)).attr('fill',' #3B82F6');
   }
  
 };
 
+// Functionalities related to the parsing of the keyspace metadata
 const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
   resetKeyspaceMetadata();
   const keyspaceConcept = {
@@ -260,6 +312,7 @@ const resetKeyspaceMetadata = (): void => {
   graphMetadata.value.dataTypes = new Map<string, ConfigurableConcept>();
 };
 
+// Functionalities related to the retrieval of the keyspace metadata
 const retrieveKeyspaceMetadata = async (): Promise<void> => {
   if (currentKeyspace.value) {
     isKeyspaceRetrieveInProgress.value = true;
@@ -317,12 +370,29 @@ watch(forceGraph, () => {
     border: 1px solid #e9ecef
     top: 0
     left: 0
+    padding: 1.5rem
 
-    .info span:first-of-type
-      margin-right: 0.5rem
+    .info 
+      @include containers.flex-container($flex-direction: column, $align-items: center)
+      
+      .relation-dummy
+        width: 1px
+        height: 2rem
+        background-color: variables.$cassandra-black
 
-    .info span:last-of-type
-      color: variables.$cassandra-app-blue
+      .concept-dummy
+        width: 4rem
+        height: 2rem
+        border: 1px solid variables.$cassandra-black
+
+      span:last-of-type
+        color: variables.$cassandra-app-blue
+
+      span:first-of-type
+        margin-right: 0.5rem
+
+      &:first-of-type
+        margin-bottom: 1rem
 
   .dashboard-tag-container
     @include containers.flex-container($flex-direction: column, $align-items: flex-end)
