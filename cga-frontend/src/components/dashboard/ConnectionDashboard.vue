@@ -54,6 +54,26 @@
         />
       </Transition>
 
+      <Transition name="pop-in" mode="out-in">
+        <Tag
+          v-if="forceGraph"
+          icon="pi pi-info"
+          severity="info"
+          value="use the slider to increase the size of the nodes"
+        /> 
+      </Transition>
+
+      <div class="slider-container" v-if="forceGraph">
+        <span>{{ conceptNodeSize }}</span>
+        <Slider 
+          v-model="conceptNodeSize" 
+          class="w-14rem" 
+          :min="4"
+          :max="16"
+          @update:model-value="updateConceptNodeSize"
+        />
+      </div>
+
     </div>
     <div class="conceptual-graph-wrapper">
       <conceptual-graph v-if="!forceGraph && graphMetadata.tables.length" graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
@@ -107,6 +127,9 @@ const { getRelationTypeForColumnConcept } = useMetadata();
 
 // Functionalities related to the Force Graph representation of the keyspace metadata
 const conceptForLookup: Ref<Concept | any | null> = ref(null);
+const conceptNodeSize: Ref<number> = ref(8);
+const forceLinks: Ref<any> = ref(null);
+const forceSimulation: Ref<any> = ref(null);
 
 const conceptTypeNameForCurrentLookupConcept: ComputedRef<string> = computed(() =>{
   switch (conceptForLookup.value.conceptType) {
@@ -142,7 +165,7 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
     // Apply a 'collide' detection force in order to keep the nodes not overlapping
     .force('collision', d3.forceCollide().radius(10))
     // Apply a 'center' force in order to render the nodes around the center of the svg container 
-    .force('center', d3.forceCenter(width / 2, height / 2 - 68))
+    .force('center', d3.forceCenter(width / 2, height / 2 - 168))
 
   const link = svg
     .selectAll<SVGLineElement, any> ('line')
@@ -213,7 +236,8 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
   }
 
   function mouseover(_: MouseEvent, d: any) {
-    d3.select(this).attr('cursor', 'grab').attr('r', 10);
+    const nodeSize = d3.select(this).attr('r');
+    d3.select(this).attr('cursor', 'grab').attr('r', parseInt(nodeSize) + 2);
 
     const childNodes = findChildren(d, links);
     node.filter(n => childNodes.includes(n)).attr('fill', '#ffcc00');
@@ -225,10 +249,21 @@ const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
     conceptForLookup.value = null;
 
     const childNodes = findChildren(d, links);
-    d3.select(this).attr('r', 8);
+
+    const oldNodeSize = d3.select(this).attr('r');
+    d3.select(this).attr('r', parseInt(oldNodeSize) - 2);
     node.filter(n => childNodes.includes(n)).attr('fill',' #3B82F6');
   }
- 
+  
+  forceLinks.value = link;
+  forceSimulation.value = simulation;
+};
+
+const updateConceptNodeSize = (size: number): void => {
+  const svg = d3.select('.svg-container');
+  svg.selectAll<SVGCircleElement, any>('circle').attr('r', size);
+
+  forceSimulation.value.restart();
 };
 
 // Functionalities related to the parsing of the keyspace metadata
@@ -368,6 +403,7 @@ watch(forceGraph, () => {
     position: absolute
     box-shadow: none !important
     border: 1px solid #e9ecef
+    z-index: 1
     top: 0
     left: 0
     padding: 1.5rem
@@ -392,7 +428,7 @@ watch(forceGraph, () => {
         margin-right: 0.5rem
 
       &:first-of-type
-        margin-bottom: 1rem
+        margin-bottom: 1.25rem
 
   .dashboard-tag-container
     @include containers.flex-container($flex-direction: column, $align-items: flex-end)
@@ -400,6 +436,15 @@ watch(forceGraph, () => {
 
     .p-tag
       margin-bottom: 0.5rem
+
+    .slider-container
+      @include containers.flex-container($align-items: baseline)
+      
+      span
+        margin-right: 1rem
+      .p-slider
+        margin-top: 1rem
+        width: 12rem
 
   .conceptual-graph-wrapper
     @include containers.flex-container($flex-direction: column, $align-items: center, $justify-content: center)
