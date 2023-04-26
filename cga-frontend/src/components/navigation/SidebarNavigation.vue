@@ -101,7 +101,7 @@ const renderGraph = async (): Promise<void> => {
   const currentKeyspaceValue = currentKeyspace.value;
   currentKeyspace.value = constants.inputValues.empty;
   currentKeyspace.value = currentKeyspaceValue;
-} 
+};
 
 </script>
 

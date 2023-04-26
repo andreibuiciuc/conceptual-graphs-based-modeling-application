@@ -3,7 +3,7 @@
     <div class="dashboard-tag-container">
       
       <Card
-        v-if="forceGraph"
+        v-if="forceGraph && graphMetadata.keyspace"
         class="concept-node-lookup-container">
         
         <template #title>
@@ -13,7 +13,9 @@
         <template #content>
           <div class="info">
             <div class="relation-dummy"></div>
-            <div class="concept-dummy"></div>
+            <div class="concept-dummy">
+              <span v-if="conceptForLookup">{{ conceptForLookup.conceptType }}</span>
+            </div>
             <div class="relation-dummy"></div>
           </div>
           <div class="info">
@@ -32,13 +34,13 @@
       </Card>
       
       <Transition name="pop-in" mode="out-in">
-        <Tag v-if="forceGraph"
+        <Tag v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
           icon="pi pi-check"
           severity="success"
           value="force graph is the recommended representation of higher volume keyspaces"
         />
         <Tag 
-          v-else
+          v-else-if="cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
           icon="pi pi-exclamation-circle"
           severity="warning"
           value="it is recommended to use the force graph representation for higher volume keyspaces"
@@ -47,7 +49,7 @@
 
       <Transition name="pop-in" mode="out-in">
         <Tag
-          v-if="forceGraph"
+          v-if="forceGraph && currentKeyspace && cassandraServerCredentials.isCassandraServerConnected"
           icon="pi pi-info"
           severity="info"
           value="hover over concept nodes for details"
@@ -56,14 +58,14 @@
 
       <Transition name="pop-in" mode="out-in">
         <Tag
-          v-if="forceGraph"
+          v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected"
           icon="pi pi-info"
           severity="info"
           value="use the slider to increase the size of the nodes"
         /> 
       </Transition>
 
-      <div class="slider-container" v-if="forceGraph">
+      <div class="slider-container" v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected">
         <span>{{ conceptNodeSize }}</span>
         <Slider 
           v-model="conceptNodeSize" 
@@ -113,13 +115,13 @@ const defaultGraphMetadata: GraphMetadata = {
   dataTypes: new Map<string, ConfigurableConcept>()
 };
 
-const graphMetadata: Ref<GraphMetadata> = ref(defaultGraphMetadata);
+const graphMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
 const keyspaceMetadata: Ref<any> = ref(null);
 const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
 
 // Store mappings
 const connectionStore = useConnectionStore();
-const { currentKeyspace } = storeToRefs(connectionStore);
+const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
 
 // Composables
 const { openNotificationToast } = useUtils();
@@ -369,13 +371,26 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
     await nextTick();
     isKeyspaceRetrieveInProgress.value = false;
 
-    keyspaceGraph.value.removeArrows();
-    keyspaceGraph.value.drawInitialArrows();
+    if (!forceGraph.value) {
+      keyspaceGraph.value.removeArrows();
+      keyspaceGraph.value.drawInitialArrows();
+    }
   }
 };
 
 watch(currentKeyspace, async () => {
-  await retrieveKeyspaceMetadata();
+  if (currentKeyspace.value) {
+    if (forceGraph.value) {
+      d3.select('.svg-container').selectAll('*').remove();
+    }
+    await retrieveKeyspaceMetadata();
+  } else {
+    graphMetadata.value = { ... defaultGraphMetadata };
+    if (forceGraph.value) {
+      d3.select('.svg-container').selectAll('*').remove();
+    }
+    forceGraph.value = false;
+  }
 });
 
 watch(forceGraph, () => {
@@ -414,9 +429,13 @@ watch(forceGraph, () => {
         background-color: variables.$cassandra-black
 
       .concept-dummy
+        @include containers.flex-container($justify-content: center, $align-items: center)
         width: 4rem
         height: 2rem
         border: 1px solid variables.$cassandra-black
+
+        span
+          margin-right: 0 !important
 
       span:last-of-type
         color: variables.$cassandra-app-blue

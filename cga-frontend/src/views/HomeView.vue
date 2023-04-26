@@ -57,6 +57,7 @@
     <section class="homepage-section homepage-section__last" id="auth">
       <AuthenticationCard />
     </section>
+    <ScrollTop target="parent" :threshold="500" />
   </div>
 
   <div v-else>

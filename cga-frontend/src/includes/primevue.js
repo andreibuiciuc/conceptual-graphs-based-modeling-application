@@ -23,6 +23,7 @@ import Chip from 'primevue/chip';
 import Menubar from 'primevue/menubar';
 import Tag from 'primevue/tag';
 import Slider from 'primevue/slider';
+import ScrollTop from 'primevue/scrolltop';
 
 export default {
     install(app) {
@@ -52,6 +53,7 @@ export default {
         app.component('Chip', Chip);
         app.component('Tag', Tag);
         app.component('Slider', Slider);
+        app.component('ScrollTop', ScrollTop);
 
         app.directive('tooltip', Tooltip);
     }
