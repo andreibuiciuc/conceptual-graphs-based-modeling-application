@@ -95,13 +95,13 @@ interface DataTableColumn {
 };
 
 interface D3Node {
-    id: string,
-    type: string,
+    conceptName: string
+    conceptType: string,
 };
 
 interface D3Link {
-    source: string,
-    target: string
+    source: number,
+    target: number
 };
 
 export {

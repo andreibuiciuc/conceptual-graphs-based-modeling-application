@@ -72,7 +72,7 @@
           class="w-14rem" 
           :min="4"
           :max="16"
-          @update:model-value="updateConceptNodeSize"
+          @update:model-value="updateConceptNodeSize($event, forceSimulation);"
         />
       </div>
 
@@ -95,6 +95,7 @@ import ConceptualGraph from '../graphic/graph/ConceptualGraph.vue';
 import { useConnectionStore } from "../../stores/connection";
 import { useUtilsStore } from "../../stores/utils";
 
+import { useForceGraph } from '../../composables/forcegraph';
 import { useMetadata } from '../../composables/metadata';
 import { useUtils } from '../../composables/utils';
 
@@ -104,10 +105,7 @@ import { storeToRefs } from 'pinia';
 import * as d3 from 'd3';
 import { computed } from '@vue/reactivity';
 
-const utilsStore = useUtilsStore();
-const { forceGraph } = storeToRefs(utilsStore);
-
-const keyspaceGraph = ref();
+// Constants
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],
@@ -115,6 +113,8 @@ const defaultGraphMetadata: GraphMetadata = {
   dataTypes: new Map<string, ConfigurableConcept>()
 };
 
+// Reactive data
+const keyspaceGraph = ref();
 const graphMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
 const keyspaceMetadata: Ref<any> = ref(null);
 const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
@@ -123,14 +123,17 @@ const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
 const connectionStore = useConnectionStore();
 const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
 
+const utilsStore = useUtilsStore();
+const { forceGraph } = storeToRefs(utilsStore);
+
 // Composables
+const { createForceGraphRepresentation, updateConceptNodeSize } = useForceGraph();
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
 
 // Functionalities related to the Force Graph representation of the keyspace metadata
 const conceptForLookup: Ref<Concept | any | null> = ref(null);
 const conceptNodeSize: Ref<number> = ref(8);
-const forceLinks: Ref<any> = ref(null);
 const forceSimulation: Ref<any> = ref(null);
 
 const conceptTypeNameForCurrentLookupConcept: ComputedRef<string> = computed(() =>{
@@ -153,121 +156,7 @@ const conceptTypeInfoText: ComputedRef<string> = computed(() => {
   return typeText ? `${conceptForLookup.value.conceptType} (${typeText})` : constants.inputValues.empty;
 });
 
-const createForceGraphRepresentation = (nodes: any[], links: any[]): void => {
     
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const svg = d3.select('.svg-container').style('width', width).style('height', height);
-    
-    const simulation = d3.forceSimulation(nodes)
-    // Apply a 'link' force in order to attract the related nodes
-    .force('link', d3.forceLink(links).id((d: any) => d.index))
-    // Apply a 'charge' force in order to space out the nodes
-    .force('charge', d3.forceManyBody().strength(-30))
-    // Apply a 'collide' detection force in order to keep the nodes not overlapping
-    .force('collision', d3.forceCollide().radius(10))
-    // Apply a 'center' force in order to render the nodes around the center of the svg container 
-    .force('center', d3.forceCenter(width / 2, height / 2 - 168))
-
-  const link = svg
-    .selectAll<SVGLineElement, any> ('line')
-    .data(links)
-    .enter()
-    .append('line')
-    .attr('stroke-width', 1)
-    .style('stroke', 'black');
-
-  const node = svg
-    .selectAll<SVGCircleElement, any>('circle')
-    .data(nodes)
-    .enter()
-    .append('circle')
-    .attr('r', 8)
-    .attr('fill', '#3B82F6')
-    .attr('stroke', '#3B82F6')
-    .on('mouseover', mouseover)
-    .on('mouseout', mouseout)
-    .call(d3.drag<SVGCircleElement, any>()
-      .on('start', dragstarted)
-      .on('drag', dragged)
-      .on('end', dragended));
-
-  simulation.on('tick', () => {
-    link
-      .attr('x1', (d: any) => d.source.x)
-      .attr('y1', (d: any) => d.source.y)
-      .attr('x2', (d: any) => d.target.x)
-      .attr('y2', (d: any) => d.target.y);
-
-    node
-      .attr('cx', d => d.x)
-      .attr('cy', d => d.y);
-  });
-
-
-  function findChildren(currentNode: any, links: any[]): any[] {
-    const linksWithCurrentNodeAsSource = links.filter((link: any) => link.source.index === currentNode.index);
-    const childNodes = linksWithCurrentNodeAsSource.map((link: any) => nodes[link.target.index]);
-
-    const children = childNodes.flatMap((node: any) => findChildren(node, links));
-
-    return [ ... childNodes, ... children ];
-  };
-
-
-  function dragstarted(event: d3.D3DragEvent<SVGCircleElement, any, any>, d: any) {
-    if (!event.active) {
-      simulation.alphaTarget(0.3).restart();
-    }
-    d.fx = d.x;
-    d.fy = d.y;
-  }
-
-  function dragged(event: d3.D3DragEvent<SVGCircleElement, any, any>, d: any) {
-    d.fx = event.x;
-    d.fy = event.y;
-    d3.select(this).style('cursor', 'grabbing');
-  }
-
-  function dragended(event: d3.D3DragEvent<SVGCircleElement, any, any>, d: any) {
-    if (!event.active) {
-      simulation.alphaTarget(0);
-    }
-    d.fx = null;
-    d.fy = null;
-  }
-
-  function mouseover(_: MouseEvent, d: any) {
-    const nodeSize = d3.select(this).attr('r');
-    d3.select(this).attr('cursor', 'grab').attr('r', parseInt(nodeSize) + 2);
-
-    const childNodes = findChildren(d, links);
-    node.filter(n => childNodes.includes(n)).attr('fill', '#ffcc00');
-
-    conceptForLookup.value = <any>{ conceptName: d.conceptName, conceptType: d.conceptType, childrenCount: childNodes.length };
-  }
-
-  function mouseout(_: MouseEvent, d: any) {
-    conceptForLookup.value = null;
-
-    const childNodes = findChildren(d, links);
-
-    const oldNodeSize = d3.select(this).attr('r');
-    d3.select(this).attr('r', parseInt(oldNodeSize) - 2);
-    node.filter(n => childNodes.includes(n)).attr('fill',' #3B82F6');
-  }
-  
-  forceLinks.value = link;
-  forceSimulation.value = simulation;
-};
-
-const updateConceptNodeSize = (size: number): void => {
-  const svg = d3.select('.svg-container');
-  svg.selectAll<SVGCircleElement, any>('circle').attr('r', size);
-
-  forceSimulation.value.restart();
-};
-
 // Functionalities related to the parsing of the keyspace metadata
 const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
   resetKeyspaceMetadata();
@@ -299,8 +188,8 @@ const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
 };
 
 const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: any): { [key: string]: any } => {
-  let nodes: any[] = [];
-  let links: any[] = [];
+  let nodes: D3Node[] = [];
+  let links: D3Link[] = [];
   let currentNodeIndex =0;
 
   nodes.push({ conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace });
@@ -335,7 +224,7 @@ const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: any): { [key: strin
 const parseKeyspaceMetadataWrapper = (keyspaceMetadata: any): void => {
   if (forceGraph.value) {
     const { nodes, links} = parseKeyspaceMetadataAsForceGraph(keyspaceMetadata);
-    createForceGraphRepresentation(nodes, links);
+    forceSimulation.value = createForceGraphRepresentation(nodes, links, conceptForLookup);
   } else {
     parseKeyspaceMetadata(keyspaceMetadata);
   }
