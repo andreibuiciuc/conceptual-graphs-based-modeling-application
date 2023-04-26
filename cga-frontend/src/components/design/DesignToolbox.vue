@@ -255,7 +255,7 @@ const doesColumnConceptAlreadyExists: ComputedRef<boolean> = computed(() => {
 });
 
 const isAddColumnConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
-  return areColumnConceptFieldsCompleted && !doesColumnConceptAlreadyExists.value;
+  return areColumnConceptFieldsCompleted.value && !doesColumnConceptAlreadyExists.value;
 });
 
 

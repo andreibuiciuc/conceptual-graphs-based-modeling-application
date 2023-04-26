@@ -66,7 +66,7 @@ import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/type
 import constants from '../constants/constants';
 import { useMetadata } from '../composables/metadata';
 import { useConfetti } from '../composables/confetti';
-import { conceptualGraphsCollection } from '../includes/firebase';
+import { conceptualGraphsCollection, auth } from '../includes/firebase';
 
 // Functions mapped from composables
 const { generateQueryAsString, generateQueryAsCommands } = useQuery();
@@ -159,7 +159,7 @@ const saveTableMetadata = async (): Promise<void> => {
 
   try {
     const currentTableConcept: Concept = tableMetadata.value.tables.at(0)!;
-    await conceptualGraphsCollection.add({
+    await conceptualGraphsCollection.doc(auth.currentUser?.uid).set({
       tableName: currentTableConcept.conceptName,
       tableConcepts: tableMetadata.value.tables,
       columnConcepts: Object.fromEntries(tableMetadata.value.columns),
