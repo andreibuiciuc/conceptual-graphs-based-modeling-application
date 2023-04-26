@@ -5,6 +5,9 @@ import { useUtils } from "../composables/utils";
 import { Ref, ref } from "vue";
 
 export const useConnectionStore = defineStore('connection', () => {
+
+  // Store responsible for the connection to Cassandra servers
+
   const cassandraServerCredentials: Ref<any> = ref(null);
   const currentKeyspace: Ref<string> = ref(constants.inputValues.empty);
   const availableKeyspaces: Ref<string[]> = ref([]);
@@ -14,19 +17,23 @@ export const useConnectionStore = defineStore('connection', () => {
 
   async function connect (): Promise<void> {
     isConnectionButtonTriggerd.value = true;
-    const response = await manageRequest(constants.requestTypes.GET, 'connection/on', {
-      host: cassandraServerCredentials.value.ipAddress,
-      port: cassandraServerCredentials.value.port
-    });
-    if (response && response.data) {
-      if (response.data.status === constants.requestStatus.SUCCESS) {
-        cassandraServerCredentials.value.isCassandraServerConnected = true;
-        openNotificationToast(`Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} established.`, 'success');
-        retrieveKeyspaces();
-      } else {
-        openNotificationToast(response.data.message, 'error');
-        isConnectionButtonTriggerd.value = false;
+    try {
+      const response = await manageRequest(constants.requestTypes.GET, 'connection/on', {
+        host: cassandraServerCredentials.value.ipAddress,
+        port: cassandraServerCredentials.value.port
+      });
+      if (response && response.data) {
+        if (response.data.status === constants.requestStatus.SUCCESS) {
+          cassandraServerCredentials.value.isCassandraServerConnected = true;
+          openNotificationToast(`Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} established.`, 'success');
+          retrieveKeyspaces();
+        } else {
+          openNotificationToast(response.data.message, 'error');
+          isConnectionButtonTriggerd.value = false;
+        }
       }
+    } catch (exception: any) {
+      openNotificationToast('unexpected network error occured. contact the CGA admin for assistance', 'error');
     }
   }
 

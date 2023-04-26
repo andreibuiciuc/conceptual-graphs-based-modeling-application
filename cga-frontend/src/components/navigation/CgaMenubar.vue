@@ -1,10 +1,11 @@
 <template>
-    <Menubar :model="menuItems" :class="{ 'p-menubar-with-border-bottom': isUserLoggedIn || currentScrollYPosition > 0 }">
+    <Menubar :model="menuItems" 
+      >
         <template #start>
             <img src="/cassandra.png" height="32" />
         </template>
         <template #item="{ item }">
-          <RouterLink :to="item.to" class="p-menuitem-link">
+          <RouterLink :to="item.to" class="p-menuitem-link" v-if="isUserLoggedIn">
             <i class="p-menuitem-icon" :class="item.icon"></i>
             <span class="p-menuitem-text">
               {{ item.label }}
@@ -58,7 +59,7 @@ const onAccountItemClick = (): void => {
   } else {
     const authSectionElement = document.getElementById('auth');
     if (authSectionElement) {
-      authSectionElement.scrollIntoView({ behavior: "smooth" });
+      authSectionElement.scrollIntoView({ behavior: "smooth", block: 'end' });
     }
   }
 };
@@ -70,13 +71,21 @@ const onAccountItemClick = (): void => {
 @use '@/assets/styles/_containers.sass'
 
 .p-menubar
-    z-index: 999
     background-color: variables.$cassandra-white !important
     border: none !important
     height: 68px
+    position: sticky !important
+    top: 0px
+    z-index: 1004
+    transform: translateY(0%)
+    position: fixed
+    left: 0px
+    width: calc((100% - 0px) - 0px)
 
     &.p-menubar-with-border-bottom
         border-bottom: 1px solid variables.$cassandra-light-gray !important
+        border-bottom-left-radius: 0
+        border-bottom-right-radius: 0
 
     .p-menubar-start, .p-menubar-end
         @include containers.flex-container($align-items: center)

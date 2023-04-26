@@ -244,7 +244,6 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
       return ;
     }
 
-    debugger 
     for (let columnIndex in props.queryConcepts[QueryClause.ORDER_BY].columns) {
       const columnConcept: Concept | undefined = props.queryConcepts[QueryClause.ORDER_BY].columns[parseInt(columnIndex)];
       const index = props.graphMetadata.columns.get(currentTable.conceptName)?.findIndex(concept => concept.conceptName === columnConcept?.conceptName);
@@ -258,6 +257,7 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
         createArrow(orderByConceptElement, orderByReferentElement);
       }
     }
+    
   }
 };
 
@@ -377,17 +377,9 @@ defineExpose({
   margin-bottom: 1.5em
   position: relative
 
-  .v-btn
-    position: absolute
-    top: -45%
-    left: 65%
-    min-width: 0
-
-    .v-icon
-      color: variables.$cassandra-red
-
-    &:hover > .v-btn__overlay
-      opacity: 0
+  &:hover .tf-nc
+    cursor: pointer
+    border-color: 1px solid variables.$cassandra-app-blue
 
 li.column-concept-hoverable:hover .tf-nc
     background-color: variables.$cassandra-light-blue

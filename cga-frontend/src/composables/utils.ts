@@ -19,7 +19,7 @@ export function useUtils() {
       severity,
       summary,
       detail,
-      life: TOAST_LIFETIME,
+      life: severity === 'error' ? undefined : TOAST_LIFETIME,
     });
   };
 

@@ -41,7 +41,7 @@ const toolbar: Toolbar = {
       title: "query design",
       value: "query",
       icon: "mdi-database-search",
-      pathTo: "query-design",
+      pathTo: "query",
       active: false,
     },
   ]
