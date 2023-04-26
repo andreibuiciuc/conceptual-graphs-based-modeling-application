@@ -43,13 +43,12 @@
                   >
                   <span class="concept-type">{{ columnConcept.conceptType }}:</span>
                   <span class="concept-name">{{ columnConcept.conceptName }}</span>
-                  <v-btn
-                    v-if="areColumnConceptsDeletable"
-                    @click="removeColumnConcept(tableConcept, columnConcept)"
-                    variant="text"
-                  >
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
+                  <i 
+                    v-if="areColumnConceptsDeletable" 
+                    class="pi pi-times" 
+                    style="font-size: 1.5rem;" 
+                    @click="removeColumnConcept(tableConcept, columnConcept)">
+                  </i>
                 </div>
                 <ul v-if="graphMetadata.dataTypes.size">
                   <!-- Type level -->
@@ -257,7 +256,7 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
         createArrow(orderByConceptElement, orderByReferentElement);
       }
     }
-    
+
   }
 };
 
@@ -380,9 +379,21 @@ defineExpose({
   &:hover .tf-nc
     cursor: pointer
     border-color: 1px solid variables.$cassandra-app-blue
+  
+  .pi
+    position: absolute
+    top: 0
+    right: 0
+    font-size: 1rem !important
 
-li.column-concept-hoverable:hover .tf-nc
-    background-color: variables.$cassandra-light-blue
+  .pi:hover
+    cursor: pointer
+    color: variables.$cassandra-red
+
+li.column-concept-hoverable:hover 
+  
+  .tf-nc
+    border-color: variables.$cassandra-app-blue
 
 .tf-tree li ul
   margin: 0.5em 0
@@ -400,7 +411,7 @@ li.column-concept-hoverable:hover .tf-nc
   margin-bottom: 1em
 
 .concept-type
-  color: variables.$cassandra-blue
+  color: variables.$cassandra-app-blue
   font-weight: bold
   margin-right: 0.25em
 
@@ -424,7 +435,7 @@ li.column-concept-hoverable:hover .tf-nc
     border-color: variables.$cassandra-white !important
 
 .conceptual-graph-with-border
-  border: 1px dashed variables.$cassandra-blue
+  border: 1px dashed variables.$cassandra-app-blue
   width: 100%
 
 .tf-nc::after, .tf-nc::before, .tf-tree .tf-nc:before, .tf-tree .tf-nc:after

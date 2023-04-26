@@ -13,7 +13,6 @@
             id="ip"
             placeholder="ip address" 
             maxlength="15"
-            class="mt-4"
             :disabled="cassandraServerCredentials.isCassandraServerConnected"
             :readonly="cassandraServerCredentials.isCassandraServerConnected" 
           />
@@ -26,7 +25,6 @@
             id="port"
             placeholder="port"
             maxlength="4"
-            class="mt-2 mb-12"
             :disabled="cassandraServerCredentials.isCassandraServerConnected"
             :readonly="cassandraServerCredentials.isCassandraServerConnected" 
           />
