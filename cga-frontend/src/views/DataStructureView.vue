@@ -8,6 +8,7 @@
         <Button
           outlined
           severity="primary"
+          icon="pi pi-credit-card"
           label="command"
           :disabled="!isGraphRendered"
           @click="generateCQLQuery"
@@ -15,6 +16,7 @@
         <Button
           outlined
           severity="primary"
+          icon="pi pi-save"
           label="save"
           :disabled="!isGraphRendered"
           @click="saveTableMetadata"

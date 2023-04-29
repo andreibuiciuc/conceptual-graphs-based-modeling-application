@@ -14,9 +14,10 @@
           @change="changeTable">
         </Dropdown>
         <Button 
-          label="save"  
-          outlined 
           severity="primary" 
+          label="save" 
+          icon="pi pi-save" 
+          outlined 
           :disabled="true"
         />
       </div>
@@ -95,14 +96,16 @@
           <Divider layout="vertical" />
           <Button 
             label="command" 
-            outlined 
             severity="primary" 
+            icon="pi pi-credit-card"
+            outlined 
             :disabled="!areQueryActionsEnabled" 
             @click="openQueryTerminal" />
           <Button 
             label="run" 
-            outlined 
             severity="primary" 
+            icon="pi pi-server"
+            outlined 
             :disabled="!areQueryActionsEnabled" 
             @click="runQuery" 
           />
