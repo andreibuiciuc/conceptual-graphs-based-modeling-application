@@ -66,7 +66,9 @@
         <Button 
           outlined 
           severity="primary" 
-          label="connect" 
+          label="connect"
+          icon="pi pi-angle-right"
+          :class="!forceGraph && cassandraServerCredentials.isCassandraServerConnected && currentKeyspace  ? 'animated-button' : null" 
           @click="isSidebarOpened = true" 
         />
         <Transition name="pop-in" mode="out-in">

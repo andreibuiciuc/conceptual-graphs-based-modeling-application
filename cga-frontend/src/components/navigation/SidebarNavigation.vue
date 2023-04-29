@@ -1,7 +1,7 @@
 <template>
   <Sidebar v-model:visible="isSidebarOpened" class="w-full md:w-25rem lg:w-30rem">
     <template #header>
-      <InputSwitch v-model="forceGraph" :disabled="!currentKeyspace" />
+      <InputSwitch v-model="forceGraph" :disabled="!currentKeyspace" :class="{ 'animated-switch': !forceGraph && currentKeyspace }" />
       <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
     </template>
     <div class="panel-container">
@@ -32,6 +32,7 @@
         <Button 
           outlined 
           severity="primary" 
+          icon="pi pi-ellipsis-h"
           label="prefill with default network" 
           :disabled="cassandraServerCredentials.isCassandraServerConnected"
           @click="autoCompleteServerCredentials" 
@@ -39,6 +40,7 @@
         <Button 
           outlined
           severity="primary"
+          :icon="cassandraServerCredentials.isCassandraServerConnected ? 'pi pi-circle-fill' : 'pi pi-circle'"
           :label="cassandraServerCredentials.isCassandraServerConnected ? 'disconnect' : 'connect'"
           :disabled="!isConnectionButtonEnabled || isConnectionButtonTriggered"
           :loading="isConnectionButtonTriggered"
@@ -57,6 +59,7 @@
       <Button 
         outlined
         severity="primary"
+        icon="pi pi-sitemap"
         label="re-render conceptual graph"
         :disabled="!cassandraServerCredentials.isCassandraServerConnected"
         @click="renderGraph"
@@ -107,6 +110,8 @@ const renderGraph = async (): Promise<void> => {
 
 <style lang="sass">
 @use "@/assets/styles/_containers.sass"
+@use '@/assets/styles/_transitions.sass'
+
 
 .p-sidebar
   width: 25rem !important

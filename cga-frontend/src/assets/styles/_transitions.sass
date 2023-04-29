@@ -1,3 +1,5 @@
+@use '@/assets/styles/_variables.sass'
+
 // Sass classes responsible for the fade in transition
 .pop-in-enter-active 
   transition: all 0.3s ease-out
@@ -8,3 +10,22 @@
 .pop-in-enter-from, .pop-in-leave-to
   transform: translateX(3rem)
   opacity: 0
+
+// Sass classes responsible for the animated button
+.animated-button .pi 
+  animation: animation-button-color-change 1.5s infinite linear
+
+.animated-switch .p-inputswitch .p-inputswitch-slider:before
+  animation: animation-switch-color-change 1.5s infinite linear
+
+@keyframes animation-button-color-change
+  0%
+    color: variables.$cassandra-white
+  100%
+    color: #F59E0B
+
+@keyframes animation-switch-color-change
+  0%
+    background: variables.$cassandra-white !important
+  100%
+    background: #F59E0B !important

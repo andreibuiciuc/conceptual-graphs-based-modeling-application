@@ -47,6 +47,7 @@ const { updateConceptNodeSize } = useForceGraph();
     border-left: 2px solid variables.$cassandra-app-blue
     padding: 1.5rem
     width: 100%
+    height: 100%
     
     .slider-container
         @include containers.flex-container($align-items: baseline)

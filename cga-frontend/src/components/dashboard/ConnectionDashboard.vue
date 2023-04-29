@@ -39,12 +39,6 @@
       </Transition> -->
 
     </div>
-
-    <!-- <div class="conceptual-graph-wrapper">
-      <conceptual-graph v-if="!forceGraph && graphMetadata.tables.length" graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
-      <svg class="svg-container" v-else></svg>
-    </div> -->
-
 </template>
 
 <script setup lang="ts">
@@ -243,6 +237,7 @@ watch(forceGraph, () => {
 
   .dashboard-column-container
     @include containers.flex-container($flex-direction: column)
+    height: 100%
 
     &:not(:last-of-type)
       margin-right: 1rem
