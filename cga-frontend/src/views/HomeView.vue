@@ -335,12 +335,6 @@ onMounted(() => {
   @include containers.flex-container($flex-direction: column)
   height: calc(100vh - 68px)
 
-  .header-container
-    justify-content: flex-start
-
-    & > *:not(:last-child)
-      margin-right: 2rem
-
 @keyframes floating-oval-animation__first
   0%
     transform: translateX(-50%) translateY(-50%) rotate(25deg) translateX(35%)

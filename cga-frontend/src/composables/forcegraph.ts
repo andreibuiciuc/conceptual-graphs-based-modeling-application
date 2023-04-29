@@ -14,20 +14,21 @@ export function useForceGraph() {
      * @returns d3 force simulation object
      */
     const createForceGraphRepresentation = (nodes: D3Node[], links: D3Link[], conceptForLookup: Ref<Concept | any>): d3.Simulation<d3.SimulationNodeDatum, undefined> => {
-    
-        const width = window.innerWidth - 21 * 16;
-        const height = window.innerHeight;
-        const svg = d3.select('.svg-container').style('width', width).style('height', height);
-        
-        const simulation = d3.forceSimulation(<any>nodes)
-        // Apply a 'link' force in order to attract the related nodes
-        .force('link', d3.forceLink(links).id((d: any) => d.index))
-        // Apply a 'charge' force in order to space out the nodes
-        .force('charge', d3.forceManyBody().strength(-30))
-        // Apply a 'collide' detection force in order to keep the nodes not overlapping
-        .force('collision', d3.forceCollide().radius(10))
-        // Apply a 'center' force in order to render the nodes around the center of the svg container 
-        .force('center', d3.forceCenter(width / 2, height / 2 - 168))
+      const svg = d3.select('.svg-container').style('width', '100%').style('height', '100%');
+      
+      const svgElement: HTMLElement = document.querySelector('.svg-container')!;
+      const svgElementWidth = svgElement.clientWidth;
+      const svgElementHeight = svgElement.clientHeight;
+      
+      const simulation = d3.forceSimulation(<any>nodes)
+      // Apply a 'link' force in order to attract the related nodes
+      .force('link', d3.forceLink(links).id((d: any) => d.index))
+      // Apply a 'charge' force in order to space out the nodes
+      .force('charge', d3.forceManyBody().strength(-30))
+      // Apply a 'collide' detection force in order to keep the nodes not overlapping
+      .force('collision', d3.forceCollide().radius(10))
+      // Apply a 'center' force in order to render the nodes around the center of the svg container 
+      .force('center', d3.forceCenter(svgElementWidth / 2, svgElementHeight / 2));
     
       const link = svg
         .selectAll<SVGLineElement, any> ('line')
