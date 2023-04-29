@@ -1,53 +1,26 @@
 <template>
   <div class="dashboard">
-    <div class="dashboard-tag-container">
-      
-      <Card
-        v-if="forceGraph && graphMetadata.keyspace"
-        class="concept-node-lookup-container">
-        
-        <template #title>
-          concept node lookup
-        </template>
 
-        <template #content>
-          <div class="info">
-            <div class="relation-dummy"></div>
-            <div class="concept-dummy">
-              <span v-if="conceptForLookup">{{ conceptForLookup.conceptType }}</span>
-            </div>
-            <div class="relation-dummy"></div>
-          </div>
-          <div class="info">
-            <span>concept type:</span>
-            <span>{{ conceptForLookup ? conceptTypeInfoText : 'not selected yet' }}</span>
-          </div>
-          <div class="info">
-            <span>concept name:</span> 
-            <span>{{ conceptForLookup ? conceptForLookup.conceptName : 'not selected yet' }}</span>
-          </div>
-          <div class="info">
-            <span>children count:</span>
-            <span>{{ conceptForLookup ? `${conceptForLookup.childrenCount} child concepts` : 'not selected yet'}}</span>
-          </div>
-        </template>
-      </Card>
-      
-      <Transition name="pop-in" mode="out-in">
-        <Tag v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
-          icon="pi pi-check"
-          severity="success"
-          value="force graph is the recommended representation of higher volume keyspaces"
-        />
-        <Tag 
-          v-else-if="cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
-          icon="pi pi-exclamation-circle"
-          severity="warning"
-          value="it is recommended to use the force graph representation for higher volume keyspaces"
-        />
-      </Transition>
+    <div class="dashboard-column-container" v-if="forceGraph">
+      <CgaLookupCard v-if="forceGraph && graphMetadata.keyspace" :concept-for-lookup="conceptForLookup" />
+      <CgaForceConfigCard v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected" :force-simulation="forceSimulation" />
+    </div>
 
-      <Transition name="pop-in" mode="out-in">
+    <div class="dashboard-column-container conceptual-graph-wrapper">
+        <template v-if="!forceGraph && graphMetadata.tables.length">
+          <svg class="svg-clip-container">
+            <defs>
+              <clipPath id="clip">
+                <rect x="0" y="0" />
+              </clipPath>
+            </defs>
+          </svg>
+          <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
+        </template>
+      <svg class="svg-container" v-else></svg>
+    </div>
+      
+      <!-- <Transition name="pop-in" mode="out-in">
         <Tag
           v-if="forceGraph && currentKeyspace && cassandraServerCredentials.isCassandraServerConnected"
           icon="pi pi-info"
@@ -63,25 +36,15 @@
           severity="info"
           value="use the slider to increase the size of the nodes"
         /> 
-      </Transition>
-
-      <div class="slider-container" v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected">
-        <span>{{ conceptNodeSize }}</span>
-        <Slider 
-          v-model="conceptNodeSize" 
-          class="w-14rem" 
-          :min="4"
-          :max="16"
-          @update:model-value="updateConceptNodeSize($event, forceSimulation);"
-        />
-      </div>
+      </Transition> -->
 
     </div>
-    <div class="conceptual-graph-wrapper">
+
+    <!-- <div class="conceptual-graph-wrapper">
       <conceptual-graph v-if="!forceGraph && graphMetadata.tables.length" graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
       <svg class="svg-container" v-else></svg>
-    </div>
-  </div>
+    </div> -->
+
 </template>
 
 <script setup lang="ts">
@@ -91,6 +54,8 @@ import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../
 import { manageRequest } from '../../includes/requests';
 
 import ConceptualGraph from '../graphic/graph/ConceptualGraph.vue';
+import CgaLookupCard from '../graphic/cards/CgaLookupCard.vue';
+import CgaForceConfigCard from '../graphic/cards/CgaForceConfigCard.vue';
 
 import { useConnectionStore } from "../../stores/connection";
 import { useUtilsStore } from "../../stores/utils";
@@ -99,11 +64,10 @@ import { useForceGraph } from '../../composables/forcegraph';
 import { useMetadata } from '../../composables/metadata';
 import { useUtils } from '../../composables/utils';
 
-import { Ref, ref, watch, nextTick, ComputedRef } from 'vue';
+import { Ref, ref, watch, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import * as d3 from 'd3';
-import { computed } from '@vue/reactivity';
 
 // Constants
 const defaultGraphMetadata: GraphMetadata = {
@@ -127,36 +91,14 @@ const utilsStore = useUtilsStore();
 const { forceGraph } = storeToRefs(utilsStore);
 
 // Composables
-const { createForceGraphRepresentation, updateConceptNodeSize } = useForceGraph();
+const { createForceGraphRepresentation } = useForceGraph();
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
 
 // Functionalities related to the Force Graph representation of the keyspace metadata
 const conceptForLookup: Ref<Concept | any | null> = ref(null);
-const conceptNodeSize: Ref<number> = ref(8);
 const forceSimulation: Ref<any> = ref(null);
 
-const conceptTypeNameForCurrentLookupConcept: ComputedRef<string> = computed(() =>{
-  switch (conceptForLookup.value.conceptType) {
-    case constants.conceptTypes.keyspace:
-      return 'keyspace';
-    case constants.conceptTypes.table:
-      return 'table';
-    case constants.conceptTypes.column:
-      return 'column';
-    case constants.conceptTypes.dataType:
-      return 'data type';
-    default:
-      return constants.inputValues.empty;
-  }
-});
-
-const conceptTypeInfoText: ComputedRef<string> = computed(() => {
-  const typeText = conceptTypeNameForCurrentLookupConcept.value;
-  return typeText ? `${conceptForLookup.value.conceptType} (${typeText})` : constants.inputValues.empty;
-});
-
-    
 // Functionalities related to the parsing of the keyspace metadata
 const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
   resetKeyspaceMetadata();
@@ -294,46 +236,20 @@ watch(forceGraph, () => {
 @use "@/assets/styles/_transitions.sass"
 
 .dashboard
-  @include containers.flex-container($flex-direction: column, $align-items: flex-start, $justify-content: flex-start)
-  position: relative
+  @include containers.flex-container($flex-direction: row)
   padding: 1rem
   height: 100%
   width: 100%
 
-  .concept-node-lookup-container
-    position: absolute
-    box-shadow: none !important
-    border: 1px solid #e9ecef
-    z-index: 1
-    top: 0
-    left: 0
-    padding: 1.5rem
+  .dashboard-column-container
+    @include containers.flex-container($flex-direction: column)
 
-    .info 
-      @include containers.flex-container($flex-direction: column, $align-items: center)
-      
-      .relation-dummy
-        width: 1px
-        height: 2rem
-        background-color: variables.$cassandra-black
+    &:not(:last-of-type)
+      margin-right: 1rem
 
-      .concept-dummy
-        @include containers.flex-container($justify-content: center, $align-items: center)
-        width: 4rem
-        height: 2rem
-        border: 1px solid variables.$cassandra-black
+    *:not(:last-child)
+      margin-bottom: 1rem
 
-        span
-          margin-right: 0 !important
-
-      span:last-of-type
-        color: variables.$cassandra-app-blue
-
-      span:first-of-type
-        margin-right: 0.5rem
-
-      &:first-of-type
-        margin-bottom: 1.25rem
 
   .dashboard-tag-container
     @include containers.flex-container($flex-direction: column, $align-items: flex-end)
@@ -342,21 +258,29 @@ watch(forceGraph, () => {
     .p-tag
       margin-bottom: 0.5rem
 
-    .slider-container
-      @include containers.flex-container($align-items: baseline)
-      
-      span
-        margin-right: 1rem
-      .p-slider
-        margin-top: 1rem
-        width: 12rem
-
   .conceptual-graph-wrapper
     @include containers.flex-container($flex-direction: column, $align-items: center, $justify-content: center)
-    flex-grow: 1
+    border: 1px solid #e9ecef
     width: 100%
+    height: 100%
+    position: relative
+    clip-path: url(#clip)
 
     .svg .circle
       cursor: move
+
+    .svg-clip-container
+      position: absolute
+      top: 0
+      left: 0
+      width: calc(100% - 1rem)
+      height: 100%
+
+      rect
+        position: absolute
+        top:0
+        left: 0
+        width: 100%
+        height: 101%
 
 </style>

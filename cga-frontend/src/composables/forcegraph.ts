@@ -15,7 +15,7 @@ export function useForceGraph() {
      */
     const createForceGraphRepresentation = (nodes: D3Node[], links: D3Link[], conceptForLookup: Ref<Concept | any>): d3.Simulation<d3.SimulationNodeDatum, undefined> => {
     
-        const width = window.innerWidth;
+        const width = window.innerWidth - 21 * 16;
         const height = window.innerHeight;
         const svg = d3.select('.svg-container').style('width', width).style('height', height);
         
@@ -126,11 +126,11 @@ export function useForceGraph() {
      * @param size new size of the nodes
      * @param simulation reference to the current force simulation
      */
-    const updateConceptNodeSize = (size: number, simulation: Ref<d3.Simulation<d3.SimulationNodeDatum, undefined>>): void => {
+    const updateConceptNodeSize = (size: number, simulation: d3.Simulation<d3.SimulationNodeDatum, undefined>): void => {
         const svg = d3.select('.svg-container');
         svg.selectAll<SVGCircleElement, any>('circle').attr('r', size);
       
-        simulation.value.restart();
+        simulation.restart();
       };
 
     return {

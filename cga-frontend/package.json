@@ -9,6 +9,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@astrajs/rest": "^0.3.4",
     "@vee-validate/rules": "^4.7.3",
     "@vueuse/core": "^9.13.0",
     "animejs": "^3.2.1",

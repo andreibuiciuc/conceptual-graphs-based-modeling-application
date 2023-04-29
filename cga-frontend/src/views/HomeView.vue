@@ -63,14 +63,25 @@
   <div v-else>
     <div class="console-section">
       <div class="header-container">
-        <div class="header-division">
-          <Button 
-            outlined 
-            severity="primary" 
-            label="connect" 
-            @click="isSidebarOpened = true" 
+        <Button 
+          outlined 
+          severity="primary" 
+          label="connect" 
+          @click="isSidebarOpened = true" 
+        />
+        <Transition name="pop-in" mode="out-in">
+          <Tag v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
+            icon="pi pi-check"
+            severity="success"
+            value="force graph is the recommended representation of higher volume keyspaces"
           />
-        </div>
+          <Tag 
+            v-else-if="cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
+            icon="pi pi-exclamation-triangle"
+            severity="warning"
+            value="it is recommended to use the force graph representation for higher volume keyspaces"
+          />
+        </Transition>
       </div>
       <ConnectionDashboard />
     </div>
@@ -91,13 +102,18 @@ import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue
 import { onMounted } from 'vue';
 import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
 import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
+import { useConnectionStore } from '../stores/connection';
 
 // Store state mappings
 const userStore = useUserStore();
 const utilsStore = useUtilsStore();
 
 const { isUserLoggedIn } = storeToRefs(userStore);
-const { currentScrollYPosition, isSidebarOpened } = storeToRefs(utilsStore);
+const { currentScrollYPosition, isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
+
+// Store mappings
+const connectionStore = useConnectionStore();
+const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
 
 const homepageElement: Ref<HTMLElement | null> = ref(null);
 const bannerElement: Ref<HTMLElement | null> = ref(null);
@@ -130,6 +146,7 @@ onMounted(() => {
 <style lang="sass">
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
+@use "@/assets/styles/_transitions.sass"
 
 .homepage
   overflow-y: auto
@@ -317,6 +334,12 @@ onMounted(() => {
 .console-section
   @include containers.flex-container($flex-direction: column)
   height: calc(100vh - 68px)
+
+  .header-container
+    justify-content: flex-start
+
+    & > *:not(:last-child)
+      margin-right: 2rem
 
 @keyframes floating-oval-animation__first
   0%

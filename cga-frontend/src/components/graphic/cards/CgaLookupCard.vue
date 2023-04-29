@@ -66,13 +66,12 @@ const conceptTypeInfoText: ComputedRef<string> = computed(() => {
 @use "@/assets/styles/_variables.sass"
 
 .concept-node-lookup-container
-    position: absolute
     box-shadow: none !important
     border: 1px solid #e9ecef
+    border-left: 2px solid variables.$cassandra-app-blue
     z-index: 1
-    top: 0
-    left: 0
     padding: 1.5rem
+    width: 21rem
 
     .info 
       @include containers.flex-container($flex-direction: column, $align-items: center)
