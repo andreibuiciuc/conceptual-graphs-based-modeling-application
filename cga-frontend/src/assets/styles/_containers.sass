@@ -37,6 +37,7 @@ section
     height: variables.$cga-header-height
     min-height: variables.$cga-header-height
     border-bottom: 1px solid #e9ecef
+    margin-top: variables.$cga-header-height
     width: 100%
     padding: 1.25rem 2rem
 
@@ -110,6 +111,21 @@ section
 
 .flex-column
     align-items: center
+
+// Menubar
+.p-menubar
+    border-radius: 0 !important
+    border: none !important
+    border-bottom: 1px solid variables.$cassandra-light-gray !important
+
+.p-menubar .p-menubar-root-list > .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content
+    background: none !important
+
+    &:hover
+        background: none !important
+
+        & *
+            color: variables.$cassandra-app-blue !important
 
 // Confirmation Popup
 .p-confirm-popup .flex

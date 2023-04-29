@@ -209,8 +209,7 @@ $transition-all-time: 0.5s
 
 .design-section
   @include containers.flex-container($flex-direction: column)
-  // margin-top: variables.$cga-topbar-height
-  // height: calc(100vh - variables.$cga-topbar-height)
+  height: 100vh
 
   .design-container
     @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
