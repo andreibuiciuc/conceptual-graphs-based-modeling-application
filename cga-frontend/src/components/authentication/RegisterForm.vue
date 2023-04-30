@@ -53,12 +53,13 @@
 </template>
 
 <script setup lang="ts">
-import constants from "../../constants/constants";
-import { RegisterCredentials } from "../../types/types";
+import constants from '@/constants/constants';
+import { RegisterCredentials } from '@/types/auth/types';
 
-import { useUserStore } from "../../stores/user";
+import { useUserStore } from '@/stores/user';
+import { useUtils } from '@/composables/utils';
+
 import { Ref, ref } from "vue";
-import { useUtils } from "../../composables/utils";
 
 // Data
 const registerValidationSchema = {

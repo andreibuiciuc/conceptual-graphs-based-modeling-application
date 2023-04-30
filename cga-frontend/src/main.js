@@ -1,6 +1,7 @@
 import { auth } from "@/includes/firebase";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
+import { retrieveAllEntities } from './includes/astra'
 import App from "./App.vue";
 import PrimeVuePlugin from './includes/primevue';
 import VeeValidatePlugin from "./includes/validation";
@@ -27,6 +28,8 @@ const vuetify = createVuetify({
     defaultSet: "mdi",
   },
 });
+
+retrieveAllEntities();
 
 let app;
 auth.onAuthStateChanged(() => {
