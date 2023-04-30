@@ -12,7 +12,6 @@ function createRequestURL(endpoint: string) {
   return `${urlPrefix}${server.HOST}:${server.PORT}/${endpoint}`;
 }
 
-// TODO: Improve types
 function manageRequest(requestType: string, endpoint: string, payload: object | null = null) {
   const requestURL = createRequestURL(endpoint);
   switch (requestType) {

@@ -1,4 +1,3 @@
-// import { astraClient, basePath } from "./includes/astra";
 import { auth } from "@/includes/firebase";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
@@ -28,8 +27,6 @@ const vuetify = createVuetify({
     defaultSet: "mdi",
   },
 });
-
-console.log(import.meta.env.VITE_TEST);
 
 let app;
 auth.onAuthStateChanged(() => {

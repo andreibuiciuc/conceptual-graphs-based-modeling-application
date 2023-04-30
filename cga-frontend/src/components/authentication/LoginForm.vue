@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import constants from '../../constants/constants';
-import { LoginCredentials } from '../../types/types';
+import { LoginCredentials } from '@/types/auth/types';
 import { useUserStore } from '../../stores/user';
 import { useUtils } from '../../composables/utils';
 import { Ref, ref } from 'vue';

@@ -1,13 +1,3 @@
-// Authentication types
-interface LoginCredentials {
-    email: string
-    password: string
-};
-
-interface RegisterCredentials extends LoginCredentials {
-    firstname: string
-    lastname: string
-};
 
 // Conceptual Graphs types
 interface Concept {
@@ -105,8 +95,6 @@ interface D3Link {
 };
 
 export {
-    LoginCredentials,
-    RegisterCredentials,
     //
     QueryClause,
     Concept,

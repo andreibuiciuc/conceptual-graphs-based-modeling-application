@@ -1,11 +1,13 @@
 {
     "compilerOptions": {
+      "baseUrl": ".",
       "target": "esnext",
       "module": "esnext",
       "moduleResolution": "node",
-      "importHelpers": true,
-      "isolatedModules": true,
-      "noEmit": true,
-      "types": ["vite/client"]
-    }
+      "paths": {
+        "@/*": ["src/*"]
+      },
+      "types": ["node", "vite/client"],
+      "typeRoots": [ "../node_modules/@types" ]
+    },
   }
