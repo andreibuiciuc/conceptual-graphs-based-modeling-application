@@ -25,7 +25,7 @@ const createRequestURL = (endpoint: string): string => {
  * @param payload custom payload for request
  * @returns Promise with the Axios response received from the server
  */
-const manageRequest = (requestType: RequestType, endpoint: string, payload: object | null = null, customEndpoint?: string, headers?: object): Promise<AxiosResponse<any, any>> => {
+const manageRequest = (requestType: RequestType, endpoint: string, payload: object | null = null, customEndpoint?: string, headers?: {[key: string]: string}): Promise<AxiosResponse<any, any>> => {
 
   let requestURL = customEndpoint ? customEndpoint : createRequestURL(endpoint);
   
