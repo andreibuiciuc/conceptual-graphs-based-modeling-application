@@ -54,7 +54,7 @@ const connectionStore = useConnectionStore();
 const { cassandraServerCredentials } = storeToRefs(connectionStore);
 
 const utilsStore = useUtilsStore();
-const { currentScrollYPosition } = storeToRefs(utilsStore);
+const { currentScrollYPosition, isLoginInModal } = storeToRefs(utilsStore);
 
 // Router
 const router = useRouter();
@@ -87,9 +87,13 @@ const onAccountItemClick = (): void => {
     userStore.signOut();
     router.push({ name: 'home' });
   } else {
-    const authSectionElement = document.getElementById('auth');
-    if (authSectionElement) {
-      authSectionElement.scrollIntoView({ behavior: "smooth", block: 'end' });
+    if (router.currentRoute.value.name === 'home') {
+      const authSectionElement = document.getElementById('auth');
+      if (authSectionElement) {
+        authSectionElement.scrollIntoView({ behavior: "smooth", block: 'end' });
+      }
+    } else {
+      isLoginInModal.value = true;
     }
   }
 };

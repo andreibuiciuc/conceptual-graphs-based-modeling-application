@@ -35,8 +35,11 @@
 import constants from '@/constants/constants';
 import { LoginCredentials } from '@/types/auth/types';
 import { useUserStore } from '@/stores/user'
+import { useUtilsStore } from '@/stores/utils';
 import { useUtils } from '@/composables/utils'
 import { Ref, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router';
 
 const loginValidationSchema = {
   email: 'required|min:3|max:50|email',
@@ -49,9 +52,14 @@ const isLoginInSubmission: Ref<boolean> = ref(false);
 
 // Store state and actions mappings
 const userStore = useUserStore();
+const utilsStore = useUtilsStore();
+const { isLoginInModal } = storeToRefs(utilsStore);
 
 // Composables
 const { openNotificationToast } = useUtils();
+
+// Router
+const router = useRouter();
 
 // Functions related to the Login flow
 const login = async (): Promise<void> => {
@@ -68,6 +76,12 @@ const login = async (): Promise<void> => {
 
 const handleSuccessfulLogin = (): void => {
   isLoginInSubmission.value = false;
+
+  if (router.currentRoute.value.name === 'demo') {
+    isLoginInModal.value = false;
+    router.push({ name: 'home' });
+  }
+
   openNotificationToast(constants.snackbarMessages.loginSuccess, 'success');
 };
 

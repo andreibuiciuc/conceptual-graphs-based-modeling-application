@@ -4,6 +4,9 @@
       <div class="authentication-card-first-half">
       </div>
       <div class="authentication-card-second-half">
+        <div class="authentication-card-header-actions" v-if="isAuthInsideModal">
+          <i class="pi pi-times" style="font-size: 1.5rem;" @click="isLoginInModal = false"></i>
+        </div>
         <div class="authentication-card-content">
           <div class="authentication-card-title">
             <span>{{ isRegisterFormActive ? 'register' : 'login' }}</span>
@@ -19,14 +22,25 @@
 
 <script setup lang="ts">
 import { useMouseInElement } from '@vueuse/core';
+import { useUtilsStore } from '@/stores/utils';
 
 import RegisterForm from './RegisterForm.vue';
 import LoginForm from "./LoginForm.vue";
 import { Ref, ref } from 'vue';
 import { computed } from '@vue/reactivity';
 import constants from '../../constants/constants';
+import { storeToRefs } from 'pinia';
 
+interface Props {
+  isAuthInsideModal?: boolean
+};
+
+const props = defineProps<Props>();
 const isRegisterFormActive: Ref<boolean> = ref(true);
+
+// Store mappings
+const utilsStore = useUtilsStore();
+const { isLoginInModal } = storeToRefs(utilsStore);
 
 // Tilt functionality
 const target = ref(null);
@@ -47,6 +61,7 @@ const cardTilt = computed(() => {
 
 .authentication-card-wrapper
   @include containers.flex-container($justify-content: center, $align-items: center)
+  overflow: hidden
 
   .authentication-card
     @include containers.flex-container($flex-direction: row)
@@ -65,10 +80,18 @@ const cardTilt = computed(() => {
       border-bottom-left-radius: 1.5rem
 
     .authentication-card-second-half
+      background-color: variables.$cassandra-white !important
       border: 1px solid variables.$cassandra-light-gray
       padding: 2.5rem
       border-top-right-radius: 1.5rem
       border-bottom-right-radius: 1.5rem
+
+      .authentication-card-header-actions
+        @include containers.flex-container($justify-content: flex-end)
+        width: 100%
+
+        .pi:hover
+          cursor: pointer
 
       .authentication-card-content
         @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
