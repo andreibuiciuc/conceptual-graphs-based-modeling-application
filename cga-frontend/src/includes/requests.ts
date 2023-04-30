@@ -4,9 +4,8 @@ import constants from "../constants/constants";
 const urlPrefix = "http://";
 
 const server = {
-  // Address and port for the uvicorn server
-  HOST: "127.0.0.1",
-  PORT: "8001",
+  HOST: import.meta.env.VITE_UVICORN_SERVER_HOST,
+  PORT: import.meta.env.VITE_UVICORN_SERVER_PORT
 };
 
 function createRequestURL(endpoint: string) {

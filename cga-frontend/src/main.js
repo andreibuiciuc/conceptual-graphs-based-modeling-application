@@ -1,25 +1,18 @@
-// Vue app and state management related imports
+// import { astraClient, basePath } from "./includes/astra";
+import { auth } from "@/includes/firebase";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
+import App from "./App.vue";
+import PrimeVuePlugin from './includes/primevue';
+import VeeValidatePlugin from "./includes/validation";
+import router from "./router";
 
+// TODO: Remove after full PrimeVue migration
 // Vuetify related imports
 import "vuetify/styles";
 import { createVuetify } from "vuetify/lib/framework.mjs";
 import * as components from "vuetify/lib/components/index.mjs";
 import * as directives from "vuetify/lib/directives/index.mjs";
-
-// Router related imports
-import router from "./router";
-
-// Plugins
-import VeeValidatePlugin from "./includes/validation";
-import PrimeVuePlugin from './includes/primevue';
-
-// Firebase related imports
-import { auth } from "@/includes/firebase";
-
-// Root component
-import App from "./App.vue";
 
 // Styles imports
 import "./assets/main.css";
@@ -35,6 +28,8 @@ const vuetify = createVuetify({
     defaultSet: "mdi",
   },
 });
+
+console.log(import.meta.env.VITE_TEST);
 
 let app;
 auth.onAuthStateChanged(() => {
