@@ -1,24 +1,5 @@
-interface NavigationItem {
-  title: string,
-  pathTo: string,
-  subtitle?: string,
-  avatar?: string,
-  key?: string,
-  value?: string,
-  icon?: string,
-  active?: boolean
-};
+import { Toolbar, MenuItem } from '@/types/navigation/types';
 
-interface Toolbar {
-  navigationHeader: NavigationItem,
-  navigationItems: NavigationItem[]
-};
-
-interface MenuItem {
-  label: string,
-  icon: string,
-  to: string
-};
 
 const toolbar: Toolbar = {
   navigationHeader: {
@@ -47,7 +28,7 @@ const toolbar: Toolbar = {
   ]
 };
 
-const menuItems: MenuItem[] = [
+const authenticatedMenuItems: MenuItem[] = [
   {
     label: 'console',
     icon: 'pi pi-home',
@@ -63,12 +44,18 @@ const menuItems: MenuItem[] = [
     icon: 'pi pi-database',
     to: 'query'
   }
-]; 
+];
+
+const unauthenticatedMenuItems: MenuItem[] = [
+  {
+    label: 'try it out',
+    icon: 'pi pi-code',
+    to: 'demo'
+  }
+];
 
 export {
-  NavigationItem,
-  Toolbar,
-  toolbar,
-  menuItems
+  authenticatedMenuItems,
+  unauthenticatedMenuItems
 };
 

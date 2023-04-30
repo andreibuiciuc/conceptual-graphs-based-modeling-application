@@ -1,10 +1,17 @@
 <template>
-  <Menubar :model="menuItems" :class="{ 'p-menubar-translucent': !isUserLoggedIn, 'p-menubar-solid': isUserLoggedIn }">
+  <Menubar 
+    :model="menuItems" 
+    :class="{ 'p-menubar-translucent': isTranslucentEffectApplied, 
+              'p-menubar-solid': !isTranslucentEffectApplied, 
+              'p-menubar-with-border-bottom': isBorderBottomAppliedToMenubar }"
+  >
     <template #start>
-      <img src="/cassandra.png" height="32" />
+      <RouterLink :to="{ name: 'home' }">
+        <img src="/cassandra.png" height="32" />
+      </RouterLink>
     </template>
     <template #item="{ item }">
-      <RouterLink :to="item.to" class="p-menuitem-link" v-if="isUserLoggedIn">
+      <RouterLink :to="item.to" class="p-menuitem-link">
         <i class="p-menuitem-icon" :class="item.icon"></i>
         <span class="p-menuitem-text">
           {{ item.label }}
@@ -25,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { menuItems } from './navigationConstants';
+import { authenticatedMenuItems, unauthenticatedMenuItems } from './navigationConstants';
 
 import { useConnectionStore } from '../../stores/connection';
 import { useUserStore } from '../../stores/user';
@@ -33,21 +40,45 @@ import { useUtilsStore } from '../../stores/utils';
 
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
+import { ComputedRef, computed } from 'vue';
+import { MenuItem } from '@/types/navigation/types';
+
+const SCROLL_Y_POSITION_OFFSET = 10;
 
 // Composables
 const userStore = useUserStore();
 const { isUserLoggedIn } = storeToRefs(userStore);
 
+// Store mappings
 const connectionStore = useConnectionStore();
 const { cassandraServerCredentials } = storeToRefs(connectionStore);
 
 const utilsStore = useUtilsStore();
 const { currentScrollYPosition } = storeToRefs(utilsStore);
 
+// Router
 const router = useRouter();
 
 
+// Functionalities related to the menubar configurations
+const isBorderBottomAppliedToMenubar: ComputedRef<boolean> = computed(() => {
+  return isUserLoggedIn ? currentScrollYPosition.value > SCROLL_Y_POSITION_OFFSET : true;
+});
+
+const isTranslucentEffectApplied: ComputedRef<boolean> = computed(() => {
+  return !isUserLoggedIn || router.currentRoute.value.name !== 'demo';
+});
+
+
 // Functionalities related to the menubar navigation
+const menuItems: ComputedRef<MenuItem[]> = computed(() => {
+  if (isUserLoggedIn.value) {
+    return authenticatedMenuItems;
+  } else {
+    return unauthenticatedMenuItems;
+  }
+});
+
 const onAccountItemClick = (): void => {
   if (isUserLoggedIn.value) {
     if (cassandraServerCredentials.value.isCassandraServerConnected) {
@@ -83,11 +114,10 @@ const onAccountItemClick = (): void => {
   z-index: 1004
   transform: translateY(0%)
   width: 100%
+  border-bottom: none !important
 
   &.p-menubar-with-border-bottom
     border-bottom: 1px solid variables.$cassandra-light-gray !important
-    border-bottom-left-radius: 0
-    border-bottom-right-radius: 0
 
   .p-menubar-start, .p-menubar-end
     @include containers.flex-container($align-items: center)
