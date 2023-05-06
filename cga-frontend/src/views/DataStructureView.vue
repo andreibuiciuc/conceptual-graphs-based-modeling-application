@@ -126,6 +126,7 @@ const renderConceptualGraph = async (metadata: GraphMetadata, clusteringOption: 
     isGraphRendered.value = true;
     tableMetadata.value = { ... metadata };
     clusteringColumnOption.value = { ... clusteringOption };
+    
     await nextTick();
     tableGraph.value.removeArrows();
     tableGraph.value.drawInitialArrows();
@@ -133,7 +134,7 @@ const renderConceptualGraph = async (metadata: GraphMetadata, clusteringOption: 
   }
 };
 
-const removeColumnConcept = (tableAndColumnConcepts: any): void => {
+const removeColumnConcept = async (tableAndColumnConcepts: any): Promise<void> => {
   if (tableAndColumnConcepts) {
     const tableConceptIndex = tableMetadata.value.tables.findIndex((x: Concept) => x.conceptName === tableAndColumnConcepts.tableConcept.conceptName);
     if (tableConceptIndex > -1) {
@@ -142,6 +143,11 @@ const removeColumnConcept = (tableAndColumnConcepts: any): void => {
       if (columnConceptIndex !== undefined && columnConceptIndex > -1) {
         tableMetadata.value.columns.get(tableConceptName)?.splice(columnConceptIndex, 1);
       }
+
+      await nextTick();
+      tableGraph.value.removeArrows();
+      tableGraph.value.drawInitialArrows();
+      tableGraph.value.drawArrowsForConcepts();
     }
   }
 };

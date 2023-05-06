@@ -8,36 +8,18 @@
 
     <div class="dashboard-column-container conceptual-graph-wrapper">
         <template v-if="!forceGraph && graphMetadata.tables.length">
-          <svg class="svg-clip-container">
-            <defs>
-              <clipPath id="clip">
-                <rect x="0" y="0" />
-              </clipPath>
-            </defs>
-          </svg>
+            <!-- <svg class="svg-clip-container">
+              <defs>
+                <clipPath id="clip">
+                  <rect x="0" y="0" />
+                </clipPath>
+              </defs>
+            </svg> -->
           <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
         </template>
       <svg class="svg-container" v-else></svg>
     </div>
       
-      <!-- <Transition name="pop-in" mode="out-in">
-        <Tag
-          v-if="forceGraph && currentKeyspace && cassandraServerCredentials.isCassandraServerConnected"
-          icon="pi pi-info"
-          severity="info"
-          value="hover over concept nodes for details"
-        />
-      </Transition>
-
-      <Transition name="pop-in" mode="out-in">
-        <Tag
-          v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected"
-          icon="pi pi-info"
-          severity="info"
-          value="use the slider to increase the size of the nodes"
-        /> 
-      </Transition> -->
-
     </div>
 </template>
 
@@ -126,7 +108,7 @@ const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
 const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: any): { [key: string]: any } => {
   let nodes: D3Node[] = [];
   let links: D3Link[] = [];
-  let currentNodeIndex =0;
+  let currentNodeIndex = 0;
 
   nodes.push({ conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace });
   currentNodeIndex = currentNodeIndex + 1;

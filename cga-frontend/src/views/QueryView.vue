@@ -44,7 +44,6 @@
           :are-tables-collapsable="false"
           :are-columns-selectable="false"
           :are-column-concepts-deletable="true"
-          :query-concepts="queryConcepts"
           :is-query-graph="true"
           @remove="removeColumnFromQuery"
         />
@@ -198,6 +197,7 @@ import { useQuery } from '../composables/query';
 import { storeToRefs } from 'pinia';
 import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
+import { type } from 'os';
 
 
 const defaultGraphMetadata: GraphMetadata = {
@@ -214,7 +214,7 @@ const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMeta
 const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
-const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
+// const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept, 
         computeConceptReferentValue,
@@ -233,7 +233,7 @@ const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
 const connectionStore = useConnectionStore();
 const queryStore = useQueryStore();
 const { currentKeyspace } = storeToRefs(connectionStore); 
-const { whereClauseItems, orderByClauseItems, groupByClauseItems, aggregateFunctionsItems } = storeToRefs(queryStore);
+const { whereClauseItems, orderByClauseItems, groupByClauseItems, aggregateFunctionsItems, queryConcepts } = storeToRefs(queryStore);
 
 // Retrieve and parsing of the metadata
 const availableTables: Ref<string[]> = ref([]);
@@ -302,12 +302,12 @@ const retrieveTableMetadata = async (): Promise<void> => {
       // Wait for the graph components to be mounted on the DOM,
       // then draw the arrows between the concepts
       await nextTick();
-      tableGraph.value.removeArrows();
-      tableGraph.value.drawInitialArrows();
-      tableGraph.value.drawArrowsForConcepts();
-      queryGraph.value.removeArrows();
-      queryGraph.value.drawInitialArrows();
-      queryGraph.value.drawArrowsForConcepts();
+      tableGraph.value.rerenderArrows();
+
+      if (queryGraph.value && typeof queryGraph.value.rerenderArrows === 'function') {
+        await nextTick();
+        queryGraph.value.rerenderArrows();
+      }
 
     } else {
       openNotificationToast(response.data.message, 'error');
@@ -375,8 +375,7 @@ const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
       columns?.push({ ... columnConcept, relation: constants.relationTypes.has });
     }
     await nextTick();
-    queryGraph.value.removeArrows();
-    queryGraph.value.drawArrowsForConcepts();
+    queryGraph.value.rerenderArrows();
   } else {
     openNotificationToast(`column ${columnConcept.conceptName} already added to the query`, 'error');
   }
@@ -394,9 +393,7 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
       break;
   }
   await nextTick();
-  queryGraph.value.removeArrows();  
-  queryGraph.value.drawArrowsForConcepts();
-  queryGraph.value.drawArrowsForQueryConcepts();
+  queryGraph.value.rerenderArrows();
 };
 
 const addClauseToQuery = (clause: QueryClause | null): void => {
@@ -450,22 +447,17 @@ const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
 };
 
 // Functions related to the removal of query columns, clauses and data
-const clearQueryClauses = () => {
-  whereClauseItems.value = [];
-  orderByClauseItems.value = [];
-  groupByClauseItems.value = [];
-  aggregateFunctionsItems.value = [];
-};
 
 const clearQueryMetadata = () => {
-  queryMetadata.value.columns.set(queryMetadata.value.tables[0].conceptName, []);
-  queryConcepts.value[QueryClause.WHERE].columns = [];
-  clearQueryClauses();
+  // Reset the state of the clause items and query concepts
+  queryStore.resetQueryClauseItems();
+  queryStore.resetQueryConcepts();
 
   // Re-draw the Query Conceptual Graph without the query concepts
-  queryGraph.value.removeArrows();
-  queryGraph.value.drawInitialArrows();
-  queryGraph.value.drawArrowsForConcepts();
+  if (queryGraph.value && typeof queryGraph.value.rerenderArrows === 'function') {
+    queryGraph.value.rerenderArrows();
+  }
+  
 };
 
 const getItemsByClauseType = (clause: QueryClause): QueryItem[] => {
@@ -496,14 +488,19 @@ const removeClause = (clauseObject: any): void => {
   }
 }
 
-const removeColumnFromQuery = (columnMetadata) => {
+const removeColumnFromQuery = async (columnMetadata): Promise<void> => {
   if (columnMetadata) {
+    
     const tableConceptName = queryMetadata.value.tables[0].conceptName;
     const columnConceptIndex = queryMetadata.value.columns.get(tableConceptName)!.findIndex(x => x.conceptName === columnMetadata.columnConcept.conceptName);
+    
     if (columnConceptIndex > -1) {
       queryMetadata.value.columns.get(tableConceptName)!.splice(columnConceptIndex, 1);
       delete queryConcepts.value[columnMetadata.columnConcept.conceptName];
+      await nextTick();
+      queryGraph.value.rerenderArrows();
     }
+    
   }
 }
 
@@ -651,8 +648,6 @@ if (currentKeyspace.value) {
 } else {
   openNotificationToast('no selected keyspace', 'warn');
 }
-
-clearQueryClauses();
 
 </script>
 

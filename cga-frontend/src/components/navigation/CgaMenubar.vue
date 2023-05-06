@@ -62,11 +62,11 @@ const router = useRouter();
 
 // Functionalities related to the menubar configurations
 const isBorderBottomAppliedToMenubar: ComputedRef<boolean> = computed(() => {
-  return isUserLoggedIn ? currentScrollYPosition.value > SCROLL_Y_POSITION_OFFSET : true;
+  return !isUserLoggedIn.value ? currentScrollYPosition.value > SCROLL_Y_POSITION_OFFSET : true;
 });
 
 const isTranslucentEffectApplied: ComputedRef<boolean> = computed(() => {
-  return !isUserLoggedIn || router.currentRoute.value.name !== 'demo';
+  return !isUserLoggedIn.value || router.currentRoute.value.name !== 'demo';
 });
 
 

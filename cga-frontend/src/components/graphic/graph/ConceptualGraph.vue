@@ -103,12 +103,15 @@
 </template>
 
 <script setup lang="ts">
-import { ComputedRef, Ref, nextTick, onUnmounted, ref } from 'vue';
 import constants from '../../../constants/constants';
 import { QueryClause, Concept, ConfigurableConcept, GraphMetadata } from "../../../types/types";
 
+import { useQueryStore } from '@/stores/query';
+
 import arrowCreate from 'arrows-svg';
 import { computed } from '@vue/reactivity';
+import { ComputedRef, Ref, nextTick, onUnmounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 
 interface Props {
   graphMetadata: GraphMetadata
@@ -116,7 +119,6 @@ interface Props {
   applyBorder?: boolean
   noKeyspace?: boolean
   isQueryGraph?: boolean
-  queryConcepts?: Object
   areTablesCollapsable?: boolean,
   areColumnConceptsDeletable?: boolean
   areColumnsSelectable?: boolean
@@ -126,9 +128,15 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['select', 'remove']);
 
-const arrows: Ref<any> = ref([]);
+// Store mappings
+const queryStore = useQueryStore();
+const { queryConcepts } = storeToRefs(queryStore);
 
-const createArrow = (sourceNode: any, targetNode: any, relatedConcept: Concept | null = null) => {
+// Functionalities related to the creation and drawing of svg arrows.
+
+const arrows: Ref<any[]> = ref([]);
+
+const createArrow = (sourceNode: HTMLElement, targetNode: HTMLElement, relatedConcept: Concept | null = null) => {
   
   if (!sourceNode || !targetNode) {
     return;
@@ -145,9 +153,10 @@ const createArrow = (sourceNode: any, targetNode: any, relatedConcept: Concept |
     },
     updateDelay: 0
   });
+
+  // Attach the related (parent) concept to the current arrow.
   arrow.relatedNode = relatedConcept;
   
-  // Add class for the arrow svg
   if (relatedConcept) {
     arrow.node.firstElementChild.setAttribute('related-concept', `${relatedConcept.conceptName}`);
   }
@@ -155,13 +164,11 @@ const createArrow = (sourceNode: any, targetNode: any, relatedConcept: Concept |
   const elementRef = document.getElementById(`${props.graphKey}_conceptualGraph`);
   if (elementRef) {
     elementRef.append(arrow.node);
+    arrows.value.push(arrow);
   }
   
 };
 
-const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
-  return tableConcept && props.graphMetadata.tables.length && props.graphMetadata.columns && props.graphMetadata.columns.size;
-}
 
 const drawArrowsForConcept = async (tableConcept: Concept): Promise<void> => {
   await nextTick();
@@ -217,12 +224,12 @@ const drawArrowsForConcepts = async (): Promise<void> => {
 };
 
 const drawArrowsForWhereQueryConcepts = async (): Promise<void> => {
-  if (props.queryConcepts && props.queryConcepts[QueryClause.WHERE].columns) {
+  if (queryConcepts.value && queryConcepts.value[QueryClause.WHERE].columns) {
     await nextTick();
     const currentTableConceptName = props.graphMetadata.tables[0].conceptName;
 
-    for (let columnIndex in props.queryConcepts[QueryClause.WHERE].columns) {
-      const columnConcept = props.queryConcepts[QueryClause.WHERE].columns[parseInt(columnIndex)];
+    for (let columnIndex in queryConcepts.value[QueryClause.WHERE].columns) {
+      const columnConcept = queryConcepts.value[QueryClause.WHERE].columns[parseInt(columnIndex)];
       const index = props.graphMetadata.columns.get(currentTableConceptName)?.findIndex(x => x.conceptName === columnConcept.conceptName);
 
       const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${currentTableConceptName}_columnConcept_${index}`);
@@ -236,15 +243,15 @@ const drawArrowsForWhereQueryConcepts = async (): Promise<void> => {
 };
 
 const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
-  if (props.queryConcepts && props.queryConcepts[QueryClause.ORDER_BY].columns) {
+  if (queryConcepts.value && queryConcepts.value[QueryClause.ORDER_BY].columns) {
     await nextTick();
     const currentTable: Concept | undefined = props.graphMetadata.tables.at(0);
     if (!currentTable) {
       return ;
     }
 
-    for (let columnIndex in props.queryConcepts[QueryClause.ORDER_BY].columns) {
-      const columnConcept: Concept | undefined = props.queryConcepts[QueryClause.ORDER_BY].columns[parseInt(columnIndex)];
+    for (let columnIndex in queryConcepts.value[QueryClause.ORDER_BY].columns) {
+      const columnConcept: Concept | undefined = queryConcepts.value[QueryClause.ORDER_BY].columns[parseInt(columnIndex)];
       const index = props.graphMetadata.columns.get(currentTable.conceptName)?.findIndex(concept => concept.conceptName === columnConcept?.conceptName);
       if (columnConcept && index && index > -1) {
         
@@ -306,27 +313,13 @@ const drawInitialArrows = async (): Promise<void> => {
   drawArrowsForConcepts();
 };
 
-const removeArrows = (relatedConcept: Concept | null = null) => {
-  if (!relatedConcept) {
-    arrows.value.forEach((arrow: any) => arrow.clear());
-  } else {
-    removeArrowForChildrenConcepts(relatedConcept);
-  }
+// Functionalities related to the removal of columns and svg arrows
+const removeArrows = () => {
+  arrows.value.forEach((arrow: any) => arrow.clear());
 };
 
-const removeArrowForChildrenConcepts = (parentConcept: Concept): void => {
-  arrows.value.forEach((arrow: any) => {
-    if (arrow.relatedNode === parentConcept) {
-      arrow.clear();
-    }
-  });
-}
-
-const removeColumnConcept = (tableConcept: Concept, columnConcept: Concept) => {
-  if (columnConcept) {
-    removeArrows(columnConcept);
-    emit('remove', { tableConcept, columnConcept });
-  }
+const removeColumnConcept = async (tableConcept: Concept, columnConcept: Concept) => {
+  emit('remove', { tableConcept, columnConcept });
 };
 
 const expandTable = (tableConcept: ConfigurableConcept): void => {
@@ -351,12 +344,23 @@ const selectColumn = (columnConcept: Concept) => {
 };
 
 const isOutConceptVisible: ComputedRef<boolean> = computed(() => {
-  return props.queryConcepts && (props.queryConcepts[QueryClause.WHERE].columns.length ||
-    props.queryConcepts[QueryClause.ORDER_BY].columns.length);
+  return queryConcepts.value && (queryConcepts.value[QueryClause.WHERE].columns.length || queryConcepts.value[QueryClause.ORDER_BY].columns.length);
 });
+
+const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
+  return tableConcept && props.graphMetadata.tables.length && props.graphMetadata.columns && props.graphMetadata.columns.size;
+}
+
+const rerenderArrows = (): void => {
+  removeArrows();
+  drawInitialArrows(); 
+  drawArrowsForConcepts();
+};
 
 onUnmounted(() => {
   removeArrows();
+  queryStore.resetQueryClauseItems();
+  queryStore.resetQueryConcepts();
 });
 
 defineExpose({
@@ -364,6 +368,7 @@ defineExpose({
   drawArrowsForQueryConcepts,
   drawInitialArrows,
   removeArrows,
+  rerenderArrows
 });
 
 </script>

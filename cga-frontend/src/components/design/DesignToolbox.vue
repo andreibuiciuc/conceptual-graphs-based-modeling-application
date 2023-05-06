@@ -258,7 +258,6 @@ const isAddColumnConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
   return areColumnConceptFieldsCompleted.value && !doesColumnConceptAlreadyExists.value;
 });
 
-
 const addTableConceptToGraph = (): void => {
   tableMetadata.value.keyspace = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
   tableMetadata.value.tables = [{ ... currentTableConcept.value, relation: constants.relationTypes.hasMore }];
