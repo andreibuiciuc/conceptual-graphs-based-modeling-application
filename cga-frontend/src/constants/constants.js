@@ -105,7 +105,24 @@ export default {
     },
     get: {
       count: {
-        conceptReferent: ''
+        conceptReferent: '',
+        aggregatedColumns: []
+      },
+      min: {
+        conceptReferent: '',
+        aggregatedColumns: []
+      },
+      max: {
+        conceptReferent: '',
+        aggregatedColumns: []
+      },
+      avg: {
+        conceptReferent: '',
+        aggregatedColumns: []
+      },
+      sum: {
+        conceptReferent: '',
+        aggregatedColumns: []
       }
     }
   }

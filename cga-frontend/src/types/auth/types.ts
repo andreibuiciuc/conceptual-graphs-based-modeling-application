@@ -1,5 +1,5 @@
 interface LoginCredentials {
-    email: string
+    readonly email: string
     password: string
 };
 

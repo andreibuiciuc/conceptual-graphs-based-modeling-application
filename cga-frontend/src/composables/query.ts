@@ -224,29 +224,35 @@ export function useQuery() {
 
         const aggregationFunctionsSnippet = computeAggregationFunctionSnippet(queryConcepts);
         if (aggregationFunctionsSnippet) {
-            lineContent = lineContent.concat(aggregationFunctionsSnippet);
-            lineContent = lineContent.slice(0, lineContent.length - 2);
+            lineContent = lineContent.concat(', ').concat(aggregationFunctionsSnippet);
         }
 
         lineContent = lineContent.concat(` FROM ${connectionStore.currentKeyspace}.${currentTable.conceptName}`)
         addCQLCommandLine(commands, lineContent);
     };
 
-
+    /**
+     * Computes the aggregation functions snippet for the SELECT CQL statement.
+     * @param queryConcepts concepts related to the query
+     * @returns string snippet of the aggregation functions
+     */
     const computeAggregationFunctionSnippet = (queryConcepts: QueryConcepts): string => {
         let aggregationFunctionsSnippet = '';
-        let addedFirstAggregateFunction = false;
         
         ['count', 'min', 'max', 'avg', 'sum'].forEach((aggregateFunctionName: string) => {
-            if (queryConcepts.get[aggregateFunctionName] && queryConcepts.get[aggregateFunctionName].aggregatedColumn) {
-                if (!addedFirstAggregateFunction) {
-                    aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(', ');
-                    addedFirstAggregateFunction = true;
-                }
-                aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(`${aggregateFunctionName.toUpperCase()}(${queryConcepts.get[aggregateFunctionName].aggregatedColumn}), `);
+            if (queryConcepts.get[aggregateFunctionName] && queryConcepts.get[aggregateFunctionName].aggregatedColumns.length) {
+                
+                let currentAggregationFunctionSnippet = '';
+                queryConcepts.get[aggregateFunctionName].aggregatedColumns.forEach((columnConcept: Concept) => {
+                    currentAggregationFunctionSnippet = currentAggregationFunctionSnippet.concat(`${aggregateFunctionName.toUpperCase()}(${columnConcept.conceptName}), `);
+                });
+                currentAggregationFunctionSnippet = currentAggregationFunctionSnippet.slice(0, currentAggregationFunctionSnippet.length - 2);
+                
+                aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(currentAggregationFunctionSnippet).concat(', ');
             }
         });
 
+        aggregationFunctionsSnippet = aggregationFunctionsSnippet.slice(0, aggregationFunctionsSnippet.length - 2);
         return aggregationFunctionsSnippet;  
     };
 

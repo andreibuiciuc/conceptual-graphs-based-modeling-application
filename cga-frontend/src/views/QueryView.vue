@@ -118,7 +118,7 @@
               v-if="whereClauseItems.length" 
               :table-metadata="tableMetadata"
               :clause="QueryClause.WHERE" 
-              :columns="columnConcepts" 
+              :columns="selectedColumnConcepts" 
               :state="whereClauseItemsState"
               @add="addQueryConcept"
               @remove="removeClause"
@@ -138,7 +138,7 @@
             <query-items
               v-if="groupByClauseItems.length"
               :clause="QueryClause.GROUP_BY"
-              :columns="columnConcepts"
+              :columns="selectedColumnConcepts"
               :state="groupByClauseItemsState"
               @add="addQueryConcept"
               @remove="removeClause"
@@ -174,7 +174,7 @@
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '../constants/constants';
-import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType, QueryItem } from '../types/types';
+import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction } from '../types/types';
 import { manageRequest } from '../includes/requests';
 
 // Component imports
@@ -207,11 +207,11 @@ const defaultGraphMetadata: GraphMetadata = {
 
 const tableGraph = ref();
 const queryGraph = ref();
-
 const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
+
 
 const { getRelationTypeForColumnConcept, 
         computeConceptReferentValue,
@@ -223,15 +223,16 @@ const { getRelationTypeForColumnConcept,
         getHeadersForQueryResults,
         validateQuery 
       } = useMetadata();
-
 const { openNotificationToast, copyToClipboard } = useUtils();
 const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
+
 
 // Store state and action mappings
 const connectionStore = useConnectionStore();
 const queryStore = useQueryStore();
 const { currentKeyspace } = storeToRefs(connectionStore); 
 const { whereClauseItems, orderByClauseItems, groupByClauseItems, aggregateFunctionsItems, queryConcepts } = storeToRefs(queryStore);
+    
 
 // Retrieve and parsing of the metadata
 const availableTables: Ref<string[]> = ref([]);
@@ -330,6 +331,7 @@ const setConceptualGraphMetadata = (metadata: Ref<GraphMetadata>, tables: Concep
   }
 }
 
+
 // Query builder functionalities
 const isTableMetadataReady: ComputedRef<boolean> = computed(() => {
   return !!currentKeyspace.value && !!tableMetadata.value.tables.length && !!tableMetadata.value.columns.size && !!tableMetadata.value.dataTypes.size;
@@ -346,14 +348,6 @@ const orderByClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
 const groupByClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
 const aggregateFunctionsItemsState: Ref<string> = ref(constants.inputValues.empty);
 
-const columnConcepts = computed(() => {
-  return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
-});
-
-const conceptsForAggregateFunctions: ComputedRef<Concept[]> = computed(() => {
-  return [ ... columnConcepts.value, { conceptName: 'all', conceptType: constants.conceptTypes.column } ];
-});
-
 const clusteringColumns: ComputedRef<Concept[]> = computed(() => {
   const currentTable: Concept | undefined = tableMetadata.value.tables.at(0);
   if (!currentTable) {
@@ -364,6 +358,18 @@ const clusteringColumns: ComputedRef<Concept[]> = computed(() => {
     return [];
   }
   return currentColumns.filter(concept => concept.columnKind === constants.columnKinds.clustering);
+});
+
+const conceptsForAggregateFunctions: ComputedRef<Concept[]> = computed(() => {
+  return [ ... tableColumnConcepts.value, { conceptName: 'all', conceptType: constants.conceptTypes.column } ];
+});
+
+const selectedColumnConcepts: ComputedRef<Concept[]> = computed(() => {
+  return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
+});
+
+const tableColumnConcepts: ComputedRef<Concept[]> = computed(() => {
+  return tableMetadata.value.columns.size ? tableMetadata.value.columns.get(tableMetadata.value.tables[0].conceptName) : [];
 });
 
 const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
@@ -394,8 +400,8 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
       queryConcepts.value[QueryClause.ORDER_BY].conceptReferent = computeConceptReferentValueForOrderByItems(orderByClauseItems.value);
       break;
     case QueryClause.GET:
-      queryConcepts.value[QueryClause.GET][queryClauseData.item.valueSelect].conceptReferent = computeConceptReferentValueForAggregateFunction('count', queryClauseData.item.column);
-      queryConcepts.value[QueryClause.GET][queryClauseData.item.valueSelect].aggregatedColumn = queryClauseData.item.column;
+      queryConcepts.value[QueryClause.GET][<AggregateFunction>queryClauseData.item.valueSelect].aggregatedColumns.push({ conceptName: queryClauseData.item.column, conceptType: '' });
+      queryConcepts.value[QueryClause.GET][<AggregateFunction>queryClauseData.item.valueSelect].conceptReferent = computeConceptReferentValueForAggregateFunction(queryClauseData.item.valueSelect, queryConcepts.value);
       break;
   }
   await nextTick();
@@ -461,8 +467,8 @@ const checkIfClusteringColumnsAreSelected = (): boolean => {
   return queryMetadata.value.columns.get(queryMetadata.value.tables.at(0).conceptName).some((columnConcept: Concept) => columnConcept.columnKind === constants.columnKinds.clustering);
 };
 
-// Functions related to the removal of query columns, clauses and data
 
+// Functions related to the removal of query columns, clauses and data
 const clearQueryMetadata = () => {
   // Reset the state of the clause items and query concepts
   queryStore.resetQueryClauseItems();
@@ -525,10 +531,10 @@ const removeColumnFromQuery = async (columnMetadata): Promise<void> => {
   }
 }
 
+
 // Functions related to the query actions
 const isQueryTerminalOpened: Ref<boolean> = ref(false);
 const cqlQueryCommands: Ref<Command[]> = ref([]);
-
 const queryResults: Ref<any[]> = ref([]);
 const queryResultsTableHeaders: Ref<DataTableColumn[]> = ref([]);
 const isQueryResultsModalOpened: Ref<boolean> = ref(false);
@@ -641,6 +647,7 @@ const runQuery = (): void => {
   }
 };
 
+
 // Functions related to some utilities
 const confirm = useConfirm();
 
@@ -657,6 +664,7 @@ const openConfirmationPopup = (event: any): void => {
     }
   });
 };
+
 
 // Watchers
 watch(currentKeyspace, (newKeyspace, _) => {

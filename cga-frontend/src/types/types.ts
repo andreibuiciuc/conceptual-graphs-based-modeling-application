@@ -44,7 +44,7 @@ type AggregateFunction = 'count' | 'min' | 'max' | 'avg' | 'sum';
 type AggregateClause = {
     [_ in AggregateFunction]: {
         conceptReferent: string
-        aggregatedColumn: Concept
+        aggregatedColumns: Concept[]
     }
 };
 
@@ -121,6 +121,7 @@ export {
     GraphMetadata,
     QueryItemColumnType,
     ClusteringOption,
+    AggregateFunction,
     //
     Command,
     DataTableColumn,

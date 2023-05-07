@@ -91,15 +91,19 @@
                   </li> -->
                 </ul>
               </li>
-              <li v-if="isQueryGraph && queryConcepts && queryConcepts[QueryClause.GET] && queryConcepts[QueryClause.GET]?.count.conceptReferent">
-                <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_countConcept`">
-                  <span class="concept-name">get</span>
-                </div>
-                <div class="tf-nc" :id="`${graphKey}_countReferentConcept`">
-                  <span class="concept-type">F:</span>
-                  <span class="concept-name">{{ queryConcepts[QueryClause.GET].count.conceptReferent }}</span>
-                </div>
-              </li>
+              <template v-if="isQueryGraph && queryConcepts && queryConcepts[QueryClause.GET]">
+                <template v-for="aggregationFunctionName of ['count', 'min', 'max', 'avg', 'sum']">
+                  <li class="aggregation-function-item" v-if="queryConcepts[QueryClause.GET][aggregationFunctionName].conceptReferent">
+                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_${aggregationFunctionName}Concept`">
+                      <span class="concept-name">get</span>
+                    </div>
+                    <div class="tf-nc" :id="`${graphKey}_${aggregationFunctionName}ReferentConcept`">
+                      <span class="concept-type">F:</span>
+                      <span class="concept-name">{{ queryConcepts[QueryClause.GET][aggregationFunctionName].conceptReferent }}</span>
+                    </div>
+                  </li>
+                </template>
+              </template>
             </ul>
           </li>
         </ul>
@@ -274,8 +278,8 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
 };
 
 const drawArrowsForAggregateFunctions = async (): Promise<void> => {
-  debugger
   if (queryConcepts.value && queryConcepts.value[QueryClause.GET].count) {
+    
     await nextTick();
     
     const currentTable: Concept | undefined = props.graphMetadata.tables.at(0);
@@ -284,11 +288,14 @@ const drawArrowsForAggregateFunctions = async (): Promise<void> => {
     }
 
     const tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${0}`);
-    const countConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_countConcept`);
-    const countReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_countReferentConcept`);
 
-    createArrow(tableConceptElement, countConceptElement);
-    createArrow(countConceptElement, countReferentElement);
+    for (let aggregateFunctionName of ['count', 'min', 'max', 'avg', 'sum']) {
+      const countConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${aggregateFunctionName}Concept`);
+      const countReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${aggregateFunctionName}ReferentConcept`);
+      createArrow(tableConceptElement, countConceptElement);
+      createArrow(countConceptElement, countReferentElement);
+    }
+    
   }
 };
 
@@ -428,6 +435,9 @@ li.column-concept-hoverable:hover
   
   .tf-nc
     border-color: variables.$cassandra-app-blue
+
+li.aggregation-function-item
+  margin-top: 5rem !important
 
 .tf-tree li ul
   margin: 0.5em 0

@@ -7,8 +7,14 @@
         </template>
         <template #subtitle>
             <div class="query-panel-subtitle">
-                <i class="pi pi-info-circle"></i>
-                <p>{{ informationMessages[clause] }}</p>
+                <div class="subtitle-info">
+                    <i class="pi pi-info-circle"></i>
+                    <p>{{ informationMessages[clause] }}</p>
+                </div>
+                <div class=subtitle-info v-if="state === 'warn'">
+                    <i class="pi pi-info-circle"></i>
+                    <p>this query clause was recommended by the cga. you can edit and add it to the query</p>
+                </div>
             </div>
         </template>
         <template #content>
@@ -295,14 +301,22 @@ const queryPanelTitle: ComputedRef<string> = computed(() => {
         border-left-color: variables.$cassandra-yellow
 
     .query-panel-title
+        @include containers.flex-container($justify-content: space-between)
         color: variables.$cassandra-black
         margin-bottom: 8px
 
-    .query-panel-subtitle
-        @include containers.flex-container($align-items: center)
+        .query-panel-title-info
+            color: variables.$cassandra-yellow
 
-        .pi
-            margin-right: 1rem
+    .query-panel-subtitle
+        @include containers.flex-container($flex-direction: column, $align-items: flex-start)
+
+        .subtitle-info
+            @include containers.flex-container($align-items: center)
+            margin-top: 1rem
+
+            .pi
+                margin-right: 1rem
         
     .query-panel-info
         @include containers.flex-container($flex-direction: row)

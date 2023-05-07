@@ -1,5 +1,5 @@
 import constants from "../constants/constants";
-import { Concept, DataTableColumn, QueryConcepts, QueryItemColumnType } from "../types/types";
+import { AggregateFunction, Concept, DataTableColumn, QueryConcepts, QueryItemColumnType } from "../types/types";
 import { GraphMetadata, QueryItem } from "../types/types";
 
 export function useMetadata() {
@@ -61,8 +61,15 @@ export function useMetadata() {
     };
 
 
-    const computeConceptReferentValueForAggregateFunction = (aggregateFunctionName: string, aggregatedColumnName: string): string => {
-      return `${aggregateFunctionName.toUpperCase()} (${aggregatedColumnName})`;
+    const computeConceptReferentValueForAggregateFunction = (aggregateFunctionName: AggregateFunction, queryConcepts: QueryConcepts): string => {
+      const initialValue = constants.inputValues.empty;
+
+      debugger
+      let result: string = queryConcepts.get[aggregateFunctionName].aggregatedColumns.reduce((accumulator: string, currentValue: Concept) => {
+        return accumulator.concat(`${aggregateFunctionName}(${currentValue.conceptName}), `);
+      }, initialValue);
+
+      return result.slice(0, result.length - 2);
     }
 
     /**
@@ -145,10 +152,15 @@ export function useMetadata() {
       }
 
       let concepts = currentColumns.map((columnConcept: Concept) => columnConcept.conceptName);
+
       ['count', 'min', 'max', 'avg', 'sum'].forEach(aggregationFunctionName => {
-        if (queryConcepts.get[aggregationFunctionName] && queryConcepts.get[aggregationFunctionName].aggregatedColumn) {
-          concepts.push(aggregationFunctionName);
+
+        if (queryConcepts.get[aggregationFunctionName] && queryConcepts.get[<AggregateFunction>aggregationFunctionName].aggregatedColumns.length) {
+          concepts = concepts
+            .concat(queryConcepts.get[<AggregateFunction>aggregationFunctionName].aggregatedColumns
+            .map(concept => `${aggregationFunctionName}(${concept.conceptName})`));
         }
+
       });
 
       return concepts;
