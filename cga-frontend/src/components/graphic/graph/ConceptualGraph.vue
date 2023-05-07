@@ -81,9 +81,6 @@
                       <span class="concept-name">{{ queryConcepts[QueryClause.ORDER_BY].conceptReferent }}</span>
                     </div>
                   </li>
-                  <li>
-
-                  </li>
                   <!-- <li v-if="isOutConceptVisible">
                     <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_outConcept`">
                       <span class="concept-name" >{{ queryConcepts[QueryClause.OUT].conceptRelation }}</span>
@@ -93,6 +90,15 @@
                     </div>
                   </li> -->
                 </ul>
+              </li>
+              <li v-if="isQueryGraph && queryConcepts && queryConcepts[QueryClause.GET] && queryConcepts[QueryClause.GET]?.count.conceptReferent">
+                <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_countConcept`">
+                  <span class="concept-name">get</span>
+                </div>
+                <div class="tf-nc" :id="`${graphKey}_countReferentConcept`">
+                  <span class="concept-type">F:</span>
+                  <span class="concept-name">{{ queryConcepts[QueryClause.GET].count.conceptReferent }}</span>
+                </div>
               </li>
             </ul>
           </li>
@@ -229,15 +235,15 @@ const drawArrowsForWhereQueryConcepts = async (): Promise<void> => {
     const currentTableConceptName = props.graphMetadata.tables[0].conceptName;
 
     for (let columnIndex in queryConcepts.value[QueryClause.WHERE].columns) {
-      const columnConcept = queryConcepts.value[QueryClause.WHERE].columns[parseInt(columnIndex)];
+      const columnConcept: Concept = queryConcepts.value[QueryClause.WHERE].columns[parseInt(columnIndex)];
       const index = props.graphMetadata.columns.get(currentTableConceptName)?.findIndex(x => x.conceptName === columnConcept.conceptName);
 
       const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${currentTableConceptName}_columnConcept_${index}`);
       const filterConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_filterConcept`);
       const filterReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_filterReferentConcept`);
 
-      createArrow(columnConceptElement, filterConceptElement);
-      createArrow(filterConceptElement, filterReferentElement);
+      createArrow(columnConceptElement, filterConceptElement, columnConcept);
+      createArrow(filterConceptElement, filterReferentElement, columnConcept);
     }
   }
 };
@@ -253,17 +259,36 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
     for (let columnIndex in queryConcepts.value[QueryClause.ORDER_BY].columns) {
       const columnConcept: Concept | undefined = queryConcepts.value[QueryClause.ORDER_BY].columns[parseInt(columnIndex)];
       const index = props.graphMetadata.columns.get(currentTable.conceptName)?.findIndex(concept => concept.conceptName === columnConcept?.conceptName);
-      if (columnConcept && index && index > -1) {
+      if (columnConcept && index > -1) {
         
         const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${currentTable.conceptName}_columnConcept_${index}`);
         const orderByConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_orderByConcept`);
         const orderByReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_orderByReferentConcept`);
 
-        createArrow(columnConceptElement, orderByConceptElement);
-        createArrow(orderByConceptElement, orderByReferentElement);
+        createArrow(columnConceptElement, orderByConceptElement, columnConcept);
+        createArrow(orderByConceptElement, orderByReferentElement, columnConcept);
       }
     }
 
+  }
+};
+
+const drawArrowsForAggregateFunctions = async (): Promise<void> => {
+  debugger
+  if (queryConcepts.value && queryConcepts.value[QueryClause.GET].count) {
+    await nextTick();
+    
+    const currentTable: Concept | undefined = props.graphMetadata.tables.at(0);
+    if (!currentTable) {
+      return ;
+    }
+
+    const tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${0}`);
+    const countConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_countConcept`);
+    const countReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_countReferentConcept`);
+
+    createArrow(tableConceptElement, countConceptElement);
+    createArrow(countConceptElement, countReferentElement);
   }
 };
 
@@ -288,17 +313,18 @@ const drawArrowsForOutConcept = async (): Promise<void> => {
         const outConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_outConcept`);
         const outReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_outReferentConcept`);
 
-        createArrow(columnConceptElement, outConceptElement);
-        createArrow(outConceptElement, outReferentElement);
+        createArrow(columnConceptElement, outConceptElement, columnConcept);
+        createArrow(outConceptElement, outReferentElement, columnConcept);
       }
     }
   }
 };
 
-const drawArrowsForQueryConcepts = async (): Promise<void> => {
+const drawArrowsForQueryConcepts = (): void => {
   if (props.isQueryGraph) {
     drawArrowsForWhereQueryConcepts();
     drawArrowsForOrderByQueryConcepts();
+    drawArrowsForAggregateFunctions();
     drawArrowsForOutConcept();
   }
 };
@@ -344,7 +370,7 @@ const selectColumn = (columnConcept: Concept) => {
 };
 
 const isOutConceptVisible: ComputedRef<boolean> = computed(() => {
-  return queryConcepts.value && (queryConcepts.value[QueryClause.WHERE].columns.length || queryConcepts.value[QueryClause.ORDER_BY].columns.length);
+  return !!queryConcepts.value && (!!queryConcepts.value[QueryClause.WHERE].columns.length || !!queryConcepts.value[QueryClause.ORDER_BY].columns.length);
 });
 
 const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
@@ -353,8 +379,11 @@ const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
 
 const rerenderArrows = (): void => {
   removeArrows();
-  drawInitialArrows(); 
+  drawInitialArrows();
   drawArrowsForConcepts();
+  if (queryConcepts.value) {
+    drawArrowsForQueryConcepts();
+  }
 };
 
 onUnmounted(() => {

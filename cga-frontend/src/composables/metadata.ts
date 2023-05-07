@@ -1,5 +1,5 @@
 import constants from "../constants/constants";
-import { Concept, DataTableColumn, QueryItemColumnType } from "../types/types";
+import { Concept, DataTableColumn, QueryConcepts, QueryItemColumnType } from "../types/types";
 import { GraphMetadata, QueryItem } from "../types/types";
 
 export function useMetadata() {
@@ -60,6 +60,10 @@ export function useMetadata() {
       return result;
     };
 
+
+    const computeConceptReferentValueForAggregateFunction = (aggregateFunctionName: string, aggregatedColumnName: string): string => {
+      return `${aggregateFunctionName.toUpperCase()} (${aggregatedColumnName})`;
+    }
 
     /**
      * Returns the input type of a column concept
@@ -128,7 +132,7 @@ export function useMetadata() {
      * @param queryMetadata metadata of the query conceptual graph
      * @returns the list of column concept names from the query metadata
      */
-    const getQuerySelectionConceptNames = (queryMetadata: GraphMetadata): string[] => {
+    const getQuerySelectionConceptNames = (queryMetadata: GraphMetadata, queryConcepts: QueryConcepts): string[] => {
       
       const currentTable: Concept | undefined = queryMetadata.tables.at(0);
       if (!currentTable) {
@@ -140,7 +144,14 @@ export function useMetadata() {
         return [];
       }
 
-      return currentColumns.map(columnConcept => columnConcept.conceptName);
+      let concepts = currentColumns.map((columnConcept: Concept) => columnConcept.conceptName);
+      ['count', 'min', 'max', 'avg', 'sum'].forEach(aggregationFunctionName => {
+        if (queryConcepts.get[aggregationFunctionName] && queryConcepts.get[aggregationFunctionName].aggregatedColumn) {
+          concepts.push(aggregationFunctionName);
+        }
+      });
+
+      return concepts;
     };
 
     
@@ -149,8 +160,8 @@ export function useMetadata() {
      * @param queryMetadata metadata of the query conceptual graph
      * @returns list of header columns
      */
-    const getHeadersForQueryResults = (queryMetadata: GraphMetadata): DataTableColumn[] => {
-      const columnNames: string[] = getQuerySelectionConceptNames(queryMetadata);
+    const getHeadersForQueryResults = (queryMetadata: GraphMetadata, queryConcepts: QueryConcepts): DataTableColumn[] => {
+      const columnNames: string[] = getQuerySelectionConceptNames(queryMetadata, queryConcepts);
       const tableColumns: DataTableColumn[] = columnNames.map(column => {
         return { field: column, header: column } 
       });
@@ -325,7 +336,7 @@ export function useMetadata() {
         }
       }, 0);
 
-      if (partitionColumnsCount === restrictedPartitionColumns.length) {
+      if (restrictedPartitionColumns.length !== 0 && partitionColumnsCount === restrictedPartitionColumns.length) {
         return [true, constants.inputValues.empty];
       } else {
         return [false, 'all partition columns must be restricted in order to proceed'];
@@ -401,12 +412,12 @@ export function useMetadata() {
         return [constants.inputValues.empty, 0];
       }
 
-      const whereClauseErrorMessage = validateWhereClause(tableMetadata, queryMetadata, whereQueryItems);
+      const whereClauseErrorMessage = whereQueryItems.length ? validateWhereClause(tableMetadata, queryMetadata, whereQueryItems) : '';
       if (whereClauseErrorMessage) {
         return [whereClauseErrorMessage, 0];
       }
 
-      const orderByClauseErrorMessage = validateOrderByClause(tableMetadata, queryMetadata, whereQueryItems, orderByQueryItems);
+      const orderByClauseErrorMessage = orderByQueryItems.length ? validateOrderByClause(tableMetadata, queryMetadata, whereQueryItems, orderByQueryItems) : '';
       if (orderByClauseErrorMessage) {
         return [orderByClauseErrorMessage, 1];
       }
@@ -417,6 +428,7 @@ export function useMetadata() {
     
     return {
       computeConceptReferentValue,
+      computeConceptReferentValueForAggregateFunction,
       computeConceptReferentValueForOrderByItems,
       getCQLWhereOperatorsByColumnKind,
       getRelationTypeForColumnConcept,

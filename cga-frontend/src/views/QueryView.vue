@@ -148,7 +148,7 @@
             <query-items
               v-if="aggregateFunctionsItems.length"
               :clause="QueryClause.GET"
-              :columns="columnConcepts"
+              :columns="conceptsForAggregateFunctions"
               :state="aggregateFunctionsItemsState"
               @add="addQueryConcept"
               @remove="removeClause"
@@ -197,8 +197,6 @@ import { useQuery } from '../composables/query';
 import { storeToRefs } from 'pinia';
 import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
-import { type } from 'os';
-
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -214,11 +212,11 @@ const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMeta
 const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
-// const queryConcepts: Ref<QueryConcepts> = ref({ ... constants.defaultQueryConcepts });
 
 const { getRelationTypeForColumnConcept, 
         computeConceptReferentValue,
-        computeConceptReferentValueForOrderByItems, 
+        computeConceptReferentValueForAggregateFunction, 
+        computeConceptReferentValueForOrderByItems,
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
         getQuerySelectionConceptNames,
@@ -352,6 +350,10 @@ const columnConcepts = computed(() => {
   return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
 });
 
+const conceptsForAggregateFunctions: ComputedRef<Concept[]> = computed(() => {
+  return [ ... columnConcepts.value, { conceptName: 'all', conceptType: constants.conceptTypes.column } ];
+});
+
 const clusteringColumns: ComputedRef<Concept[]> = computed(() => {
   const currentTable: Concept | undefined = tableMetadata.value.tables.at(0);
   if (!currentTable) {
@@ -391,6 +393,10 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
       queryConcepts.value[QueryClause.ORDER_BY].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
       queryConcepts.value[QueryClause.ORDER_BY].conceptReferent = computeConceptReferentValueForOrderByItems(orderByClauseItems.value);
       break;
+    case QueryClause.GET:
+      queryConcepts.value[QueryClause.GET][queryClauseData.item.valueSelect].conceptReferent = computeConceptReferentValueForAggregateFunction('count', queryClauseData.item.column);
+      queryConcepts.value[QueryClause.GET][queryClauseData.item.valueSelect].aggregatedColumn = queryClauseData.item.column;
+      break;
   }
   await nextTick();
   queryGraph.value.rerenderArrows();
@@ -421,11 +427,16 @@ const addClauseToQuery = (clause: QueryClause | null): void => {
       });
       break;
     case QueryClause.ORDER_BY:
-      orderByClauseItems.value.push({ 
-        column: constants.inputValues.empty, 
-        value: constants.inputValues.empty,
-        isValueValid: true
-      });
+      const canOrderByClauseBeAdded = checkIfClusteringColumnsAreSelected();
+      if (canOrderByClauseBeAdded) {
+        orderByClauseItems.value.push({ 
+          column: constants.inputValues.empty, 
+          valueSelect: constants.clusteringOrders.ascending,
+          isValueValid: true
+        });
+      } else {
+        openNotificationToast('please select a clustering column', 'error');
+      }
       break;
     case QueryClause.GET:
       aggregateFunctionsItems.value.push({
@@ -446,12 +457,19 @@ const checkIfColumnIsAlreadyAdded = (columnConcept: Concept): boolean => {
   return false;
 };
 
+const checkIfClusteringColumnsAreSelected = (): boolean => {
+  return queryMetadata.value.columns.get(queryMetadata.value.tables.at(0).conceptName).some((columnConcept: Concept) => columnConcept.columnKind === constants.columnKinds.clustering);
+};
+
 // Functions related to the removal of query columns, clauses and data
 
 const clearQueryMetadata = () => {
   // Reset the state of the clause items and query concepts
   queryStore.resetQueryClauseItems();
   queryStore.resetQueryConcepts();
+  
+  // Reset the commands for Cassandra Terminal
+  cqlQueryCommands.value = [];
 
   // Re-draw the Query Conceptual Graph without the query concepts
   if (queryGraph.value && typeof queryGraph.value.rerenderArrows === 'function') {
@@ -496,7 +514,10 @@ const removeColumnFromQuery = async (columnMetadata): Promise<void> => {
     
     if (columnConceptIndex > -1) {
       queryMetadata.value.columns.get(tableConceptName)!.splice(columnConceptIndex, 1);
-      delete queryConcepts.value[columnMetadata.columnConcept.conceptName];
+
+      // TODO: Remove only the query concept which is related to the column removed.
+      queryConcepts.value = JSON.parse(JSON.stringify(constants.defaultQueryConcepts));
+      
       await nextTick();
       queryGraph.value.rerenderArrows();
     }
@@ -585,7 +606,7 @@ const fetchQueryResuls = async (): Promise<void> => {
 };
 
 const openQueryTerminal = (): void => {
-  cqlQueryCommands.value = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value);
+  cqlQueryCommands.value = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value, queryConcepts.value);
   isQueryTerminalOpened.value = true;
 };
 
@@ -593,8 +614,8 @@ const parseQueryResults = (results: any[]) => {
   queryResultsTableHeaders.value = [];
   queryResults.value = [];
 
-  const currentColumns = getQuerySelectionConceptNames(queryMetadata.value);
-  queryResultsTableHeaders.value = getHeadersForQueryResults(queryMetadata.value);
+  const currentColumns = getQuerySelectionConceptNames(queryMetadata.value, queryConcepts.value);
+  queryResultsTableHeaders.value = getHeadersForQueryResults(queryMetadata.value, queryConcepts.value);
 
   results.forEach(resultItem => {
     let resultForTable = {};

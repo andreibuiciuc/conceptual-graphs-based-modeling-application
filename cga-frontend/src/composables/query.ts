@@ -1,6 +1,6 @@
 
 import constants from "../constants/constants";
-import { Concept, Command, GraphMetadata, QueryItem } from "../types/types";
+import { Concept, Command, GraphMetadata, QueryItem, QueryConcepts } from "../types/types";
 import { ClusteringOption } from '../types/types';
 import designToolboxConstants from "../components/design/designToolboxConstants";
 import { useConnectionStore } from "../stores/connection";
@@ -196,7 +196,7 @@ export function useQuery() {
      * @param queryMetadata metadata of the query conceptual graph
      * @param commands result array of commands
      */
-    const computeSelectStartingLine = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, commands: Command[]): void => {
+    const computeSelectStartingLine = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, commands: Command[], queryConcepts: QueryConcepts): void => {
         const currentTable: Concept | undefined = queryMetadata.tables.at(0);
         if (!currentTable) {
             return ;
@@ -222,28 +222,33 @@ export function useQuery() {
             lineContent = lineContent.slice(0, lineContent.length - 2);
         }
 
+        const aggregationFunctionsSnippet = computeAggregationFunctionSnippet(queryConcepts);
+        if (aggregationFunctionsSnippet) {
+            lineContent = lineContent.concat(aggregationFunctionsSnippet);
+            lineContent = lineContent.slice(0, lineContent.length - 2);
+        }
+
         lineContent = lineContent.concat(` FROM ${connectionStore.currentKeyspace}.${currentTable.conceptName}`)
         addCQLCommandLine(commands, lineContent);
     };
 
 
-    /**
-     * Helper function that computes the aggregation functions snippet of the SELECT CQL statement
-     * @returns the aggregate functions snippet
-     */
-    const computeAggregateFunctonsSnippet = (): string => {
-        let aggregateFunctionsSnippet: string = constants.inputValues.empty;
-
-        queryStore.aggregateFunctionsItems.forEach((item: QueryItem) => {
-            if (item.toQuery) {
-                aggregateFunctionsSnippet = aggregateFunctionsSnippet.concat(`${item.valueSelect?.toString()}(${item.column}), `);   
+    const computeAggregationFunctionSnippet = (queryConcepts: QueryConcepts): string => {
+        let aggregationFunctionsSnippet = '';
+        let addedFirstAggregateFunction = false;
+        
+        ['count', 'min', 'max', 'avg', 'sum'].forEach((aggregateFunctionName: string) => {
+            if (queryConcepts.get[aggregateFunctionName] && queryConcepts.get[aggregateFunctionName].aggregatedColumn) {
+                if (!addedFirstAggregateFunction) {
+                    aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(', ');
+                    addedFirstAggregateFunction = true;
+                }
+                aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(`${aggregateFunctionName.toUpperCase()}(${queryConcepts.get[aggregateFunctionName].aggregatedColumn}), `);
             }
         });
 
-        aggregateFunctionsSnippet = aggregateFunctionsSnippet.slice(0, aggregateFunctionsSnippet.length - 2);
-
-        return aggregateFunctionsSnippet;
-    }
+        return aggregationFunctionsSnippet;  
+    };
 
 
     /**
@@ -338,10 +343,10 @@ export function useQuery() {
      * @param queryMetadata metadata of the query conceptual graph
      * @returns result array of commands
      */
-    const generateSelectQueryAsCommands = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata): Command[] => {
+    const generateSelectQueryAsCommands = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, queryConcepts: QueryConcepts): Command[] => {
         let commands: Command[] = [];
 
-        computeSelectStartingLine(tableMetadata, queryMetadata, commands);
+        computeSelectStartingLine(tableMetadata, queryMetadata, commands, queryConcepts);
         computeWhereClauseLine(commands);
         computeOrderByClauseLine(commands);
 

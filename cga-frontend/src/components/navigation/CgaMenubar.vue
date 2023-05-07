@@ -66,7 +66,7 @@ const isBorderBottomAppliedToMenubar: ComputedRef<boolean> = computed(() => {
 });
 
 const isTranslucentEffectApplied: ComputedRef<boolean> = computed(() => {
-  return !isUserLoggedIn.value || router.currentRoute.value.name !== 'demo';
+  return !isUserLoggedIn.value || ['/'].includes(router.currentRoute.value.path);
 });
 
 

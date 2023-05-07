@@ -38,12 +38,28 @@ enum ClusteringOrder {
     DESCENDING = 'DESC'
 };
 
-interface QueryConcepts {
-    [QueryClause.WHERE]: {
+type AggregateFunction = 'count' | 'min' | 'max' | 'avg' | 'sum';
+
+
+type AggregateClause = {
+    [_ in AggregateFunction]: {
         conceptReferent: string
-        conceptRelation: string
-        columns: Concept[]
+        aggregatedColumn: Concept
     }
+};
+
+
+type SelectClause = {
+    conceptReferent: string
+    conceptRelation: string
+    columns: Concept[]
+};
+
+
+interface QueryConcepts {
+    [QueryClause.WHERE]: SelectClause
+    [QueryClause.ORDER_BY]: SelectClause
+    [QueryClause.GET]: AggregateClause
 };
 
 interface QueryItem {

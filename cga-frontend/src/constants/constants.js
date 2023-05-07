@@ -102,6 +102,11 @@ export default {
       conceptReferent: 'out',
       conceptRelation: 'return',
       column: []
+    },
+    get: {
+      count: {
+        conceptReferent: ''
+      }
     }
   }
 };
