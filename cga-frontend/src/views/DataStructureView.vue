@@ -1,31 +1,45 @@
 <template>
   <div class="design-section">
     <div class="header-container">
-      <div>
-        <span>cassandra data structure design</span>
+      <div class="header-container-title">
+        <InputSwitch v-model="isScreenInViewMode" :disabled="!currentKeyspace" @update:modelValue="changeScreenMode" />
+        <span>cassandra data structure {{ isScreenInViewMode ? 'view' : 'design' }}</span>
       </div>
       <div class="header-actions">
-        <Button
-          outlined
-          severity="primary"
-          icon="pi pi-credit-card"
-          label="command"
-          :disabled="!isGraphRendered"
-          @click="generateCQLQuery"
-        />
-        <Button
-          outlined
-          severity="primary"
-          icon="pi pi-save"
-          label="save"
-          :disabled="!isGraphRendered"
-          @click="saveTableMetadata"
-        />
+        <template v-if="!isScreenInViewMode">
+          <Button
+            outlined
+            severity="primary"
+            icon="pi pi-credit-card"
+            label="command"
+            :disabled="!isGraphRendered"
+            @click="generateCQLQuery"
+          />
+          <Button
+            outlined
+            severity="primary"
+            icon="pi pi-save"
+            label="save"
+            :disabled="!isGraphRendered"
+            @click="saveTableMetadata"
+          />
+        </template>
+        <template v-else>
+          <Dropdown
+            v-model="tableInViewMode"
+            placeholder="table"
+            :options="availableTables"
+            @change="retrieveSavedTable"
+          />
+        </template>
       </div>
     </div>
     <div class="design-container">
       <div class="design-container-item">
         <DesignToolbox
+          :is-table-in-view-mode="isScreenInViewMode"
+          :is-table-in-view-mode-ready="isTableInViewModeReady"
+          :table-in-view-mode="tableMetadata"
           @openTerminal="openTerminal"
           @render="renderConceptualGraph">
         </DesignToolbox>
@@ -36,7 +50,7 @@
           :graph-metadata="tableMetadata"
           ref="tableGraph"
           graph-key="tableGraph"
-          :are-column-concepts-deletable="true"
+          :are-column-concepts-deletable="!isScreenInViewMode"
           :are-tables-collapsable="false"
           :apply-border="false"
           @remove="removeColumnConcept">
@@ -63,12 +77,12 @@ import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.
 import { useUtils } from '../composables/utils';
 import { storeToRefs } from "pinia"
 import { useQuery } from '../composables/query';
-import { Ref, nextTick, onMounted, ref } from 'vue';
+import { ComputedRef, Ref, nextTick, onMounted, ref } from 'vue';
 import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';
 import constants from '../constants/constants';
 import { useMetadata } from '../composables/metadata';
 import { useConfetti } from '../composables/confetti';
-import { conceptualGraphsCollection, auth } from '../includes/firebase';
+import { auth, tableGraphsCollection } from '@/includes/firebase';
 
 // Functions mapped from composables
 const { generateQueryAsString, generateQueryAsCommands } = useQuery();
@@ -128,9 +142,7 @@ const renderConceptualGraph = async (metadata: GraphMetadata, clusteringOption: 
     clusteringColumnOption.value = { ... clusteringOption };
     
     await nextTick();
-    tableGraph.value.removeArrows();
-    tableGraph.value.drawInitialArrows();
-    tableGraph.value.drawArrowsForConcepts();
+    tableGraph.value.rerenderArrows();
   }
 };
 
@@ -145,9 +157,7 @@ const removeColumnConcept = async (tableAndColumnConcepts: any): Promise<void> =
       }
 
       await nextTick();
-      tableGraph.value.removeArrows();
-      tableGraph.value.drawInitialArrows();
-      tableGraph.value.drawArrowsForConcepts();
+      tableGraph.value.rerenderArrows();
     }
   }
 };
@@ -167,11 +177,12 @@ const saveTableMetadata = async (): Promise<void> => {
 
   try {
     const currentTableConcept: Concept = tableMetadata.value.tables.at(0)!;
-    await conceptualGraphsCollection.doc(auth.currentUser?.uid).set({
+    await tableGraphsCollection.doc(auth.currentUser?.uid).set({
       tableName: currentTableConcept.conceptName,
       tableConcepts: tableMetadata.value.tables,
       columnConcepts: Object.fromEntries(tableMetadata.value.columns),
-      dataTypeConcepts: Object.fromEntries(tableMetadata.value.dataTypes)
+      dataTypeConcepts: Object.fromEntries(tableMetadata.value.dataTypes),
+      inSyncWithKeyspace: false
     });
     isSaveInProgress.value = false;
     openNotificationToast(designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE, 'success');
@@ -204,6 +215,54 @@ onMounted(() => {
   }
 });
 
+// Functions related to the view mode
+const availableTables: Ref<string[]> = ref([]);
+const isScreenInViewMode: Ref<boolean> = ref(false);
+const isTableInViewModeReady: Ref<boolean> = ref(false);
+const tableInViewMode: Ref<string> = ref(constants.inputValues.empty);
+
+const changeScreenMode = (isViewMode: boolean): void => {
+  if (isViewMode) {
+    retrieveAllSavedTables();
+  } else {
+    availableTables.value = [];
+    tableInViewMode.value = constants.inputValues.empty;
+    isTableInViewModeReady.value = false;
+    tableMetadata.value = JSON.parse(JSON.stringify(defaultGraphMetadata));
+    isGraphRendered.value = false;
+  }
+};
+
+const parseTableForViewMode = async (metadata: any): Promise<void> => {
+  tableMetadata.value = JSON.parse(JSON.stringify(defaultGraphMetadata));
+  tableMetadata.value.keyspace = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
+  tableMetadata.value.tables = JSON.parse(JSON.stringify(metadata.tableConcepts));
+  tableMetadata.value.columns = new Map<string, Concept[]>(Object.entries(metadata.columnConcepts));
+  tableMetadata.value.dataTypes = new Map<string, Concept>(Object.entries(metadata.dataTypeConcepts));
+  isGraphRendered.value = true;
+  await nextTick();
+  tableGraph.value.rerenderArrows();
+};
+
+const retrieveAllSavedTables = async (): Promise<void> => {
+  try {
+    const snapshot = await tableGraphsCollection.get();
+    availableTables.value = JSON.parse(JSON.stringify(snapshot.docs.map(doc => doc.data().tableName)));
+  } catch (error: any) {
+    openNotificationToast(error.message, 'error');
+  }
+};
+
+const retrieveSavedTable = async (): Promise<void> => {
+  try {
+    const querySnapshot = await tableGraphsCollection.where('tableName', '==', tableInViewMode.value).get();
+    parseTableForViewMode(querySnapshot.docs.at(0).data());
+    isTableInViewModeReady.value = true;
+  } catch (error: any) {
+    openNotificationToast(error.message, 'error');
+  }
+};
+
 </script>
 
 <style scoped lang="sass">
@@ -212,6 +271,12 @@ onMounted(() => {
 @use "@/assets/styles/_transitions.sass"
 
 $transition-all-time: 0.5s
+
+.header-container .header-container-title
+  @include containers.flex-container($align-items: center)
+
+  .p-inputswitch
+    margin-right: 1rem
 
 .design-section
   @include containers.flex-container($flex-direction: column)

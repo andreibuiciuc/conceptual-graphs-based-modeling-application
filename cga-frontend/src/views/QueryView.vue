@@ -127,6 +127,7 @@
           <Transition name="pop-in" mode="out-in">
             <query-items
               v-if="orderByClauseItems.length"
+              :table-metadata="tableMetadata"
               :clause="QueryClause.ORDER_BY"
               :columns="clusteringColumns"
               :state="orderByClauseItemsState"
@@ -137,6 +138,7 @@
           <Transition name="pop-in" mode="out-in">
             <query-items
               v-if="groupByClauseItems.length"
+              :table-metadata="tableMetadata"
               :clause="QueryClause.GROUP_BY"
               :columns="selectedColumnConcepts"
               :state="groupByClauseItemsState"
@@ -147,6 +149,7 @@
           <Transition name="pop-in" mode="out-in">
             <query-items
               v-if="aggregateFunctionsItems.length"
+              :table-metadata="tableMetadata"
               :clause="QueryClause.GET"
               :columns="conceptsForAggregateFunctions"
               :state="aggregateFunctionsItemsState"
@@ -348,6 +351,10 @@ const orderByClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
 const groupByClauseItemsState: Ref<string> = ref(constants.inputValues.empty);
 const aggregateFunctionsItemsState: Ref<string> = ref(constants.inputValues.empty);
 
+const areAllColumnsSelected: ComputedRef<boolean> = computed(() => {
+  return selectedColumnConcepts.value.length === tableMetadata.value.columns.get(tableMetadata.value.tables[0].conceptName).length;
+});
+
 const clusteringColumns: ComputedRef<Concept[]> = computed(() => {
   const currentTable: Concept | undefined = tableMetadata.value.tables.at(0);
   if (!currentTable) {
@@ -361,11 +368,15 @@ const clusteringColumns: ComputedRef<Concept[]> = computed(() => {
 });
 
 const conceptsForAggregateFunctions: ComputedRef<Concept[]> = computed(() => {
-  return [ ... tableColumnConcepts.value, { conceptName: 'all', conceptType: constants.conceptTypes.column } ];
+  const aggregationFunctionConcepts = [ ... tableColumnConcepts.value ];
+  if (!areAllColumnsSelected.value) {
+    aggregationFunctionConcepts.push({ conceptName: 'all', conceptType: constants.conceptTypes.column });
+  }
+  return aggregationFunctionConcepts;
 });
 
 const selectedColumnConcepts: ComputedRef<Concept[]> = computed(() => {
-  return queryMetadata.value.columns.size ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
+  return queryMetadata.value.columns ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
 });
 
 const tableColumnConcepts: ComputedRef<Concept[]> = computed(() => {

@@ -64,8 +64,10 @@ export function useMetadata() {
     const computeConceptReferentValueForAggregateFunction = (aggregateFunctionName: AggregateFunction, queryConcepts: QueryConcepts): string => {
       const initialValue = constants.inputValues.empty;
 
-      debugger
       let result: string = queryConcepts.get[aggregateFunctionName].aggregatedColumns.reduce((accumulator: string, currentValue: Concept) => {
+        if (currentValue.conceptName === 'all') {
+          return accumulator.concat(`${aggregateFunctionName}(*), `);
+        }
         return accumulator.concat(`${aggregateFunctionName}(${currentValue.conceptName}), `);
       }, initialValue);
 
@@ -158,7 +160,13 @@ export function useMetadata() {
         if (queryConcepts.get[aggregationFunctionName] && queryConcepts.get[<AggregateFunction>aggregationFunctionName].aggregatedColumns.length) {
           concepts = concepts
             .concat(queryConcepts.get[<AggregateFunction>aggregationFunctionName].aggregatedColumns
-            .map(concept => `${aggregationFunctionName}(${concept.conceptName})`));
+            .map(concept => {
+              if (concept.conceptName === 'all') {
+                return  `${aggregationFunctionName}(*)`;
+              } else {
+                return `${aggregationFunctionName}(${concept.conceptName})`;
+              }
+            }));
         }
 
       });

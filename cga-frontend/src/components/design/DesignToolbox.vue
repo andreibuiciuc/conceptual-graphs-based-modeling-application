@@ -11,23 +11,23 @@
         <div class="design-toolbox-input-container">
           <div class="design-toolbox-input-group">
               <InputText
-                v-model="currentTableConcept.conceptName"
+                v-model="tableName"
                 placeholder="table name"
                 :class="{ 'p-invalid': !isTableConceptValid }"
-                :disabled="!currentKeyspace"
+                :disabled="!currentKeyspace || isTableInViewMode"
                 :readonly="isGraphRendered"
                 @change="changeTableConcept"
               />
           </div>
           <div class="design-toolbox-action-group">
-            <Button 
+            <Button v-if="!isTableInViewMode"
               severity="secondary"
               text
               icon="pi pi-times"
               :disabled="!isGraphRendered"
               @click="resetToolbox"
             />
-            <Button 
+            <Button v-if="!isTableInViewMode"
               severity="primary"
               text
               :icon="isGraphRendered ? 'pi pi-check' : 'pi pi-plus'"
@@ -65,7 +65,7 @@
               :options="designToolboxConstants.CQL_DATA_TYPES"
             />
           </div>
-          <Button 
+          <Button v-if="!isTableInViewMode"
             icon="pi pi-plus"
             text
             :disabled="!isAddColumnConceptButtonEnabled"
@@ -115,8 +115,14 @@ import { ComputedRef, Ref, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { computed } from '@vue/reactivity';
 
-
 // Props and emits definitions
+interface Props {
+  isTableInViewMode: boolean,
+  isTableInViewModeReady: boolean,
+  tableInViewMode?: GraphMetadata
+};
+
+const props = defineProps<Props>();
 const emit = defineEmits(['render']);
 
 // Functions mapped from composables
@@ -174,6 +180,10 @@ const resetToolbox = async (): Promise<void> => {
   setClusteringOptionGroupEnabledState();
   isGraphRendered.value = false;
 };
+
+const tableName: ComputedRef<string> = computed(() => {
+  return props.isTableInViewMode && props.tableInViewMode && props.isTableInViewModeReady ? props.tableInViewMode.tables.at(0).conceptName : currentTableConcept.value.conceptName;
+});
 
 // Functions related to the validation of the data structure
 const isTableConceptValid: Ref<boolean> = ref(true);

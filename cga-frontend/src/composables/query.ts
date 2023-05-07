@@ -244,7 +244,8 @@ export function useQuery() {
                 
                 let currentAggregationFunctionSnippet = '';
                 queryConcepts.get[aggregateFunctionName].aggregatedColumns.forEach((columnConcept: Concept) => {
-                    currentAggregationFunctionSnippet = currentAggregationFunctionSnippet.concat(`${aggregateFunctionName.toUpperCase()}(${columnConcept.conceptName}), `);
+                    const aggregationColumn = columnConcept.conceptName === 'all' ? '*' : columnConcept.conceptName;
+                    currentAggregationFunctionSnippet = currentAggregationFunctionSnippet.concat(`${aggregateFunctionName.toUpperCase()}(${aggregationColumn}), `);
                 });
                 currentAggregationFunctionSnippet = currentAggregationFunctionSnippet.slice(0, currentAggregationFunctionSnippet.length - 2);
                 

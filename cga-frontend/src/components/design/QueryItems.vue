@@ -117,7 +117,7 @@
                     <span>using</span>
                     <Dropdown 
                         v-model="item.valueSelect"
-                        :options="aggregateFunctionsOptions"
+                        :options="getAggregationFunctionsForSelectedColumn(item)"
                     />
                 </template>
                 
@@ -139,7 +139,7 @@
 import constants from '../../constants/constants';
 import { useMetadata } from '../../composables/metadata';
 import { useQueryStore } from '../../stores/query';
-import { QueryClause, QueryItem, Concept, GraphMetadata } from '../../types/types';
+import { QueryClause, QueryItem, Concept, GraphMetadata, AggregateFunction } from '../../types/types';
 
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
@@ -156,7 +156,7 @@ interface Props {
 };
 
 const orderByOptions = [ "asc", "desc" ];
-const aggregateFunctionsOptions = [ 'max', 'min', 'sum', 'avg', 'count' ];
+const aggregateFunctionsOptions: AggregateFunction[] = [ 'max', 'min', 'sum', 'avg', 'count' ];
 
 const informationMessages = {
     [QueryClause.WHERE]: "due to the differences in the role that they are playing, partition key, clustering and normal columns support different sets of restrictions within this clause",
@@ -202,6 +202,14 @@ const items = computed((): QueryItem[] => {
 });
 
 // Functions related to the item actions
+const getAggregationFunctionsForSelectedColumn = (item: QueryItem): AggregateFunction[] => {
+    debugger
+    if (item.column === 'all' || !['integer', 'float'].includes(item.type)) {
+        return ['count'];
+    }
+    return aggregateFunctionsOptions;
+};
+
 const addToQuery = (clause: QueryClause, item: QueryItem): void => {
     const isQueryItemValid = validateItem(clause, item);
     if (isQueryItemValid) {

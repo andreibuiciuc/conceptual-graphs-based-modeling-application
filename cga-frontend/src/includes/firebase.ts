@@ -17,5 +17,12 @@ const auth = firebase.auth();
 const database = firebase.firestore();
 const usersCollection = database.collection("users");
 const conceptualGraphsCollection = database.collection("conceptual-graphs");
+const tableGraphsCollection = database.collection('table-graphs');
 
-export { auth, database, usersCollection, conceptualGraphsCollection };
+export { 
+  auth,
+  database, 
+  usersCollection, 
+  conceptualGraphsCollection, 
+  tableGraphsCollection 
+};
