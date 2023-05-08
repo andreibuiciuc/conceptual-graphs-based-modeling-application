@@ -104,6 +104,17 @@
                   </li>
                 </template>
               </template>
+              <template v-if="isQueryGraph && queryConcepts && queryConcepts[QueryClause.GROUP_BY]">
+                <li class="group-by-item" v-if="queryConcepts.groupBy.conceptReferent">
+                  <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_groupByConcept`">
+                    <span class="concept-name">groupBy</span>
+                  </div>
+                  <div class="tf-nc" :id="`${graphKey}_groupByReferentConcept`">
+                    <span class="concept-type">CL:</span>
+                    <span class="concept-name">{{ queryConcepts[QueryClause.GROUP_BY].conceptReferent }}</span>
+                  </div>
+                </li>
+              </template>
             </ul>
           </li>
         </ul>
@@ -273,6 +284,24 @@ const drawArrowsForOrderByQueryConcepts = async (): Promise<void> => {
         createArrow(orderByConceptElement, orderByReferentElement, columnConcept);
       }
     }
+  }
+};
+
+const drawArrowsForGroupByQueryConcepts = async (): Promise<void> => {
+  if (queryConcepts.value && queryConcepts.value[QueryClause.ORDER_BY].columns) {
+
+    await nextTick();
+    
+    const currentTable: Concept | undefined = props.graphMetadata.tables.at(0);
+    if (!currentTable) {
+      return ;
+    }
+
+    const tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${0}`);
+    const groupByConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_groupByConcept`);
+    const groupByReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_groupByReferentConcept`);
+    createArrow(tableConceptElement, groupByConceptElement);
+    createArrow(groupByConceptElement, groupByReferentElement);
 
   }
 };
@@ -331,6 +360,7 @@ const drawArrowsForQueryConcepts = (): void => {
   if (props.isQueryGraph) {
     drawArrowsForWhereQueryConcepts();
     drawArrowsForOrderByQueryConcepts();
+    drawArrowsForGroupByQueryConcepts();
     drawArrowsForAggregateFunctions();
     drawArrowsForOutConcept();
   }
@@ -437,7 +467,10 @@ li.column-concept-hoverable:hover
     border-color: variables.$cassandra-app-blue
 
 li.aggregation-function-item
-  margin-top: 5rem !important
+  margin-top: 10rem !important
+
+li.group-by-item
+  margin-top: 10rem !important
 
 .tf-tree li ul
   margin: 0.5em 0

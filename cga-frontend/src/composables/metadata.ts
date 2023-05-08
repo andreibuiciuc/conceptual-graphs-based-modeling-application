@@ -61,6 +61,12 @@ export function useMetadata() {
     };
 
 
+    /**
+     * Computes the value of the referent concept for aggregation function items
+     * @param aggregateFunctionName name of the current aggregation function
+     * @param queryConcepts object containing the query items
+     * @returns 
+     */
     const computeConceptReferentValueForAggregateFunction = (aggregateFunctionName: AggregateFunction, queryConcepts: QueryConcepts): string => {
       const initialValue = constants.inputValues.empty;
 
@@ -73,6 +79,22 @@ export function useMetadata() {
 
       return result.slice(0, result.length - 2);
     }
+
+    
+    /**
+     * Computes the value of the referent concept for the group by clause
+     * @param queryConcepts object containing the query items
+     */
+    const computeConceptReferentValueForGroupByItems = (queryConcepts: QueryConcepts): string => {
+      const initialValue = constants.inputValues.empty;
+
+      let result: string = queryConcepts.groupBy.columns.reduce((accumulator: string, currentValue: Concept) => {
+        return accumulator.concat(` ${currentValue.conceptName} + `);
+      }, initialValue);
+
+      result = result.slice(0, result.length - 2);
+      return result;
+    };
 
     /**
      * Returns the input type of a column concept
@@ -221,7 +243,7 @@ export function useMetadata() {
     /**
      * Return the column kind of a query item
      * @param tableMetadata metadata of the table conceptual graph
-     * @param queryItem query item 
+     * @param queryItem current query item
      * @returns column kind of the query item, if exists in the metadata, otherwise, the result is undefined
      */
     const getColumnKindForQueryItem = (tableMetadata: GraphMetadata, queryItem: QueryItem): string | undefined => {
@@ -449,6 +471,7 @@ export function useMetadata() {
     return {
       computeConceptReferentValue,
       computeConceptReferentValueForAggregateFunction,
+      computeConceptReferentValueForGroupByItems,
       computeConceptReferentValueForOrderByItems,
       getCQLWhereOperatorsByColumnKind,
       getRelationTypeForColumnConcept,

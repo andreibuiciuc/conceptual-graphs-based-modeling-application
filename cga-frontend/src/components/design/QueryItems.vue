@@ -55,6 +55,11 @@
                     @change="changeColumn(clause, item)">
                 </Dropdown>
 
+                <i  v-if="clause === QueryClause.GROUP_BY"
+                    class="pi pi-info" 
+                    v-tooltip="item.tooltip">
+                </i>
+
                 <template v-if="clause === QueryClause.WHERE">
                     <Dropdown 
                         v-model="item.relation"
@@ -160,8 +165,8 @@ const aggregateFunctionsOptions: AggregateFunction[] = [ 'max', 'min', 'sum', 'a
 
 const informationMessages = {
     [QueryClause.WHERE]: "due to the differences in the role that they are playing, partition key, clustering and normal columns support different sets of restrictions within this clause",
-    [QueryClause.ORDER_BY]: "the partition key must be defined in the where clause and the order by clause defines the clustering column to use for ordering.",
-    [QueryClause.GROUP_BY]: "TODO",
+    [QueryClause.ORDER_BY]: "the partition key must be defined in the where clause and the order by clause defines the clustering column to use for ordering",
+    [QueryClause.GROUP_BY]: "the group by option can condense all selected rows that share the same values for a set of columns into a single row",
     [QueryClause.GET]: "aggregate functions work on a set of rows matching a select statement to return a single value"
 };
 
@@ -171,6 +176,9 @@ const tooltips = {
         clustering: "the clustering columns support only the following operators: =, IN, >, >=, <, <=",
         regular: "TODO: regular column tooltip"
     },
+    [QueryClause.GROUP_BY]: {
+        partition_key: "group by is only supported on primary key columns"
+    }
 };
 
 // Props and emits
@@ -203,7 +211,6 @@ const items = computed((): QueryItem[] => {
 
 // Functions related to the item actions
 const getAggregationFunctionsForSelectedColumn = (item: QueryItem): AggregateFunction[] => {
-    debugger
     if (item.column === 'all' || !['integer', 'float'].includes(item.type)) {
         return ['count'];
     }
@@ -221,10 +228,11 @@ const addToQuery = (clause: QueryClause, item: QueryItem): void => {
 };
 
 const changeColumn = (clause: QueryClause, item: QueryItem): void => {
+    debugger;
     const currentColumn = props.columns?.find(x => x.conceptName === item.column);
     if (currentColumn) {
         item.operators = getCQLWhereOperatorsByColumnKind(currentColumn.columnKind);
-        item.tooltip = props.clause === QueryClause.WHERE ? tooltips[clause][currentColumn.columnKind] : constants.inputValues.empty;
+        item.tooltip = tooltips[clause][currentColumn.columnKind];
         item.type = getColumnInputType(currentColumn, props.tableMetadata);
     } else {
         item.operators = [];

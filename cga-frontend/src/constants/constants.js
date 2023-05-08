@@ -96,12 +96,12 @@ export default {
     groupBy: {
       conceptReferent: '',
       conceptRelation: 'groupby',
-      column: []
+      columns: []
     },
     out: {
       conceptReferent: 'out',
       conceptRelation: 'return',
-      column: []
+      columns: []
     },
     get: {
       count: {

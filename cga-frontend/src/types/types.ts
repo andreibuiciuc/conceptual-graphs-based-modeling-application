@@ -58,6 +58,7 @@ type SelectClause = {
 
 interface QueryConcepts {
     [QueryClause.WHERE]: SelectClause
+    [QueryClause.GROUP_BY]: SelectClause
     [QueryClause.ORDER_BY]: SelectClause
     [QueryClause.GET]: AggregateClause
 };

@@ -303,6 +303,20 @@ export function useQuery() {
     };
 
 
+    const computeGroupByClauseLine = (commands: Command[]): void => {
+        let lineContent: string = constants.inputValues.empty;
+
+        queryStore.queryConcepts.groupBy.columns.forEach((concept: Concept) => {
+            lineContent = lineContent.concat(`${concept.conceptName}, `);
+        });
+
+        if (lineContent) {
+            lineContent = lineContent.slice(0, lineContent.length - 2);
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(' GROUP BY ').concat(lineContent);
+            addCQLCommandLine(commands, lineContent);
+        }
+    };
+
     /**
      * Helper function that computes the column value of a WHERE clause query item as a string
      * @param item WHERE clause query item
@@ -355,6 +369,7 @@ export function useQuery() {
 
         computeSelectStartingLine(tableMetadata, queryMetadata, commands, queryConcepts);
         computeWhereClauseLine(commands);
+        computeGroupByClauseLine(commands);
         computeOrderByClauseLine(commands);
 
         return commands;

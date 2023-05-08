@@ -140,7 +140,7 @@
               v-if="groupByClauseItems.length"
               :table-metadata="tableMetadata"
               :clause="QueryClause.GROUP_BY"
-              :columns="selectedColumnConcepts"
+              :columns="primaryKeyColumns"
               :state="groupByClauseItemsState"
               @add="addQueryConcept"
               @remove="removeClause"
@@ -176,15 +176,15 @@
 
 <script setup lang="ts">
 // Constants, types and utility imports
-import constants from '../constants/constants';
-import { Concept, QueryClause, QueryConcepts, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction } from '../types/types';
-import { manageRequest } from '../includes/requests';
+import constants from '@/constants/constants';
+import { Concept, QueryClause, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction } from '../types/types';
+import { manageRequest } from '@/includes/requests';
 
 // Component imports
-import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
-import QueryItems from '../components/design/QueryItems.vue';
-import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
-import CgaTable from '../utilities/CgaTable.vue';
+import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
+import QueryItems from '@/components/design/QueryItems.vue';
+import CassandraTerminal from '@/components/graphic/terminal/CassandraTerminal.vue';
+import CgaTable from '@/components/utilities/CgaTable.vue';
 
 // Store imports
 import { useConnectionStore } from '../stores/connection';
@@ -218,7 +218,8 @@ const selectedClauseType: Ref<QueryClause | null> = ref(null);
 
 const { getRelationTypeForColumnConcept, 
         computeConceptReferentValue,
-        computeConceptReferentValueForAggregateFunction, 
+        computeConceptReferentValueForAggregateFunction,
+        computeConceptReferentValueForGroupByItems,
         computeConceptReferentValueForOrderByItems,
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
@@ -379,6 +380,12 @@ const selectedColumnConcepts: ComputedRef<Concept[]> = computed(() => {
   return queryMetadata.value.columns ? queryMetadata.value.columns.get(queryMetadata.value.tables[0].conceptName): [];
 });
 
+const primaryKeyColumns: ComputedRef<Concept[]> = computed(() => {
+  return tableMetadata.value.columns 
+    ? tableMetadata.value.columns.get(tableMetadata.value.tables[0].conceptName).filter((concept: Concept) => concept.columnKind === 'partition_key' || concept.columnKind === constants.columnKinds.clustering) 
+    : [];
+});
+
 const tableColumnConcepts: ComputedRef<Concept[]> = computed(() => {
   return tableMetadata.value.columns.size ? tableMetadata.value.columns.get(tableMetadata.value.tables[0].conceptName) : [];
 });
@@ -405,6 +412,10 @@ const addQueryConcept = async (queryClauseData: any): Promise<void> => {
     case QueryClause.WHERE:
       queryConcepts.value[QueryClause.WHERE].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
       queryConcepts.value[QueryClause.WHERE].conceptReferent = computeConceptReferentValue(whereClauseItems.value);
+      break;
+    case QueryClause.GROUP_BY:
+      queryConcepts.value[QueryClause.GROUP_BY].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });
+      queryConcepts.value[QueryClause.GROUP_BY].conceptReferent = computeConceptReferentValueForGroupByItems(queryConcepts.value);
       break;
     case QueryClause.ORDER_BY:
       queryConcepts.value[QueryClause.ORDER_BY].columns.push({ conceptName: queryClauseData.item.column, conceptType: constants.conceptTypes.column });

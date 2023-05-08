@@ -196,7 +196,6 @@ const isAddTableConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
   return !!currentTableConcept.value.conceptName && !isGraphRendered.value;
 });
 
-
 const checkIfTableExistsInCollection = async (): Promise<boolean> => {
   try {
     const snapshot = await conceptualGraphsCollection.where('tableName', '==', currentTableConcept.value.conceptName).get();
