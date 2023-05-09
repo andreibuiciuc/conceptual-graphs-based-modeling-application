@@ -95,7 +95,12 @@ export default {
     },
     groupBy: {
       conceptReferent: '',
-      conceptRelation: 'groupby',
+      conceptRelation: 'groupBy',
+      columns: []
+    },
+    groupId: {
+      conceptReferent: '',
+      conceptRelation: 'groupId',
       columns: []
     },
     out: {

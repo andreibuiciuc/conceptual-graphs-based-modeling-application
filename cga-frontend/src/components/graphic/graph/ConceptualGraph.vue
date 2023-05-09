@@ -81,6 +81,11 @@
                       <span class="concept-name">{{ queryConcepts[QueryClause.ORDER_BY].conceptReferent }}</span>
                     </div>
                   </li>
+                  <li v-if="queryConcepts[QueryClause.GROUP_BY].columns.length">
+                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_groupIdConcept`">
+                      <span class="concept-name">groupId</span>
+                    </div>
+                  </li>
                   <!-- <li v-if="isOutConceptVisible">
                     <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_outConcept`">
                       <span class="concept-name" >{{ queryConcepts[QueryClause.OUT].conceptRelation }}</span>
@@ -306,6 +311,30 @@ const drawArrowsForGroupByQueryConcepts = async (): Promise<void> => {
   }
 };
 
+const drawArrowsForGroupIdConcept = async (): Promise<void> => {
+  if (queryConcepts.value && queryConcepts.value[QueryClause.GROUP_BY].columns) {
+    await nextTick();
+    const currentTable: Concept | undefined = props.graphMetadata.tables.at(0);
+    if (!currentTable) {
+      return ;
+    }
+
+    for (let columnIndex in queryConcepts.value[QueryClause.GROUP_BY].columns) {
+      const columnConcept: Concept | undefined = queryConcepts.value[QueryClause.GROUP_BY].columns[parseInt(columnIndex)];
+      const index = props.graphMetadata.columns.get(currentTable.conceptName)?.findIndex(concept => concept.conceptName === columnConcept?.conceptName);
+      if (columnConcept && index > -1) {
+        
+        const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${currentTable.conceptName}_columnConcept_${index}`);
+        const groupIdConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_groupIdConcept`);
+        const groupByReferentElement: HTMLElement | null = document.getElementById(`${props.graphKey}_groupByReferentConcept`);
+
+        createArrow(columnConceptElement, groupIdConceptElement, columnConcept);
+        createArrow(groupIdConceptElement, groupByReferentElement);
+      }
+    }
+  }
+};
+
 const drawArrowsForAggregateFunctions = async (): Promise<void> => {
   if (queryConcepts.value && queryConcepts.value[QueryClause.GET].count) {
     
@@ -361,6 +390,7 @@ const drawArrowsForQueryConcepts = (): void => {
     drawArrowsForWhereQueryConcepts();
     drawArrowsForOrderByQueryConcepts();
     drawArrowsForGroupByQueryConcepts();
+    drawArrowsForGroupIdConcept();
     drawArrowsForAggregateFunctions();
     drawArrowsForOutConcept();
   }
@@ -470,7 +500,7 @@ li.aggregation-function-item
   margin-top: 10rem !important
 
 li.group-by-item
-  margin-top: 10rem !important
+  margin-top: 15rem !important
 
 .tf-tree li ul
   margin: 0.5em 0
