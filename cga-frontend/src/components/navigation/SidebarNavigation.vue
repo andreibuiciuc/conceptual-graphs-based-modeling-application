@@ -6,7 +6,7 @@
     </template>
     <div class="panel-container">
         <div class="flex flex-column gap-2">
-          <small id="ip-help">enter the exposed IP address of your running cassandra network (server). example: 127.0.0.1, localhost, etc.</small>
+          <small id="ip-help">enter the exposed IP address of your cassandra server</small>
           <InputText 
             v-model="cassandraServerCredentials.ipAddress"
             outlined 
@@ -18,7 +18,7 @@
           />
         </div>
         <div class="flex flex-column gap-2">
-          <small id="port-help">enter the exposed port number of your running cassandra network (server). example: 9042 (cassandra default), etc.</small>
+          <small id="port-help">enter the exposed port number of your cassandra server</small>
           <InputText
             v-model="cassandraServerCredentials.port"
             outlined
@@ -65,15 +65,18 @@
         @click="renderGraph"
       />
     </div>
+    <Divider />
+    <SyncronizeCard :are-tables-in-sync="true" />
   </Sidebar>
 </template>
 
 <script setup lang="ts">
+import constants from '@/constants/constants';
 import { storeToRefs } from 'pinia';
-import { useUtilsStore } from '../../stores/utils';
-import { useConnectionStore } from '../../stores/connection';
-import constants from '../../constants/constants';
+import { useUtilsStore } from '@/stores/utils';
+import { useConnectionStore } from '@/stores/connection';
 import { Ref, ref, computed, ComputedRef } from 'vue';
+import SyncronizeCard from '@/components/dashboard/SyncronizeCard.vue';
 
 const isConnectionButtonTriggered: Ref<boolean> = ref(false);
 const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
@@ -126,14 +129,20 @@ const renderGraph = async (): Promise<void> => {
         margin-left: 1rem
 
   .p-sidebar-content
-    padding-top: 2.5rem !important
+    padding-top: 1.5rem !important
 
   .panel-container
-    @include containers.flex-container($flex-direction: column, $align-items: center)
+    @include containers.flex-container($flex-direction: column, $align-items: flex-start)
     margin-top: 16px
 
     input, .p-button, .p-dropdown
       width: 100%
       margin-bottom: 1rem
+
+    .flex
+      width: 100%
+
+    .flex-column
+      align-items: flex-start
 
 </style>

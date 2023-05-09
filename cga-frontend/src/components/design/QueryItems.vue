@@ -232,7 +232,7 @@ const changeColumn = (clause: QueryClause, item: QueryItem): void => {
     const currentColumn = props.columns?.find(x => x.conceptName === item.column);
     if (currentColumn) {
         item.operators = getCQLWhereOperatorsByColumnKind(currentColumn.columnKind);
-        item.tooltip = tooltips[clause][currentColumn.columnKind];
+        // item.tooltip = tooltips[clause][currentColumn.columnKind];
         item.type = getColumnInputType(currentColumn, props.tableMetadata);
     } else {
         item.operators = [];
