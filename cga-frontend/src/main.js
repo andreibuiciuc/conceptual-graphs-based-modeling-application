@@ -44,3 +44,4 @@ auth.onAuthStateChanged(() => {
     app.mount("#app");
   }
 });
+

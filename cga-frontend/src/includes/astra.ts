@@ -8,36 +8,18 @@ const astraDbTable = import.meta.env.VITE_ASTRA_DB_TABLE;
 const baseUrl = `https://${astraDbId}-${astraDbRegion}.apps.astra.datastax.com/api/rest`;
 
 
-/**
- * Helper function for constructing the URL to the endpoint for Astra DB retrievals
- * @param applyWhereClause flag for applying filtering
- * @param searchPath search path for filtering 
- * @returns enpoint for Astra DB retrieval
- */
-const createAstraApiUrlForRetrieve = (applyWhereClause?: boolean, searchPath?: string): string => {
-  let retrieveUrl = `${baseUrl}/v2/keyspaces/${astraDbKeyspace}/${astraDbTable}/rows`;
-
-  if (applyWhereClause) {
-    retrieveUrl = retrieveUrl.concat(`?where=${searchPath}`);
-  }
-
-  return retrieveUrl;
-}
-
-
-/**
- * Helper function for constructing tge URL to the endpoint for Astra DB retrieval of column metadata.
- * @returns endpoint for Astra DB retrieval of column metadata
- */
-const createAstraApiUrlForMetadata = (): string => {
-  return `${baseUrl}/v2/schemas/keyspaces/${astraDbKeyspace}/tables/${astraDbTable}/columns`;
+const createAstraApiUrlForKeyspaces = (): string => {
+  return `${baseUrl}/v2/schemas/keyspaces`;
 };
 
+const createAstraApiUrlForTableMetadata = (): string => {
+  return `${baseUrl}/v2/keyspaces/${astraDbKeyspace}/tables/${astraDbTable}/columns`;
+};
 
-/**
- * Helper function for configuring the required headers for Astra DB communication
- * @returns object consisting of the required headers
- */
+const createAstraApiUrlForTables = (keyspace: string): string => {
+  return `${baseUrl}/v2/schemas/keyspaces/${keyspace}/tables`;
+};
+
 const configureHeaders = (): { [key: string]: string } => {
   return {
     'X-Cassandra-Token': import.meta.env.VITE_ASTRA_DB_APPLICATION_TOKEN,
@@ -48,30 +30,26 @@ const configureHeaders = (): { [key: string]: string } => {
 };
 
 
-/**
- * Function for retrieving the column metadata for the supported table from Astra DB.
- * @returns Promise with the Axios reponse received from the Astra DB server
- */
-const retrieveColumnsMetadataForTable = (): any => {
-  const requestUrl = createAstraApiUrlForMetadata();
+const retrieveAllKeyspaces = (): Promise<AxiosResponse<any, any>> => {
+  const requestUrl = createAstraApiUrlForKeyspaces();
   const headers = configureHeaders();
   return manageRequest('get', requestUrl, null, requestUrl, headers);
 };
 
-
-/**
- * Function for retrieving all entities from the supported table from Astra DB.
- * In this version, the application supports and manages only one table in Astra DB for unathenticated users.
- * @returns Promise with the Axios response received from the Astra DB server
- */
-const retrieveAllEntities = async (): Promise<AxiosResponse<any, any>> => {
-  const requestURL = createAstraApiUrlForRetrieve();
+const retrieveAllTables = (keyspace: string): Promise<AxiosResponse<any, any>> => {
+  const requestUrl = createAstraApiUrlForTables(keyspace);
   const headers = configureHeaders();
-  return manageRequest('get', requestURL, null, requestURL, headers);
+  return manageRequest('get', requestUrl, null, requestUrl, headers);
 };
 
+const retrieveTableMetadata = (): Promise<AxiosResponse<any, any>> => {
+  const requestUrl = createAstraApiUrlForTableMetadata();
+  const headers = configureHeaders();
+  return manageRequest('get', requestUrl, null, requestUrl, headers);
+};
 
 export {
-  retrieveAllEntities,
-  retrieveColumnsMetadataForTable
+  retrieveAllKeyspaces,
+  retrieveAllTables,
+  retrieveTableMetadata,
 };

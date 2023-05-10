@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import constants from '@/constants/constants';
-import { retrieveColumnsMetadataForTable } from '@/includes/astra';
+// import { retrieveColumnsMetadataForTable } from '@/includes/astra';
 import { useForceGraph } from '@/composables/forcegraph';
 import { useUtilsStore } from '@/stores/utils';
 import { storeToRefs } from 'pinia';
@@ -64,17 +64,17 @@ const parseColumnMetadata = (columns: { [key: string]: string }[]) => {
 };
 
 const retrieveColumnMetadata = async (): Promise<void> => {
-    isRetrieveInProgress.value = true;
-    const response = await retrieveColumnsMetadataForTable();
-    if (response && response.data) {
-        parseColumnMetadata(response.data.data);
-        await nextTick();
-        demoGraph.value.drawInitialArrows();
-    }
-    isRetrieveInProgress.value = false;
+    // isRetrieveInProgress.value = true;
+    // const response = await retrieveColumnsMetadataForTable();
+    // if (response && response.data) {
+    //     parseColumnMetadata(response.data.data);
+    //     await nextTick();
+    //     demoGraph.value.drawInitialArrows();
+    // }
+    // isRetrieveInProgress.value = false;
 };
 
-retrieveColumnMetadata();
+// retrieveColumnMetadata();
 
 </script>
 

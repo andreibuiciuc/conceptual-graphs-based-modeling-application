@@ -2,11 +2,19 @@ import axios, { AxiosResponse } from "axios";
 import constants from "@/constants/constants";
 import { RequestType } from '@/types/utils/types';
 
+type ServerCredentials = 'HOST' | 'PORT';
+type ApplicationMode = 'DEV' | 'PROD';
+
 const urlPrefix = "http://";
 
-const server = {
+const applicationModes: { [mode in ApplicationMode]: string } = {
+  DEV: 'DEV',
+  PROD: 'PROD'
+};
+
+const server: { [credential in ServerCredentials]: string } = {
   HOST: import.meta.env.VITE_UVICORN_SERVER_HOST,
-  PORT: import.meta.env.VITE_UVICORN_SERVER_PORT
+  PORT: import.meta.env.VITE_UVICORN_SERVER_PORT,
 };
 
 /**
@@ -15,8 +23,12 @@ const server = {
  * @returns URL to the specific endpoint from the server
  */
 const createRequestURL = (endpoint: string): string => {
-  return `${urlPrefix}${server.HOST}:${server.PORT}/${endpoint}`;
+  if (import.meta.env.VITE_SERVER_MODE === applicationModes.DEV) {
+    return `${urlPrefix}${server.HOST}:${server.PORT}/${endpoint}`;
+  }
+  return `${import.meta.env.VITE_PROD_SERVER_HOST}/${endpoint}`;
 };
+
 
 /**
  * Axios wrapper for communication with a RESTful service

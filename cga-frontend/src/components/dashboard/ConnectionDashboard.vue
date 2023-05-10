@@ -8,7 +8,8 @@
 
     <div class="dashboard-column-container conceptual-graph-wrapper">
         <template v-if="!forceGraph && graphMetadata.tables.length">
-            <!-- <svg class="svg-clip-container">
+            <!-- TODO:
+              <svg class="svg-clip-container">
               <defs>
                 <clipPath id="clip">
                   <rect x="0" y="0" />
@@ -44,6 +45,8 @@ import { Ref, ref, watch, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import * as d3 from 'd3';
+import { retrieveAllTables } from '@/includes/astra';
+import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 
 // Constants
 const defaultGraphMetadata: GraphMetadata = {
@@ -76,36 +79,38 @@ const conceptForLookup: Ref<Concept | any | null> = ref(null);
 const forceSimulation: Ref<any> = ref(null);
 
 // Functionalities related to the parsing of the keyspace metadata
-const parseKeyspaceMetadata = (keyspaceMetadata: any): void => {
+const parseKeyspaceMetadata = (keyspaceMetadata: AstraTableMetadata[] ): void => {
+  console.log(keyspaceMetadata);
   resetKeyspaceMetadata();
+
   const keyspaceConcept = {
     conceptType: constants.conceptTypes.keyspace,
-    conceptName: keyspaceMetadata.keyspace_name
+    conceptName: currentKeyspace.value
   };
   graphMetadata.value.keyspace = Object.assign({}, keyspaceConcept);
   
-  keyspaceMetadata.tables.forEach((table: any) => {
+  keyspaceMetadata.forEach((table: AstraTableMetadata) => {
     const tableConcept: ConfigurableConcept = {
       conceptType: constants.conceptTypes.table,
-      conceptName: table.table,
+      conceptName: table.name,
       isTableExpanded: true
     };
     graphMetadata.value.tables.push(tableConcept);
     graphMetadata.value.columns.set(tableConcept.conceptName, []);
 
-    table.columns.forEach(column => {
-      const columnConcept = { conceptType: constants.conceptTypes.column, conceptName: column.column_name };
-      const relationType = getRelationTypeForColumnConcept(column.column_kind, column.clustering_order)
+    table.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
+      const columnConcept = { conceptType: constants.conceptTypes.column, conceptName: columnDefinition.name };
+      // const relationType = getRelationTypeForColumnConcept(column.column_kind, column.clustering_order)
 
-      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: relationType });
+      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: 'todo' });
 
-      const typeConcept = { conceptType: constants.conceptTypes.dataType, conceptName: column.column_type };
+      const typeConcept = { conceptType: constants.conceptTypes.dataType, conceptName: columnDefinition.typeDefinition };
       graphMetadata.value.dataTypes.set(columnConcept.conceptName, { ... typeConcept, relation: constants.relationTypes.hasType });
     });
   });
 };
 
-const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: any): { [key: string]: any } => {
+const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: AstraTableMetadata[]): { [key: string]: any } => {
   let nodes: D3Node[] = [];
   let links: D3Link[] = [];
   let currentNodeIndex = 0;
@@ -116,21 +121,21 @@ const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: any): { [key: strin
   let tableIndex = 0;
   let columnIndex = 0;
 
-  keyspaceMetadata.tables.forEach((table: any) => {
+  keyspaceMetadata.forEach((table: AstraTableMetadata) => {
     tableIndex = currentNodeIndex;
     links.push({ source: 0, target: tableIndex });
 
-    nodes.push({ conceptName: table.table, conceptType: constants.conceptTypes.table });
+    nodes.push({ conceptName: table.name, conceptType: constants.conceptTypes.table });
     currentNodeIndex = currentNodeIndex + 1;
 
-    table.columns.forEach((column: any) => {
+    table.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
       columnIndex = currentNodeIndex;
 
-      nodes.push({ conceptName: column.column_name, conceptType: constants.conceptTypes.column });
+      nodes.push({ conceptName: columnDefinition.name, conceptType: constants.conceptTypes.column });
       currentNodeIndex = currentNodeIndex + 1;
       links.push({ source: tableIndex, target: columnIndex });
 
-      nodes.push({ conceptName: column.column_type, conceptType: constants.conceptTypes.dataType });
+      nodes.push({ conceptName: columnDefinition.name, conceptType: constants.conceptTypes.dataType });
       links.push({ source: columnIndex, target: currentNodeIndex });
       currentNodeIndex = currentNodeIndex + 1;
     });
@@ -161,16 +166,17 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
   if (currentKeyspace.value) {
     isKeyspaceRetrieveInProgress.value = true;
 
-    resetKeyspaceMetadata();
-    const response = await manageRequest(constants.requestTypes.GET, "keyspace", { keyspace_name: currentKeyspace.value });
-    
+    const response = await retrieveAllTables(currentKeyspace.value);
     if (response && response.data) {
-      if (response.data.status === constants.requestStatus.SUCCESS) {
-        keyspaceMetadata.value = { ... response.data.keyspace_metadata };
-        parseKeyspaceMetadataWrapper(response.data.keyspace_metadata);
+    
+      const responseData = response.data as AstraApiResponse;
+      if (responseData.data) {
+        keyspaceMetadata.value = { ...responseData.data };
+        parseKeyspaceMetadataWrapper(responseData.data);
       } else {
-        openNotificationToast(response.data.message, 'error');
+        openNotificationToast(responseData.description, 'error');
       }
+
     } else {
       openNotificationToast('Unexpected error occured', 'error');
     }
@@ -183,6 +189,7 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
       keyspaceGraph.value.drawInitialArrows();
     }
   }
+
 };
 
 watch(currentKeyspace, async () => {

@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
 import constants from '../constants/constants';
-import { manageRequest } from '../includes/requests';
 import { useUtils } from "../composables/utils";
 import { Ref, ref } from "vue";
+import { retrieveAllKeyspaces } from "@/includes/astra";
+import { AstraApiResponse } from "@/types/astra/types";
 
 export const useConnectionStore = defineStore('connection', () => {
 
@@ -17,50 +18,28 @@ export const useConnectionStore = defineStore('connection', () => {
 
   async function connect (): Promise<void> {
     isConnectionButtonTriggerd.value = true;
-    try {
-      const response = await manageRequest(constants.requestTypes.GET, 'connection/on', {
-        host: cassandraServerCredentials.value.ipAddress,
-        port: cassandraServerCredentials.value.port
-      });
-      if (response && response.data) {
-        if (response.data.status === constants.requestStatus.SUCCESS) {
-          cassandraServerCredentials.value.isCassandraServerConnected = true;
-          openNotificationToast(`Connection to Cassandra server ${this.cassandraServerCredentials.ipAddress}:${this.cassandraServerCredentials.port} established.`, 'success');
-          retrieveKeyspaces();
-        } else {
-          openNotificationToast(response.data.message, 'error');
-          isConnectionButtonTriggerd.value = false;
-        }
-      }
-    } catch (exception: any) {
-      openNotificationToast('unexpected network error occured. contact the CGA admin for assistance', 'error');
-    }
+    retrieveKeyspaces();
   }
 
   async function disconnect (): Promise<void> {
-    isConnectionButtonTriggerd.value = true;
-    const response = await manageRequest(constants.requestTypes.POST, 'connection/off');
-    if (response && response.data) {
-      if (response.data.status === constants.requestStatus.SUCCESS) {
-        openNotificationToast(`Connection to Cassandra server ${cassandraServerCredentials.value.ipAddress}:${cassandraServerCredentials.value.port} discarded.`, 'success');
-        cassandraServerCredentials.value = { ... constants.defaultServerConnectionCredentials };
-        currentKeyspace.value = constants.inputValues.empty;
-      } else {
-        openNotificationToast(response.data.message, 'error');
-      }
-    }
-    isConnectionButtonTriggerd.value = false;
+    cassandraServerCredentials.value.isCassandraServerConnected = false;
+    currentKeyspace.value = constants.inputValues.empty;
+    openNotificationToast(`connection to astra db cassandra server discarded.`, 'success');
   }
 
   async function retrieveKeyspaces (): Promise<void> {
-    const response = await manageRequest(constants.requestTypes.GET, 'keyspaces');
+    const response = await retrieveAllKeyspaces();
     if (response && response.data) {
-      if (response.data.status === constants.requestStatus.SUCCESS) {
-        availableKeyspaces.value = JSON.parse(JSON.stringify(response.data.keyspaces));
+      const responseData = response.data as AstraApiResponse;
+      if (responseData.data) {
+        const mappedKeyspaces = responseData.data.map((keyspace: any) => keyspace.name);
+        availableKeyspaces.value = JSON.parse(JSON.stringify(mappedKeyspaces));
+
         openNotificationToast('keyspaces were successfully retrieved', 'success');
+        cassandraServerCredentials.value.isCassandraServerConnected = true;
         isConnectionButtonTriggerd.value = false;
       } else {
-        openNotificationToast(response.data.message, 'error');
+        openNotificationToast(responseData.description, 'error');
         isConnectionButtonTriggerd.value = false;
       }
     }
