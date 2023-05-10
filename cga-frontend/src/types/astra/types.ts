@@ -20,7 +20,7 @@ interface AstraPrimaryKey {
 
 interface AstraClusteringExpression {
     order: AstraClusteringOrder
-    columns: string
+    columns: string[]
 }
 
 interface AstraTableOptions {
@@ -38,6 +38,7 @@ interface AstraTableMetadata {
 
 export {
     AstraApiResponse,
-    AstraTableMetadata,
+    AstraClusteringOrder,
     AstraColumnDefinition,
+    AstraTableMetadata,
 };

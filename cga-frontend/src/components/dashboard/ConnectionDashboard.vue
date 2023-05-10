@@ -80,7 +80,6 @@ const forceSimulation: Ref<any> = ref(null);
 
 // Functionalities related to the parsing of the keyspace metadata
 const parseKeyspaceMetadata = (keyspaceMetadata: AstraTableMetadata[] ): void => {
-  console.log(keyspaceMetadata);
   resetKeyspaceMetadata();
 
   const keyspaceConcept = {

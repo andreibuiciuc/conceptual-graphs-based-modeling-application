@@ -3,21 +3,19 @@ import { manageRequest } from "./requests";
 
 const astraDbId = import.meta.env.VITE_ASTRA_DB_ID;
 const astraDbRegion = import.meta.env.VITE_ASTRA_DB_REGION;
-const astraDbKeyspace = import.meta.env.VITE_ASTRA_DB_KEYSPACE;
-const astraDbTable = import.meta.env.VITE_ASTRA_DB_TABLE;
 const baseUrl = `https://${astraDbId}-${astraDbRegion}.apps.astra.datastax.com/api/rest`;
 
-
+// Helper functions for creating the URL for communicating with Astra API
 const createAstraApiUrlForKeyspaces = (): string => {
   return `${baseUrl}/v2/schemas/keyspaces`;
 };
 
-const createAstraApiUrlForTableMetadata = (): string => {
-  return `${baseUrl}/v2/keyspaces/${astraDbKeyspace}/tables/${astraDbTable}/columns`;
-};
-
 const createAstraApiUrlForTables = (keyspace: string): string => {
   return `${baseUrl}/v2/schemas/keyspaces/${keyspace}/tables`;
+};
+
+const createAstraApiUrlForTable = (keyspace: string, table: string): string => {
+  return `${baseUrl}/v2/schemas/keyspaces/${keyspace}/tables/${table}`;
 };
 
 const configureHeaders = (): { [key: string]: string } => {
@@ -30,6 +28,7 @@ const configureHeaders = (): { [key: string]: string } => {
 };
 
 
+// GET: retrieve of metadata
 const retrieveAllKeyspaces = (): Promise<AxiosResponse<any, any>> => {
   const requestUrl = createAstraApiUrlForKeyspaces();
   const headers = configureHeaders();
@@ -42,14 +41,21 @@ const retrieveAllTables = (keyspace: string): Promise<AxiosResponse<any, any>> =
   return manageRequest('get', requestUrl, null, requestUrl, headers);
 };
 
-const retrieveTableMetadata = (): Promise<AxiosResponse<any, any>> => {
-  const requestUrl = createAstraApiUrlForTableMetadata();
+const retrieveTable = (keyspace: string, table: string): Promise<AxiosResponse<any, any>> => {
+  const requestUrl = createAstraApiUrlForTable(keyspace, table);
   const headers = configureHeaders();
   return manageRequest('get', requestUrl, null, requestUrl, headers);
+};
+
+const saveTable = (keyspace: string, data: any): Promise<AxiosResponse<any, any>> => {
+  const requestUrl = createAstraApiUrlForTables(keyspace);
+  const headers = configureHeaders();
+  return manageRequest('post', requestUrl, data, requestUrl, headers);
 };
 
 export {
   retrieveAllKeyspaces,
   retrieveAllTables,
-  retrieveTableMetadata,
+  retrieveTable,
+  saveTable,
 };

@@ -11,12 +11,18 @@
         <div class="design-toolbox-input-container">
           <div class="design-toolbox-input-group">
               <InputText
-                v-model="tableName"
+                v-if="!isTableInViewMode"
+                v-model="currentTableConcept.conceptName"
                 placeholder="table name"
                 :class="{ 'p-invalid': !isTableConceptValid }"
-                :disabled="!currentKeyspace || isTableInViewMode"
+                :disabled="!currentKeyspace"
                 :readonly="isGraphRendered"
                 @change="changeTableConcept"
+              />
+              <InputText v-else 
+                v-model="tableName"
+                :disabled="true"
+                :readonly="true"
               />
           </div>
           <div class="design-toolbox-action-group">
@@ -114,6 +120,9 @@ import { conceptualGraphsCollection } from "../../includes/firebase";
 import { ComputedRef, Ref, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { computed } from '@vue/reactivity';
+import { retrieveTable } from '@/includes/astra';
+import { AstraApiResponse } from '@/types/astra/types';
+import { Axios, AxiosResponse } from 'axios';
 
 // Props and emits definitions
 interface Props {
@@ -182,7 +191,7 @@ const resetToolbox = async (): Promise<void> => {
 };
 
 const tableName: ComputedRef<string> = computed(() => {
-  return props.isTableInViewMode && props.tableInViewMode && props.isTableInViewModeReady ? props.tableInViewMode.tables.at(0).conceptName : currentTableConcept.value.conceptName;
+  return props.isTableInViewMode && props.tableInViewMode && props.isTableInViewModeReady ? props.tableInViewMode.tables.at(0).conceptName : constants.inputValues.empty;
 });
 
 // Functions related to the validation of the data structure
@@ -193,7 +202,8 @@ const getColumnNameErrorMessage: ComputedRef<string> = computed(() => {
 });
 
 const isAddTableConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
-  return !!currentTableConcept.value.conceptName && !isGraphRendered.value;
+  // return !!currentTableConcept.value.conceptName && !isGraphRendered.value;
+  return true;
 });
 
 const checkIfTableExistsInCollection = async (): Promise<boolean> => {
@@ -208,33 +218,32 @@ const checkIfTableExistsInCollection = async (): Promise<boolean> => {
     }
   } catch (error) {
     openNotificationToast(error.message, 'error');
-    // TODO: Handle this case (maybe in the axios wrapper)
     return true;
   }
 };
 
 const checkIfTableExistsInKeyspace = async (): Promise<boolean> => {
-  const response = await manageRequest(constants.requestTypes.GET, 'table', { 
-    table_name: currentTableConcept.value.conceptName,
-    keyspace_name: currentKeyspace.value
-  });
-  if (response && response.data) {
-    if (response.data.status === constants.requestStatus.SUCCESS) {
-      if (response.data.flag) {
-        isTableConceptValid.value = false;
-        openNotificationToast(`table ${currentTableConcept.value.conceptName} already exists in the current keyspace`, 'error');
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      openNotificationToast(response.data.message, 'error');
-      // TODO: Handle this case (maybe in the axios wrapper)
-      return true;
-    }
+  let response: AxiosResponse<any, any>, responseData: AstraApiResponse;
+  
+  try {
+    response = await retrieveTable(currentKeyspace.value, currentTableConcept.value.conceptName);
+  } catch (error: any) {
+    openNotificationToast(error.message, 'error');
+    return false;
   }
-  // Handle this case (maybe in the axios wrapper)
-  return true;
+
+  if (response && response.data) {
+    responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      isTableConceptValid.value = true;
+      openNotificationToast(`table ${currentTableConcept.value.conceptName} already exists in the current keyspace`, 'error');
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    openNotificationToast(responseData.description, 'error');
+  }
 };
 
 const validateTableName = async (): Promise<void> => {
@@ -250,7 +259,6 @@ const validateTableName = async (): Promise<void> => {
   }
 
   addTableConceptToGraph();
-
 };
 
 // Functions related to the rendering of the conceptual graph

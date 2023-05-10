@@ -21,7 +21,7 @@
             icon="pi pi-save"
             label="save"
             :disabled="!isGraphRendered"
-            @click="saveTableMetadata"
+            @click="saveAndSyncronizeTable"
           />
         </template>
         <template v-else>
@@ -83,6 +83,9 @@ import constants from '../constants/constants';
 import { useMetadata } from '../composables/metadata';
 import { useConfetti } from '../composables/confetti';
 import { auth, tableGraphsCollection } from '@/includes/firebase';
+import { saveTable } from '@/includes/astra';
+import { AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
+import { AstraApiResponse } from '@/types/astra/types';
 
 // Functions mapped from composables
 const { generateQueryAsString, generateQueryAsCommands } = useQuery();
@@ -165,7 +168,58 @@ const removeColumnConcept = async (tableAndColumnConcepts: any): Promise<void> =
 // Functions related to the main screen actions
 const isSaveInProgress: Ref<boolean> = ref(false);
 
-const saveTableMetadata = async (): Promise<void> => {
+const prepareTableForSaving = (): AstraTableMetadata => {
+  // TODO
+  let table: any = {};
+  table.name = tableMetadata.value.tables.at(0).conceptName;
+  table.keyspace = tableMetadata.value.keyspace.conceptName;
+  
+  let columns: AstraColumnDefinition[] = [];
+  let partitionKeys: string[] = [];
+  let clusteringKeys: string[] = [];
+  tableMetadata.value.columns.get(table.name).forEach((column: Concept) => {
+    columns.push({
+      name: column.conceptName,
+      static: true,
+      typeDefinition: tableMetadata.value.dataTypes.get(column.conceptName).conceptName
+    });
+    if (column.columnKind === 'partition_key') {
+      partitionKeys.push(column.conceptName);
+    } else if (column.columnKind === constants.columnKinds.clustering) {
+      clusteringKeys.push(column.conceptName);
+    }
+  });
+
+  table.columnDefinitions = columns;
+  
+  table.primaryKey = {};
+  table.primaryKey.partitionKey = JSON.parse(JSON.stringify(partitionKeys));
+  table.primaryKey.clusteringKey = JSON.parse(JSON.stringify(clusteringKeys));
+
+  table.tableOptions = {};
+  table.tableOptions.defaultTimeToLive = 0;
+  table.tableOptions.clusteringExpression = [ { columns: [clusteringColumnOption.value.clusteringColumn], order: clusteringColumnOption.value.clusteringOrder }];
+
+  return table;
+};
+
+const addTableToKeyspace = async (): Promise<void> => {
+  const table = prepareTableForSaving();
+  const response = await saveTable(currentKeyspace.value, table);
+  if (response && response.data) {
+    const responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      openNotificationToast('table successfully added to the keyspace', 'success');
+    } else {
+      openNotificationToast(responseData.description, 'error');
+    }
+  } else {
+    openNotificationToast('unexpeced error occured', 'error');
+  }
+  return;
+};
+
+const saveTableMetadataToCollection = async (): Promise<void> => {
   isSaveInProgress.value = true;
   
   const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
@@ -191,6 +245,10 @@ const saveTableMetadata = async (): Promise<void> => {
     isSaveInProgress.value = false;
     openNotificationToast(error.message, 'error');
   }
+};
+
+const saveAndSyncronizeTable = (): void => {
+  saveTableMetadataToCollection();
 };
 
 const validateConceptualGraph = (): [boolean, string] => {

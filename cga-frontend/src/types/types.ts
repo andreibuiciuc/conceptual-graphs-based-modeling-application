@@ -1,3 +1,4 @@
+import { AstraClusteringOrder } from "./astra/types"
 
 // Conceptual Graphs types
 interface Concept {
@@ -82,7 +83,7 @@ interface QueryItem {
 
 type ClusteringOption = {
     clusteringColumn: string
-    clusteringOrder: string
+    clusteringOrder: AstraClusteringOrder
 };
   
 // Utility types
