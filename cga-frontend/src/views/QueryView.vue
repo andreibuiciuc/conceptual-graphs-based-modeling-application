@@ -191,8 +191,8 @@ import { storeToRefs } from 'pinia';
 import { useAxios } from '@/composables/requests/axios';
 import { useConfirm } from "primevue/useconfirm";
 import { useConnectionStore } from '../stores/connection';
-import { useMetadata } from '../composables/metadata';
-import { useQuery } from '../composables/query';
+import { useMetadata } from '@/composables/metadata/metadata';
+import { useQuery } from '@/composables/metadata/query';
 import { useQueryStore } from '../stores/query';
 import { useUtils } from '../composables/utils';
 

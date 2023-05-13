@@ -116,7 +116,7 @@ import { conceptualGraphsCollection } from "../../includes/firebase";
 import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
 import { useAstra } from '@/composables/requests/astra';
 import { useConnectionStore } from '../../stores/connection';
-import { useMetadata } from '../../composables/metadata';
+import { useMetadata } from '@/composables/metadata/metadata';
 import { useUtils } from "../../composables/utils";
 import { storeToRefs } from 'pinia';
 

@@ -83,9 +83,9 @@ import { Ref, nextTick, onMounted, ref } from 'vue';
 import { useAstra } from '@/composables/requests/astra';
 import { useConfetti } from '../composables/confetti';
 import { useConnectionStore } from "../stores/connection";
-import { useMetadata } from '../composables/metadata';
-import { useQuery } from '../composables/query';
-import { useUtils } from '../composables/utils';
+import { useMetadata } from '@/composables/metadata/metadata';
+import { useQuery } from '@/composables/metadata/query';
+import { useUtils } from '@/composables/utils';
 
 // Functions mapped from composables
 const { generateQueryAsString, generateQueryAsCommands } = useQuery();

@@ -38,7 +38,7 @@ import { Ref, ref, watch, nextTick } from 'vue';
 import { useAstra } from '@/composables/requests/astra';
 import { useConnectionStore } from "../../stores/connection";
 import { useForceGraph } from '../../composables/forcegraph';
-import { useMetadata } from '../../composables/metadata';
+import { useMetadata } from '@/composables/metadata/metadata';
 import { useUtilsStore } from "../../stores/utils";
 import { useUtils } from '../../composables/utils';
 

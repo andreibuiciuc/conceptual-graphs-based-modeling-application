@@ -1,11 +1,11 @@
 
-import constants from "../constants/constants";
-import { Concept, Command, GraphMetadata, QueryItem, QueryConcepts } from "../types/types";
-import { ClusteringOption } from '../types/types';
-import designToolboxConstants from "../components/design/designToolboxConstants";
-import { useConnectionStore } from "../stores/connection";
-import { useQueryStore } from "../stores/query";
-import { useMetadata } from '../composables/metadata';
+import constants from "../../constants/constants";
+import { Concept, Command, GraphMetadata, QueryItem, QueryConcepts } from "../../types/types";
+import { ClusteringOption } from '../../types/types';
+import designToolboxConstants from "../../components/design/designToolboxConstants";
+import { useConnectionStore } from "../../stores/connection";
+import { useQueryStore } from "../../stores/query";
+import { useMetadata } from './metadata';
 
 enum CassandraKeyType {
     PARTITION_KEY = "partition_key",
