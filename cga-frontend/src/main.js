@@ -16,6 +16,7 @@ import * as directives from "vuetify/lib/directives/index.mjs";
 // Styles imports
 import "./assets/main.css";
 import "@mdi/font/css/materialdesignicons.css";
+
 import "primevue/resources/themes/lara-light-blue/theme.css";     
 import "primevue/resources/primevue.min.css";
 import "primeicons/primeicons.css";
