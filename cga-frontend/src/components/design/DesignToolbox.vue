@@ -108,21 +108,17 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import designToolboxConstants from "../design/designToolboxConstants";
+import { AstraApiResponse } from '@/types/astra/types';
+import { AxiosResponse } from 'axios';
+import { ComputedRef, Ref, ref } from 'vue';
+import { computed } from '@vue/reactivity';
+import { conceptualGraphsCollection } from "../../includes/firebase";
 import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
-
+import { useAstra } from '@/composables/astra';
 import { useConnectionStore } from '../../stores/connection';
-
 import { useMetadata } from '../../composables/metadata';
 import { useUtils } from "../../composables/utils";
-
-import { manageRequest } from '../../includes/requests';
-import { conceptualGraphsCollection } from "../../includes/firebase";
-import { ComputedRef, Ref, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { computed } from '@vue/reactivity';
-import { retrieveTable } from '@/includes/astra';
-import { AstraApiResponse } from '@/types/astra/types';
-import { Axios, AxiosResponse } from 'axios';
 
 // Props and emits definitions
 interface Props {
@@ -137,6 +133,7 @@ const emit = defineEmits(['render']);
 // Functions mapped from composables
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept, getPartitionAndClusteringColumnsCount } = useMetadata();
+const { retrieveTable } = useAstra();
 
 // Local constants
 // TODO: Move this to the constants file

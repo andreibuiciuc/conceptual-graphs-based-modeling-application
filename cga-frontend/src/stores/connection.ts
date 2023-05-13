@@ -1,12 +1,12 @@
-import { defineStore } from "pinia";
+
 import constants from '../constants/constants';
-import { useUtils } from "../composables/utils";
 import { Ref, ref } from "vue";
-import { retrieveAllKeyspaces } from "@/includes/astra";
+import { defineStore } from "pinia";
 import { AstraApiResponse } from "@/types/astra/types";
+import { useUtils } from "../composables/utils";
+import { useAstra } from "@/composables/astra";
 
 export const useConnectionStore = defineStore('connection', () => {
-
   // Store responsible for the connection to Cassandra servers
 
   const cassandraServerCredentials: Ref<any> = ref(null);
@@ -15,6 +15,7 @@ export const useConnectionStore = defineStore('connection', () => {
   const isConnectionButtonTriggerd: Ref<boolean> = ref(false);
 
   const { openNotificationToast } = useUtils();
+  const { retrieveAllKeyspaces } = useAstra();
 
   async function connect (): Promise<void> {
     isConnectionButtonTriggerd.value = true;
