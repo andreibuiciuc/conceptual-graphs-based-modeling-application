@@ -114,7 +114,7 @@ import { ComputedRef, Ref, ref } from 'vue';
 import { computed } from '@vue/reactivity';
 import { conceptualGraphsCollection } from "../../includes/firebase";
 import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
-import { useAstra } from '@/composables/astra';
+import { useAstra } from '@/composables/requests/astra';
 import { useConnectionStore } from '../../stores/connection';
 import { useMetadata } from '../../composables/metadata';
 import { useUtils } from "../../composables/utils";

@@ -4,7 +4,7 @@ import { Ref, ref } from "vue";
 import { defineStore } from "pinia";
 import { AstraApiResponse } from "@/types/astra/types";
 import { useUtils } from "../composables/utils";
-import { useAstra } from "@/composables/astra";
+import { useAstra } from "@/composables/requests/astra";
 
 export const useConnectionStore = defineStore('connection', () => {
   // Store responsible for the connection to Cassandra servers

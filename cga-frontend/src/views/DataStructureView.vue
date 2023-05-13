@@ -80,7 +80,7 @@ import { AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';
 import { storeToRefs } from "pinia"
 import { Ref, nextTick, onMounted, ref } from 'vue';
-import { useAstra } from '@/composables/astra';
+import { useAstra } from '@/composables/requests/astra';
 import { useConfetti } from '../composables/confetti';
 import { useConnectionStore } from "../stores/connection";
 import { useMetadata } from '../composables/metadata';

@@ -177,29 +177,25 @@
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '@/constants/constants';
-import { Concept, QueryClause, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction } from '../types/types';
-import { manageRequest } from '@/includes/requests';
-
-// Component imports
-import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
-import QueryItems from '@/components/design/QueryItems.vue';
 import CassandraTerminal from '@/components/graphic/terminal/CassandraTerminal.vue';
 import CgaTable from '@/components/utilities/CgaTable.vue';
-
-// Store imports
-import { useConnectionStore } from '../stores/connection';
-import { useQueryStore } from '../stores/query';
-
-// Composable imports
-import { useMetadata } from '../composables/metadata';
-import { useConfirm } from "primevue/useconfirm";
-import { useUtils } from '../composables/utils';
-import { useQuery } from '../composables/query';
-
-// Vue imports
-import { storeToRefs } from 'pinia';
-import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
+import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
+import QueryItems from '@/components/design/QueryItems.vue';
+import { 
+  Concept, QueryClause, ColumnMetadata, GraphMetadata, ConfigurableConcept, 
+  Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction 
+} from '../types/types';
 import { computed } from '@vue/reactivity';
+import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useAxios } from '@/composables/requests/axios';
+import { useConfirm } from "primevue/useconfirm";
+import { useConnectionStore } from '../stores/connection';
+import { useMetadata } from '../composables/metadata';
+import { useQuery } from '../composables/query';
+import { useQueryStore } from '../stores/query';
+import { useUtils } from '../composables/utils';
+
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -229,6 +225,7 @@ const { getRelationTypeForColumnConcept,
       } = useMetadata();
 const { openNotificationToast, copyToClipboard } = useUtils();
 const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
+const { manageRequest } = useAxios();
 
 
 // Store state and action mappings

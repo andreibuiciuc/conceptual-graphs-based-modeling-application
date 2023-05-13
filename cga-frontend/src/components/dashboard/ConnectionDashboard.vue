@@ -35,7 +35,7 @@ import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/t
 import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../../types/types';
 import { storeToRefs } from 'pinia';
 import { Ref, ref, watch, nextTick } from 'vue';
-import { useAstra } from '@/composables/astra';
+import { useAstra } from '@/composables/requests/astra';
 import { useConnectionStore } from "../../stores/connection";
 import { useForceGraph } from '../../composables/forcegraph';
 import { useMetadata } from '../../composables/metadata';
