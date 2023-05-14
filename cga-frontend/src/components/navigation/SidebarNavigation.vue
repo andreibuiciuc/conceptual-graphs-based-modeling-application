@@ -50,22 +50,16 @@ import CredentialsCard from '../dashboard/CredentialsCard.vue';
 
 
 const connectionStore = useConnectionStore();
-const { cassandraServerCredentials, currentKeyspace, availableKeyspaces, userAstraDatabaseId, userAstraToken } = storeToRefs(connectionStore);
+const { cassandraServerCredentials, isConnectionButtonTriggered, currentKeyspace, availableKeyspaces, userAstraDatabaseId, userAstraToken } = storeToRefs(connectionStore);
 cassandraServerCredentials.value = { ... constants.defaultLoginCredentials };
 
 const utilsStore = useUtilsStore();
 const { isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
 
-const isConnectionButtonTriggered: Ref<boolean> = ref(false);
 const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
     return !!userAstraDatabaseId.value && !!userAstraToken.value;
 })
 
-
-// Functions related to the connection and keyspace form
-const autoCompleteServerCredentials = (): void => {
-    cassandraServerCredentials.value = { ... constants.defaultCassandraNetwork };    
-};
 
 const manageServerConnection = (): void => {
   if (cassandraServerCredentials.value.isCassandraServerConnected) {
@@ -105,7 +99,7 @@ const renderGraph = async (): Promise<void> => {
 
   .panel-container
     @include containers.flex-container($flex-direction: column, $align-items: flex-start)
-    margin-top: 16px
+    margin-top: 2rem
 
     input, .p-button, .p-dropdown
       width: 100%

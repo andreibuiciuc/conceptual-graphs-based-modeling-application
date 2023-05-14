@@ -9,7 +9,7 @@
         @drop.prevent.stop="uploadAstraCredentials($event)"
     >
         <i class="pi pi-upload"></i>    
-        <span>drop astra credentials file</span>
+        <span>{{ userAstraDatabaseId ? 'credentials file uploaded' : 'drop astra credentials file'}}</span>
     </div>
 </template>
 
@@ -51,6 +51,10 @@ const parseXLSXData = (excelData: any[]): void => {
 };
 
 const uploadAstraCredentials = (uploadEvent: DragEvent): void => {
+    if (userAstraDatabaseId.value) {
+        return;
+    }
+
     isFileDraggedOver.value = false;
     const file: File = [ ... uploadEvent.dataTransfer.files ].at(0);
 
@@ -84,12 +88,12 @@ const uploadAstraCredentials = (uploadEvent: DragEvent): void => {
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
     border: 1px solid variables.$cassandra-light-gray
     width: 100%
-    padding: 2rem
-    margin-bottom: 2rem
+    padding: 2.5rem 2rem 1rem 2rem
+    margin-bottom: 2rem 
 
     .pi.pi-upload
         font-size: 2.5rem
-        margin-bottom: 1rem
+        margin-bottom: 2.5rem
 
 .upload-card-drag-over
     border-bottom: 1px solid variables.$cassandra-app-blue
