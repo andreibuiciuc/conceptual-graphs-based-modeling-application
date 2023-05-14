@@ -5,38 +5,7 @@
       <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
     </template>
     <div class="panel-container">
-        <div class="flex flex-column gap-2">
-          <small id="ip-help">enter the exposed IP address of your cassandra server</small>
-          <InputText 
-            v-model="cassandraServerCredentials.ipAddress"
-            outlined 
-            id="ip"
-            placeholder="ip address" 
-            maxlength="15"
-            :disabled="cassandraServerCredentials.isCassandraServerConnected"
-            :readonly="cassandraServerCredentials.isCassandraServerConnected" 
-          />
-        </div>
-        <div class="flex flex-column gap-2">
-          <small id="port-help">enter the exposed port number of your cassandra server</small>
-          <InputText
-            v-model="cassandraServerCredentials.port"
-            outlined
-            id="port"
-            placeholder="port"
-            maxlength="4"
-            :disabled="cassandraServerCredentials.isCassandraServerConnected"
-            :readonly="cassandraServerCredentials.isCassandraServerConnected" 
-          />
-        </div>
-        <Button 
-          outlined 
-          severity="primary" 
-          icon="pi pi-ellipsis-h"
-          label="prefill with default network" 
-          :disabled="cassandraServerCredentials.isCassandraServerConnected"
-          @click="autoCompleteServerCredentials" 
-        />
+        <CredentialsCard />
         <Button 
           outlined
           severity="primary"
@@ -77,18 +46,21 @@ import { useUtilsStore } from '@/stores/utils';
 import { useConnectionStore } from '@/stores/connection';
 import { Ref, ref, computed, ComputedRef } from 'vue';
 import SyncronizeCard from '@/components/dashboard/SyncronizeCard.vue';
+import CredentialsCard from '../dashboard/CredentialsCard.vue';
 
-const isConnectionButtonTriggered: Ref<boolean> = ref(false);
-const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
-    return !!cassandraServerCredentials.value.ipAddress && !!cassandraServerCredentials.value.port;
-})
 
 const connectionStore = useConnectionStore();
-const { cassandraServerCredentials, currentKeyspace, availableKeyspaces } = storeToRefs(connectionStore);
+const { cassandraServerCredentials, currentKeyspace, availableKeyspaces, userAstraDatabaseId, userAstraToken } = storeToRefs(connectionStore);
 cassandraServerCredentials.value = { ... constants.defaultLoginCredentials };
 
 const utilsStore = useUtilsStore();
 const { isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
+
+const isConnectionButtonTriggered: Ref<boolean> = ref(false);
+const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
+    return !!userAstraDatabaseId.value && !!userAstraToken.value;
+})
+
 
 // Functions related to the connection and keyspace form
 const autoCompleteServerCredentials = (): void => {

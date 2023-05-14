@@ -9,6 +9,10 @@ import { useAstra } from "@/composables/requests/astra";
 export const useConnectionStore = defineStore('connection', () => {
   // Store responsible for the connection to Cassandra servers
 
+  const userAstraDatabaseId: Ref<string> = ref(constants.inputValues.empty);
+  const userAstraDatabaseRegion: Ref<string> = ref(constants.inputValues.empty);
+  const userAstraToken: Ref<string> = ref(constants.inputValues.empty);
+
   const cassandraServerCredentials: Ref<any> = ref(null);
   const currentKeyspace: Ref<string> = ref(constants.inputValues.empty);
   const availableKeyspaces: Ref<string[]> = ref([]);
@@ -52,6 +56,9 @@ export const useConnectionStore = defineStore('connection', () => {
     availableKeyspaces,
     connect,
     disconnect,
+    userAstraDatabaseId,
+    userAstraDatabaseRegion,
+    userAstraToken
   };
 
 });
