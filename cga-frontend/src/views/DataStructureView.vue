@@ -69,29 +69,30 @@
 </template>
 
 <script setup lang="ts">
-import designToolboxConstants from '../components/design/designToolboxConstants';
-import { useConnectionStore } from "../stores/connection";
-import DesignToolbox from "../components/design/DesignToolbox.vue";
-import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";
-import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.vue";
-import { useUtils } from '../composables/utils';
-import { storeToRefs } from "pinia"
-import { useQuery } from '../composables/query';
-import { ComputedRef, Ref, nextTick, onMounted, ref } from 'vue';
-import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';
 import constants from '../constants/constants';
-import { useMetadata } from '../composables/metadata';
-import { useConfetti } from '../composables/confetti';
+import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.vue";
+import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";
+import designToolboxConstants from '../components/design/designToolboxConstants';
+import DesignToolbox from "../components/design/DesignToolbox.vue";
 import { auth, tableGraphsCollection } from '@/includes/firebase';
-import { saveTable } from '@/includes/astra';
-import { AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 import { AstraApiResponse } from '@/types/astra/types';
+import { AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
+import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';
+import { storeToRefs } from "pinia"
+import { Ref, nextTick, onMounted, ref } from 'vue';
+import { useAstra } from '@/composables/requests/astra';
+import { useConfetti } from '../composables/confetti';
+import { useConnectionStore } from "../stores/connection";
+import { useMetadata } from '@/composables/metadata/metadata';
+import { useQuery } from '@/composables/metadata/query';
+import { useUtils } from '@/composables/utils';
 
 // Functions mapped from composables
 const { generateQueryAsString, generateQueryAsCommands } = useQuery();
 const { copyToClipboard, openNotificationToast } = useUtils();
 const { getPartitionAndClusteringColumnsCount } = useMetadata();
 const { createConfetti } = useConfetti();
+const { saveTable } = useAstra();
 
 // Local constants
 // TODO: Move this to the constants file

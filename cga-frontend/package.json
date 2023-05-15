@@ -15,11 +15,16 @@
     "animejs": "^3.2.1",
     "arrows-svg": "^1.5.6",
     "axios": "^1.2.2",
+    "browserify": "^17.0.0",
+    "buffer": "^6.0.3",
     "canvas-confetti": "^1.6.0",
+    "cassandra-driver": "^4.6.4",
+    "chart.js": "^4.3.0",
     "d3": "^7.8.0",
     "d3-force": "^3.0.0",
     "firebase": "^8.10.1",
     "install": "^0.13.0",
+    "kerberos": "^2.0.1",
     "pinia": "^2.0.26",
     "primeflex": "^3.3.0",
     "primeicons": "^6.0.1",
@@ -27,7 +32,8 @@
     "vee-validate": "^4.7.3",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6",
-    "vuetify": "^3.0.3"
+    "vuetify": "^3.0.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@mdi/font": "^7.0.96",

@@ -141,15 +141,10 @@
 </template>
 
 <script setup lang="ts">
-import constants from '../../constants/constants';
-import { useMetadata } from '../../composables/metadata';
-import { useQueryStore } from '../../stores/query';
-import { QueryClause, QueryItem, Concept, GraphMetadata, AggregateFunction } from '../../types/types';
-
-import Card from 'primevue/card';
-import InputText from 'primevue/inputtext';
-import Dropdown from 'primevue/dropdown';
-import Chips from 'primevue/chips';
+import constants from '@/constants/constants';
+import { useMetadata } from '@/composables/metadata/metadata';
+import { useQueryStore } from '@/stores/query';
+import { QueryClause, QueryItem, Concept, GraphMetadata, AggregateFunction } from '@/types/types';
 import { ComputedRef, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 

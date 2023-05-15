@@ -26,27 +26,21 @@
 
 <script setup lang="ts">
 import constants from '../../constants/constants';
-
-import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../../types/types';
-import { manageRequest } from '../../includes/requests';
-
 import ConceptualGraph from '../graphic/graph/ConceptualGraph.vue';
 import CgaLookupCard from '../graphic/cards/CgaLookupCard.vue';
 import CgaForceConfigCard from '../graphic/cards/CgaForceConfigCard.vue';
-
-import { useConnectionStore } from "../../stores/connection";
-import { useUtilsStore } from "../../stores/utils";
-
-import { useForceGraph } from '../../composables/forcegraph';
-import { useMetadata } from '../../composables/metadata';
-import { useUtils } from '../../composables/utils';
-
-import { Ref, ref, watch, nextTick } from 'vue';
-import { storeToRefs } from 'pinia';
-
 import * as d3 from 'd3';
-import { retrieveAllTables } from '@/includes/astra';
+
 import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
+import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../../types/types';
+import { storeToRefs } from 'pinia';
+import { Ref, ref, watch, nextTick } from 'vue';
+import { useAstra } from '@/composables/requests/astra';
+import { useConnectionStore } from "../../stores/connection";
+import { useForceGraph } from '../../composables/forcegraph';
+import { useMetadata } from '@/composables/metadata/metadata';
+import { useUtilsStore } from "../../stores/utils";
+import { useUtils } from '../../composables/utils';
 
 // Constants
 const defaultGraphMetadata: GraphMetadata = {
@@ -73,6 +67,7 @@ const { forceGraph } = storeToRefs(utilsStore);
 const { createForceGraphRepresentation } = useForceGraph();
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
+const { retrieveAllTables } = useAstra();
 
 // Functionalities related to the Force Graph representation of the keyspace metadata
 const conceptForLookup: Ref<Concept | any | null> = ref(null);

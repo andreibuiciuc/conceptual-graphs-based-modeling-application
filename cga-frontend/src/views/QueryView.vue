@@ -177,29 +177,27 @@
 <script setup lang="ts">
 // Constants, types and utility imports
 import constants from '@/constants/constants';
-import { Concept, QueryClause, ColumnMetadata, GraphMetadata, ConfigurableConcept, Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction } from '../types/types';
-import { manageRequest } from '@/includes/requests';
-
-// Component imports
-import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
-import QueryItems from '@/components/design/QueryItems.vue';
 import CassandraTerminal from '@/components/graphic/terminal/CassandraTerminal.vue';
 import CgaTable from '@/components/utilities/CgaTable.vue';
-
-// Store imports
-import { useConnectionStore } from '../stores/connection';
-import { useQueryStore } from '../stores/query';
-
-// Composable imports
-import { useMetadata } from '../composables/metadata';
-import { useConfirm } from "primevue/useconfirm";
-import { useUtils } from '../composables/utils';
-import { useQuery } from '../composables/query';
-
-// Vue imports
-import { storeToRefs } from 'pinia';
-import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
+import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
+import QueryItems from '@/components/design/QueryItems.vue';
+import { 
+  Concept, QueryClause, ColumnMetadata, GraphMetadata, ConfigurableConcept, 
+  Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction 
+} from '../types/types';
 import { computed } from '@vue/reactivity';
+import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useAxios } from '@/composables/requests/axios';
+import { useConfirm } from "primevue/useconfirm";
+import { useConnectionStore } from '../stores/connection';
+import { useMetadata } from '@/composables/metadata/metadata';
+import { useQuery } from '@/composables/metadata/query';
+import { useQueryStore } from '../stores/query';
+import { useUtils } from '../composables/utils';
+import { useAstra } from '@/composables/requests/astra';
+import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
+
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -229,7 +227,8 @@ const { getRelationTypeForColumnConcept,
       } = useMetadata();
 const { openNotificationToast, copyToClipboard } = useUtils();
 const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
-
+const { manageRequest } = useAxios();
+const { retrieveAllTables, retrieveTable } = useAstra();
 
 // Store state and action mappings
 const connectionStore = useConnectionStore();
@@ -250,25 +249,25 @@ const changeTable = (newTable: any): void => {
   retrieveTableMetadata();
 };
 
-const getColumnsMetadataForTableGraph = (metadata: ColumnMetadata[]) => {
+const getColumnsMetadataForTableGraph = (metadata: AstraTableMetadata) => {
   let columns: Map<string, Concept[]> = new Map();
   let dataTypes: Map<string, Concept> = new Map();
   columns.set(selectedTable.value, []);
   
   const tableColumnConcepts = columns.get(selectedTable.value);
-  metadata.forEach(columnData => {
-    const relation = getRelationTypeForColumnConcept(columnData.column_kind, columnData.clustering_order);
-    const columnConcept = { conceptName: columnData.column_name, conceptType: constants.conceptTypes.column, relation, columnKind: columnData.column_kind };
-    tableColumnConcepts?.push(columnConcept);
+  metadata.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
+    // TODO: const relation = getRelationTypeForColumnConcept()
+    const columnConcept = { conceptName: columnDefinition.name, conceptType: constants.conceptTypes.column };
+    tableColumnConcepts.push(columnConcept);
 
-    const dataTypeConcept = { conceptName: columnData.column_type, conceptType: constants.conceptTypes.dataType };
-    dataTypes.set(columnData.column_name, dataTypeConcept);
+    const dataTypeConcept = { conceptName: columnDefinition.typeDefinition, conceptType: constants.conceptTypes.dataType };
+    dataTypes.set(columnDefinition.name, dataTypeConcept);
   });
 
   return { columns, dataTypes };
 }
   
-const parseTableMetadata = (metadata: ColumnMetadata[]) => {
+const parseTableMetadata = (metadata: AstraTableMetadata) => {
   const tables = [{ conceptName: selectedTable.value, conceptType: constants.conceptTypes.table }];
   const {columns, dataTypes } = getColumnsMetadataForTableGraph(metadata);
 
@@ -279,10 +278,12 @@ const parseTableMetadata = (metadata: ColumnMetadata[]) => {
 };
 
 const retrieveAvailableTables = async (): Promise<void> => {
-  const response = await manageRequest(constants.requestTypes.GET, "tables", { keyspace_name: currentKeyspace.value });
+  const response = await retrieveAllTables(currentKeyspace.value);
   if (response && response.data) {
-    if (response.data.status === constants.requestStatus.SUCCESS) {
-      availableTables.value = JSON.parse(JSON.stringify(response.data.tables));
+    const responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      const mappedTables = responseData.data.map((table: any) => table.name);
+      availableTables.value = JSON.parse(JSON.stringify(mappedTables));
     } else {
       openNotificationToast(response.data.message, 'error')
     }
@@ -293,13 +294,12 @@ const retrieveAvailableTables = async (): Promise<void> => {
 
 const retrieveTableMetadata = async (): Promise<void> => {
   isTableRetrieveInProgress.value = true;
-  const response = await manageRequest(constants.requestTypes.GET, "table_metadata", {
-    keyspace_name: currentKeyspace.value,
-    table_name: selectedTable.value
-  });
+  const response = await retrieveTable(currentKeyspace.value, selectedTable.value);
   if (response && response.data) {
-    if (response.data.status === constants.requestStatus.SUCCESS) {
-      parseTableMetadata(response.data.table_metadata);
+    const responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      console.log(responseData.data);
+      parseTableMetadata(responseData.data);
       isTableRetrieveInProgress.value = false;
     
       // Wait for the graph components to be mounted on the DOM,
