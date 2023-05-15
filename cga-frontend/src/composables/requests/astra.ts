@@ -62,6 +62,10 @@ export function useAstra() {
         const headers = configureHeaders();
         return manageRequest('get', requestUrl, null, requestUrl, headers);
     };
+
+    const retrieveQueryResults = async (query: string) => {
+        // TODO
+    };
     // #endregion
 
     // #region POST methods

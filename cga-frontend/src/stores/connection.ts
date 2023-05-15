@@ -13,6 +13,9 @@ export const useConnectionStore = defineStore('connection', () => {
   const userAstraDatabaseRegion: Ref<string> = ref(constants.inputValues.empty);
   const userAstraToken: Ref<string> = ref(constants.inputValues.empty);
 
+  const userAstraClientId: Ref<string> = ref(constants.inputValues.empty);
+  const userAstraClientSecret: Ref<string> = ref(constants.inputValues.empty);
+
   const cassandraServerCredentials: Ref<any> = ref(null);
   const currentKeyspace: Ref<string> = ref(constants.inputValues.empty);
   const availableKeyspaces: Ref<string[]> = ref([]);
@@ -64,6 +67,8 @@ export const useConnectionStore = defineStore('connection', () => {
     userAstraDatabaseId,
     userAstraDatabaseRegion,
     userAstraToken,
+    userAstraClientId,
+    userAstraClientSecret,
     isConnectionButtonTriggered
   };
 

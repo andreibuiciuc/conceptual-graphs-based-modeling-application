@@ -1,7 +1,7 @@
 type AstraClusteringOrder = 'ASC' | 'DESC';
 
 interface AstraApiResponse {
-    data?: any
+    data?: AstraTableMetadata | any
     code?: number
     description: string
 }
