@@ -1,9 +1,15 @@
 type AstraClusteringOrder = 'ASC' | 'DESC';
+type AstraOperator = 'eq' | 'notEq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in';
 
 interface AstraApiResponse {
     data?: AstraTableMetadata | any
     code?: number
     description: string
+}
+
+interface AstraApiQueryResponse {
+    count: number,
+    rows: any[]
 }
 
 interface AstraColumnDefinition {
@@ -16,7 +22,6 @@ interface AstraPrimaryKey {
     clusteringKey: string[]
     partitionKey: string[]
 }
-
 
 interface AstraClusteringExpression {
     order: AstraClusteringOrder
@@ -36,9 +41,29 @@ interface AstraTableMetadata {
     tableOptions: AstraTableOptions
 }
 
+interface AstraQueryFilter {
+    columnName: string,
+    operator: AstraOperator,
+    value: any[]
+}
+
+interface AstraQueryOrderByOption {
+    column: string
+}
+
+interface AstraQueryPayload {
+    columnNames: string[],
+    filters: AstraQueryFilter[],
+    orderBy?: AstraQueryOrderByOption
+}
+
 export {
     AstraApiResponse,
+    AstraApiQueryResponse,
     AstraClusteringOrder,
     AstraColumnDefinition,
+    AstraOperator,
     AstraTableMetadata,
+    AstraQueryFilter,
+    AstraQueryPayload
 };

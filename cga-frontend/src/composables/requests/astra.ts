@@ -2,11 +2,15 @@ import { AxiosResponse } from "axios";
 import { useAxios } from "./axios";
 import { useConnectionStore } from "@/stores/connection";
 import { storeToRefs } from "pinia";
+import { GraphMetadata } from "@/types/types";
+import { useMetadata } from "../metadata/metadata";
+import { useQueryStore } from "@/stores/query";
 
 export function useAstra() {
     // Composable responsible for communication with a cloud Astra DB server
 
     const { manageRequest } = useAxios();
+    const { createAstraQueryPayload } = useMetadata();
 
     // #region Endpoints
     const getBaseUrl = (): string => {
@@ -30,6 +34,11 @@ export function useAstra() {
         return `${baseUrl}/v2/schemas/keyspaces/${keyspace}/tables/${table}`;
     };
     // #endregion
+
+    const createAstraApiUrlForQuery = (keyspace: string, table: string): string => {
+        const baseUrl = getBaseUrl();
+        return `${baseUrl}/v1/keyspaces/${keyspace}/tables/${table}/rows/query`;
+    }
 
     // #region Headers
     const configureHeaders = (): { [key: string]: string } => {
@@ -63,8 +72,15 @@ export function useAstra() {
         return manageRequest('get', requestUrl, null, requestUrl, headers);
     };
 
-    const retrieveQueryResults = async (query: string) => {
-        // TODO
+    const retrieveQueryResults = async (keyspace: string, table: string, queryMetadata: GraphMetadata) => {
+        const queryStore = useQueryStore();
+        const { whereClauseItems, queryConcepts } = storeToRefs(queryStore);
+
+        const requestUrl = createAstraApiUrlForQuery(keyspace, table);
+        const headers = configureHeaders();
+        const payload = createAstraQueryPayload(queryMetadata, whereClauseItems.value, queryConcepts.value);
+        
+        return manageRequest('post', requestUrl, payload, requestUrl, headers);
     };
     // #endregion
 
@@ -80,6 +96,7 @@ export function useAstra() {
         retrieveAllKeyspaces,
         retrieveAllTables,
         retrieveTable,
+        retrieveQueryResults,
         saveTable
     }
 };

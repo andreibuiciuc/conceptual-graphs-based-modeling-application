@@ -43,21 +43,24 @@ export function useAxios() {
         let requestURL = customEndpoint ? customEndpoint : createRequestURL(endpoint);
         
         switch (requestType) {
-        case constants.requestTypes.GET:
-            return axios.get(requestURL, {
-            params: {
-                ...payload,
-            },
-            headers: {
-                ... headers
-            }
-            });
-        case constants.requestTypes.POST:
-            return axios.post(requestURL, payload);
-        default:
-            break;
+            case constants.requestTypes.GET:
+                return axios.get(requestURL, {
+                    params: {
+                        ...payload,
+                    },
+                    headers: {
+                        ... headers
+                    }
+                });
+            case constants.requestTypes.POST:
+                return axios.post(requestURL, payload, {
+                    headers: {
+                        ... headers
+                    }
+                });
+            default:
+                break;
         }
-    
     };
 
     return {

@@ -1,6 +1,5 @@
 import { AstraClusteringOrder } from "./astra/types"
 
-// Conceptual Graphs types
 interface Concept {
     conceptName: string
     conceptType: string
@@ -41,14 +40,12 @@ enum ClusteringOrder {
 
 type AggregateFunction = 'count' | 'min' | 'max' | 'avg' | 'sum';
 
-
 type AggregateClause = {
     [_ in AggregateFunction]: {
         conceptReferent: string
         aggregatedColumns: Concept[]
     }
 };
-
 
 type SelectClause = {
     conceptReferent: string

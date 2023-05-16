@@ -62,14 +62,14 @@ export const useConnectionStore = defineStore('connection', () => {
     cassandraServerCredentials,
     currentKeyspace,
     availableKeyspaces,
-    connect,
-    disconnect,
     userAstraDatabaseId,
     userAstraDatabaseRegion,
     userAstraToken,
     userAstraClientId,
     userAstraClientSecret,
-    isConnectionButtonTriggered
+    isConnectionButtonTriggered,
+    connect,
+    disconnect
   };
 
 });
