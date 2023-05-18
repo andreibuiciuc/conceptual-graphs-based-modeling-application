@@ -119,6 +119,7 @@ const cardTilt = computed(() => {
 .authentication-card-wrapper
   @include containers.flex-container($justify-content: center, $align-items: center)
   overflow: hidden
+  height: 100%
 
   .authentication-card
     @include containers.flex-container($flex-direction: row)

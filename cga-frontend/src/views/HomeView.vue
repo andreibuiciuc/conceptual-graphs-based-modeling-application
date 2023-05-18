@@ -9,45 +9,17 @@
     
     <SummarySection
       summary-title="connect and start exploring"
+      :summary-actions="['connect with cloud db', 'visualize and create data structures', 'query your database in real time']"
+      summary-label="cassandra"
+      summary-label-link="https://cassandra.apache.org"
     />
     
-    <!-- <section class="homepage-section">
-      <div class="landing-section-content">
-        <div class="landing-section-container">
-          <div class="landing-cards-container">
-            <cga-card title="Connect And Start Exploring">
-              <span>Connect to your Cassandra server, locally or on the cloud, or play around with the one provided by us.</span>
-            </cga-card>
-            <cga-card title="Create Cassandra Data Structures">
-              <span>Visualise and create Cassandra data structures by building conceptual graphs.</span>
-            </cga-card>
-            <cga-card title="Query Cassandra Tables">
-              <span>Query your database tables and get results in real time, without touching your Cassandra bash terminal.</span>
-            </cga-card>
-          </div>
-        </div>
-      </div>
-    </section> -->
-    <section class="homepage-section">
-      <div class="landing-section-splitter-container">
-        <Splitter>
-          <SplitterPanel :size="100">
-            <CassandraTerminal 
-              :is-terminal-opened="true"
-              :is-terminal-readonly="true"
-              :commands="cassandraTerminalConstants.dummyCQL" 
-            />
-          </SplitterPanel>
-          <SplitterPanel :size="-10">
-            <ConceptualGraph :graph-metadata="dummyGraphMetadata" graph-key="dummyGraph"
-             />
-          </SplitterPanel>
-        </Splitter>
-      </div>
-    </section>
-    <section class="homepage-section" id="auth">
-      <AuthenticationCard />
-    </section>
+    <HomepageSection id="auth">
+      <template #section-content>
+        <AuthenticationCard />
+      </template>
+    </HomepageSection>
+
     <ScrollTop target="parent" :threshold="500" />
   </div>
 
@@ -87,15 +59,12 @@ import { Ref, ref } from '@vue/reactivity';
 import { storeToRefs } from 'pinia';
 
 import AuthenticationCard from '../components/authentication/AuthenticationCard.vue';
-import cassandraTerminalConstants from '../components/graphic/terminal/cassandraTerminalConstants';
-import CassandraTerminal from '../components/graphic/terminal/CassandraTerminal.vue';
-import CgaCard from '../components/graphic/cards/CgaCard.vue';
-import ConceptualGraph from '../components/graphic/graph/ConceptualGraph.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
+import HomepageSection from '@/components/graphic/sections/HomepageSection.vue';
 import LandingSection from '@/components/graphic/sections/LandingSection.vue';
 import SummarySection from '@/components/graphic/sections/SummarySection.vue';
 
-import { dummyGraphMetadata } from '../constants/dummyCG'
+
 import { useUtilsStore } from '../stores/utils';
 import { useUserStore } from '../stores/user';
 import { useConnectionStore } from '../stores/connection';

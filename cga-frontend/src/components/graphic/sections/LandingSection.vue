@@ -10,9 +10,10 @@
                 <div class="landing-section-text">
                     <h1 class="landing-title">
                         <span
-                            v-for="titleToken in titleTokens"
+                            v-for="(titleToken, index) in titleTokens"
                             :key="titleToken"
                             class="landing-title-text"
+                            :class="{ 'landing-title-text-active': index === currentTitleTokenIndex }"
                         >
                             {{ titleToken }}
                         </span>
@@ -32,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { Ref, ref } from 'vue';
 import HomepageSection from './HomepageSection.vue';
 
 interface Props {
@@ -40,7 +42,17 @@ interface Props {
     trailingSubtitleToken?: string
 }
 
-const _ = defineProps<Props>();
+const props = defineProps<Props>();
+
+const currentTitleTokenIndex: Ref<number> = ref(0);
+
+const updatedTitleTokenIndex = (): void => {
+    setInterval(() => {
+        currentTitleTokenIndex.value = (currentTitleTokenIndex.value + 1) % props.titleTokens.length;
+    }, 3000);
+};
+
+updatedTitleTokenIndex();
 
 </script>
 
@@ -110,6 +122,9 @@ const _ = defineProps<Props>();
                 font-size: 5rem
                 font-weight: 300
                 padding: 0.5rem
+
+            .landing-title-text-active
+                color: variables.$cassandra-yellow
         
         .landing-subtitle
             @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: flex-start)
