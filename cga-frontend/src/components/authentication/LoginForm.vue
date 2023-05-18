@@ -6,7 +6,7 @@
         v-model="loginCredentials.email"
         :value="loginCredentials.email"
         variant="outlined"
-        label="Email"
+        label="email"
         suffix="@gmail.com"
         maxlength="50"
         :error-messages="errors"
@@ -18,7 +18,7 @@
         v-model="loginCredentials.password"
         :value="loginCredentials.password"
         variant="outlined"
-        label="Password"
+        label="password"
         maxlength="50"
         :type="showPassword ? 'text' : 'password'"
         :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
@@ -26,7 +26,7 @@
         :error-messages="errors"
       />
     </vee-field>
-    <span @click="resetPassword">forgot your password?</span>
+    <slot name="login-message"></slot>
     <Button outlined label="login" severity="primary" :disabled="isLoginInSubmission" :loading="isLoginInSubmission" @click="login" />
   </vee-form>
 </template>
@@ -90,14 +90,6 @@ const handleUnsuccessfulLogin = (error: Error): void => {
   openNotificationToast(error.message, 'error');
 };
 
-const resetPassword = async (): Promise<void> => {
-  try {
-    await userStore.resetPasswordViaEmail(loginCredentials.value.email);
-  } catch (error: Error | any) {
-
-  }
-};
-
 </script>
 
 <style scoped lang="sass">
@@ -105,8 +97,8 @@ const resetPassword = async (): Promise<void> => {
 @use '@/assets/styles/_containers.sass'
 
 .login-form
-  width: 100%
   @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+  width: 100%
 
   span
     margin-bottom: 1rem
@@ -117,5 +109,8 @@ const resetPassword = async (): Promise<void> => {
 
   .v-input, .p-button
     width: 100%
+
+  .p-button
+    margin-top: 4.5rem
 
 </style>

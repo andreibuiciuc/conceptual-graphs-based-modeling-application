@@ -646,17 +646,8 @@ const parseQueryResults = (results: any[]) => {
   queryResultsTableHeaders.value = [];
   queryResults.value = [];
 
-  const currentColumns = getQuerySelectionConceptNames(queryMetadata.value, queryConcepts.value);
   queryResultsTableHeaders.value = getHeadersForQueryResults(queryMetadata.value, queryConcepts.value);
   queryResults.value = [...results];
-
-  // results.forEach(resultItem => {
-  //   let resultForTable = {};
-  //   for (let index = 0; index < resultItem.length; index ++) {
-  //     resultForTable[currentColumns[index]] = resultItem[index];
-  //   }
-  //   queryResults.value.push(resultForTable);
-  // });
 
   isQueryResultsModalOpened.value = true;
 };

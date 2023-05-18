@@ -1,19 +1,60 @@
 <template>
   <div class="authentication-card-wrapper">
-    <div class="authentication-card" :style="{ transform: cardTilt, transition: 'transform 0.3s ease-out' }" ref="target">
-      <div class="authentication-card-first-half">
-      </div>
+    <div 
+      class="authentication-card" 
+      :style="{ transform: cardTilt, transition: 'transform 0.3s ease-out' }" 
+      ref="target"
+    >
+      <div class="authentication-card-first-half"></div>
       <div class="authentication-card-second-half">
-        <div class="authentication-card-header-actions" v-if="isAuthInsideModal">
-          <i class="pi pi-times" style="font-size: 1.5rem;" @click="isLoginInModal = false"></i>
+        <div 
+          v-if="isAuthInsideModal"
+          class="authentication-card-header-actions"
+        >
+          <i 
+            class="pi pi-times" 
+            style="font-size: 1.5rem;" 
+            @click="isLoginInModal = false">
+          </i>
         </div>
         <div class="authentication-card-content">
+          
           <div class="authentication-card-title">
-            <span>{{ isRegisterFormActive ? 'register' : 'login' }}</span>
-            <i class="pi pi-arrow-right" style="font-size: 1.5rem; margin-left: 1.5rem;" @click="isRegisterFormActive = !isRegisterFormActive"></i>
+            <span>{{ authenticationModalTitle }}</span>
+            <i 
+              class="pi pi-arrow-right" 
+              style="font-size: 1.5rem; margin-left: 1.5rem;" 
+              @click="changeAuthenticationForm">
+            </i>
           </div>
-          <RegisterForm key="register-form" v-if="isRegisterFormActive" />
-          <LoginForm key="login-form" v-else />
+
+          <div 
+            v-if="currentAuthenticationFormType === 'password'"
+            class="authentication-card-info"
+          >
+            <i class="pi pi-inbox" style="font-size: 1.5rem;"></i>
+            <span>
+              {{ isPasswordResetEmailSent ? 'check your inbox to complete the password reset' : 'send a password reset email' }}
+            </span>
+          </div>
+          
+          <RegisterForm 
+            v-if="currentAuthenticationFormType === 'register'"
+            key="register-form" 
+          />
+          <LoginForm 
+            v-else-if="currentAuthenticationFormType === 'login'"
+            key="login-form"
+          >
+            <template #login-message>
+              <span @click="currentAuthenticationFormType = 'password'">forgot your password?</span>
+            </template>
+          </LoginForm>
+          <PasswordResetForm 
+            v-else-if="currentAuthenticationFormType === 'password'"
+            key="password-form"
+          />
+
         </div>
       </div>
     </div>
@@ -21,28 +62,44 @@
 </template>
 
 <script setup lang="ts">
+import constants from '../../constants/constants';
+import LoginForm from "./LoginForm.vue";
+import PasswordResetForm from '@/components/authentication/PasswordResetForm.vue';
+import RegisterForm from './RegisterForm.vue';
+
+import { computed } from '@vue/reactivity';
+import { ComputedRef, Ref, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useMouseInElement } from '@vueuse/core';
 import { useUtilsStore } from '@/stores/utils';
-
-import RegisterForm from './RegisterForm.vue';
-import LoginForm from "./LoginForm.vue";
-import { Ref, ref } from 'vue';
-import { computed } from '@vue/reactivity';
-import constants from '../../constants/constants';
-import { storeToRefs } from 'pinia';
+import { useUserStore } from '@/stores/user';
 
 interface Props {
   isAuthInsideModal?: boolean
 };
 
-const props = defineProps<Props>();
-const isRegisterFormActive: Ref<boolean> = ref(true);
+type AuthenticationForm = 'login' | 'register' | 'password';
+
+const _ = defineProps<Props>();
+const currentAuthenticationFormType: Ref<AuthenticationForm> = ref('login');
 
 // Store mappings
 const utilsStore = useUtilsStore();
 const { isLoginInModal } = storeToRefs(utilsStore);
 
-// Tilt functionality
+const userStore = useUserStore();
+const { isPasswordResetEmailSent } = storeToRefs(userStore);
+
+// Functionalities related to the authentication modal configuration
+const authenticationModalTitle: ComputedRef<string> = computed(() => {
+  return currentAuthenticationFormType.value;
+});
+
+const changeAuthenticationForm = () => {
+  currentAuthenticationFormType.value = currentAuthenticationFormType.value === 'login' ? 'register' : 'login';
+};
+
+// Functionalities related to the tilting effect of the authentication card
 const target = ref(null);
 const { elementX, elementY, isOutside, elementHeight, elementWidth } = useMouseInElement();
 const MAX_ROTATION = 7;
@@ -65,8 +122,8 @@ const cardTilt = computed(() => {
 
   .authentication-card
     @include containers.flex-container($flex-direction: row)
-    width: 100%
-    height: 750px
+    width: 80%
+    height: 40rem
 
     .authentication-card-first-half, .authentication-card-second-half
       @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
@@ -94,13 +151,14 @@ const cardTilt = computed(() => {
           cursor: pointer
 
       .authentication-card-content
-        @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+        @include containers.flex-container($flex-direction: column, $justify-content: space-between, $align-items: center)
         height: 100%
         width: 100%
 
         .authentication-card-title
-          @include containers.flex-container($flex-direction: row, $align-items: center)
-          font-size: 3rem
+          @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
+          width: 100%
+          font-size: 2rem
           margin-bottom: 2.5rem
 
           .pi
@@ -109,12 +167,12 @@ const cardTilt = computed(() => {
 
             &:hover
               cursor: pointer 
+              color: variables.$cassandra-app-blue
+          
+        .authentication-card-info
+          @include containers.flex-container($flex-direction: column, $align-items: center)
 
-        form
-          width: 100%
-          padding: 2.5rem
-
-          .p-button
-            width: 100% !important
+          span
+            margin-top: 1.5rem
 
 </style>

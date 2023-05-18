@@ -11,7 +11,7 @@
   transform: translateX(3rem)
   opacity: 0
 
-// Sass classes responsible for the animated button
+// Sass classes responsible for button animations
 .animated-button .pi 
   animation: animation-button-color-change 1.5s infinite linear
 
@@ -29,3 +29,41 @@
     background: variables.$cassandra-white !important
   100%
     background: #F59E0B !important
+
+
+// Sass classes responsible for animated blurred background
+@keyframes floating-oval-animation__first
+  0%
+    transform: translateX(-50%) translateY(-50%) rotate(25deg) translateX(35%)
+  25%
+    transform: translateX(-50%) translateY(-50%) rotate(60deg) skew(-15deg, -15deg) translateX(30%)
+  50%
+    transform: translateX(-50%) translateY(-50%) rotate(120deg) translateX(20%)
+  75%
+    transform: translateX(-50%) translateY(-50%) rotate(240deg) skew(15deg, 15deg) translateX(25%)
+  100%
+    transform: translateX(-50%) translateY(-50%) rotate(320deg) translateX(35%)
+
+@keyframes floating-oval-animation__second
+  0%
+    transform: translateX(-50%) translateY(50%) rotate(35deg) translateY(-30%)
+  25%
+    transform: translateX(-50%) translateY(50%) rotate(80deg) skew(-15deg, 15deg) translateY(-5%)
+  50%
+    transform: translateX(-50%) translateY(50%) rotate(150deg) translateY(10%)
+  75%
+    transform: translateX(-50%) translateY(50%) rotate(210deg) skew(15deg, 15deg) translateY(20%)
+  100%
+    transform: translateX(-50%) translateY(50%) rotate(400deg) translateY(30%)
+
+@keyframes floating-oval-animation__third
+  0%
+    transform: translateY(-50%) translateX(-50%) translateX(-15%) translateY(10%)
+  25%
+    transform: translateY(-50%) translateX(-50%) translateX(20%) translateY(-30%)
+  50%
+    transform: translateX(-50%) translateY(50%) translateX(-5deg) translateY(10%)
+  75%
+    transform: translateY(-50%) translateX(-50%) translateX(-25%) translateY(-15%)
+  100%
+    transform: translateY(-50%) translateX(-50%) translateX(-15%) translateY(10%)

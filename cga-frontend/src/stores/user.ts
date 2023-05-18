@@ -7,6 +7,7 @@ import { useUtils } from '../composables/utils';
 export const useUserStore = defineStore('user', () => {
     const isUserLoggedIn: Ref<boolean> = ref(false);
     const userCredentials: Ref<any | null> = ref(null);
+    const isPasswordResetEmailSent: Ref<boolean> = ref(false);
 
     const { openNotificationToast } = useUtils();
 
@@ -38,11 +39,16 @@ export const useUserStore = defineStore('user', () => {
     }
 
     async function resetPasswordViaEmail (email: string): Promise<void> {
-        await auth.sendPasswordResetEmail(email);
+        try {
+            await auth.sendPasswordResetEmail(email);
+        } catch (error: any) {
+            throw(error);
+        }
     };
 
     return {
         isUserLoggedIn,
+        isPasswordResetEmailSent,
         register,
         login,
         signOut,
