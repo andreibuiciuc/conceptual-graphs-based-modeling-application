@@ -134,15 +134,11 @@ const cardTilt = computed(() => {
     .authentication-card-first-half
       background-image: url('/cassandra-background.svg')
       background-size: cover
-      border-top-left-radius: 1.5rem
-      border-bottom-left-radius: 1.5rem
 
     .authentication-card-second-half
       background-color: variables.$cassandra-white !important
       border: 1px solid variables.$cassandra-light-gray
       padding: 2.5rem
-      border-top-right-radius: 1.5rem
-      border-bottom-right-radius: 1.5rem
 
       .authentication-card-header-actions
         @include containers.flex-container($justify-content: flex-end)
