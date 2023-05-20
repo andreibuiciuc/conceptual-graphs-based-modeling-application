@@ -1,7 +1,37 @@
 <template>
+    <div class="header-container">
+        <Tag 
+            icon="pi pi-info"
+            severity="information"
+            value="this is a read-only database hosted by cga"
+        />
+    </div>
     <div class="demo-page">
-        <div class="demo-page-graph-container">
-            <ConceptualGraph v-if="isConceptualGraphReady" :graph-metadata="graphMetadata" graph-key="demoGraph" ref="demoGraph" />
+        <div class="demo-query-items-container">
+            <QueryItems
+                :table-metadata="graphMetadata"
+                :clause="QueryClause.WHERE" 
+                :columns="[]" 
+                state="ok"
+            />
+            <QueryItems
+                :table-metadata="graphMetadata"
+                :clause="QueryClause.GROUP_BY" 
+                :columns="[]" 
+                state="ok"
+            />
+            <QueryItems
+                :table-metadata="graphMetadata"
+                :clause="QueryClause.ORDER_BY" 
+                :columns="[]" 
+                state="ok"
+            />
+            <QueryItems
+                :table-metadata="graphMetadata"
+                :clause="QueryClause.GET" 
+                :columns="[]" 
+                state="ok"
+            />
         </div>
     </div>
     <Dialog 
@@ -9,21 +39,23 @@
         :show-header="false" 
         modal
     >
-        <AuthenticationCard :is-auth-inside-modal="true" />
+        <AuthenticationCard 
+            :is-auth-inside-modal="true" 
+            :is-password-reset-visible="false"
+        />
     </Dialog>
 </template>
 
 <script setup lang="ts">
 import constants from '@/constants/constants';
-// import { retrieveColumnsMetadataForTable } from '@/includes/astra';
-import { useForceGraph } from '@/composables/forcegraph';
+import { QueryClause } from '@/types/types';
+import QueryItems from '@/components/design/QueryItems.vue';
 import { useUtilsStore } from '@/stores/utils';
 import { storeToRefs } from 'pinia';
 
 import AuthenticationCard from '@/components/authentication/AuthenticationCard.vue';
-import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
 import { Concept, GraphMetadata } from '@/types/types';
-import { Ref, nextTick, ref } from 'vue';
+import { Ref, ref } from 'vue';
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: { conceptName: import.meta.env.VITE_ASTRA_DB_KEYSPACE, conceptType: constants.conceptTypes.keyspace },
@@ -32,49 +64,12 @@ const defaultGraphMetadata: GraphMetadata = {
   dataTypes: new Map<string, Concept>()
 };
 
-// Composables
-const { createForceGraphRepresentation } = useForceGraph();
-
 // Store mapppings
 const utilsStore = useUtilsStore();
 const { isLoginInModal } = storeToRefs(utilsStore);
 
-
 // Functionalities related to the Conceptual Graph component
 const graphMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
-const demoGraph = ref();
-
-const isRetrieveInProgress: Ref<boolean> = ref(false);
-const isConceptualGraphReady: Ref<boolean> = ref(false);
-
-
-const parseColumnMetadata = (columns: { [key: string]: string }[]) => {
-    const currentTable: Concept = graphMetadata.value.tables.at(0);
-    graphMetadata.value.columns.set(currentTable.conceptName, []);
-    
-    columns.forEach((column: { [key: string]: string }) => {
-        const columnConcept = { conceptName: column.name, conceptType: constants.conceptTypes.column, relation: constants.relationTypes.has };
-
-        graphMetadata.value.columns.get(currentTable.conceptName).push(columnConcept);
-        graphMetadata.value.dataTypes.set(column.name, { conceptName: column.typeDefinition, conceptType: constants.conceptTypes.dataType });
-
-    });
-
-    isConceptualGraphReady.value = true;
-};
-
-const retrieveColumnMetadata = async (): Promise<void> => {
-    // isRetrieveInProgress.value = true;
-    // const response = await retrieveColumnsMetadataForTable();
-    // if (response && response.data) {
-    //     parseColumnMetadata(response.data.data);
-    //     await nextTick();
-    //     demoGraph.value.drawInitialArrows();
-    // }
-    // isRetrieveInProgress.value = false;
-};
-
-// retrieveColumnMetadata();
 
 </script>
 
@@ -83,9 +78,14 @@ const retrieveColumnMetadata = async (): Promise<void> => {
 @use '@/assets/styles/_containers.sass'
 
 .demo-page
-    margin-top: variables.$cga-header-height
-    height: calc(100vh - variables.$cga-header-height)
     padding: 0
+    height: 100vh
+    overflow-y: auto
+
+    .demo-page-query-container
+        @include containers.flex-container($flex-direction: column)
+        height: 100vh
+        
 
     .demo-page-graph-container
         @include containers.flex-container($justify-content: center)

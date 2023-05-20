@@ -9,14 +9,22 @@
     
     <SummarySection
       summary-title="connect and start exploring"
-      :summary-actions="['connect with cloud db', 'visualize and create data structures', 'query your database in real time']"
+      summary-subtitle="databases in a different way"
+      :summary-actions="['connect with astra cloud db', 'visualize and create data structures', 'query your database in real time']"
       summary-label="cassandra"
       summary-label-link="https://cassandra.apache.org"
     />
+
+    <StepsSection />
     
     <HomepageSection id="auth">
       <template #section-content>
-        <AuthenticationCard />
+        <div class="landing-animation-wrapper">
+          <div class="landing-animated-oval"></div>
+          <div class="landing-animated-oval"></div>
+          <div class="landing-animated-oval"></div>
+        </div>
+        <AuthenticationCard :is-password-reset-visible="true" />
       </template>
     </HomepageSection>
 
@@ -68,6 +76,7 @@ import SummarySection from '@/components/graphic/sections/SummarySection.vue';
 import { useUtilsStore } from '../stores/utils';
 import { useUserStore } from '../stores/user';
 import { useConnectionStore } from '../stores/connection';
+import StepsSection from '@/components/graphic/sections/StepsSection.vue';
 
 
 // Store state mappings
@@ -82,14 +91,14 @@ const connectionStore = useConnectionStore();
 const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
 
 const homepageElement: Ref<HTMLElement | null> = ref(null);
-const bannerElement: Ref<HTMLElement | null> = ref(null);
-const bannerElementYPosition: Ref<number> = ref(0);
+const summaryCardElement: Ref<HTMLElement | null> = ref(null);
+const summaryCardElementYPosition: Ref<number> = ref(0);
 
 const handleScrollEvent = (): void => {
   if (homepageElement.value) {
     currentScrollYPosition.value = homepageElement.value.scrollTop;
-    if (currentScrollYPosition.value >= bannerElementYPosition.value - 3 * window.innerHeight / 4) {
-      bannerElement.value?.classList.add('banner-card--fade-in');
+    if (currentScrollYPosition.value >= summaryCardElementYPosition.value - 2 * window.innerHeight / 4) {
+      summaryCardElement.value?.classList.add('summary-card-fade-in');
     }
   } else {
     currentScrollYPosition.value = 0;
@@ -100,9 +109,9 @@ onMounted(() => {
   homepageElement.value = document.getElementById('homepage');
   if (homepageElement.value) {
     homepageElement.value.addEventListener('scroll', handleScrollEvent);
-    bannerElement.value = document.getElementById('banner');
-    if (bannerElement.value) {
-      bannerElementYPosition.value = homepageElement.value.scrollTop + bannerElement.value.getBoundingClientRect().top;
+    summaryCardElement.value = document.getElementById('summary-card');
+    if (summaryCardElement.value) {
+      summaryCardElementYPosition.value = homepageElement.value.scrollTop + summaryCardElement.value.getBoundingClientRect().top;
     }
   }
 });

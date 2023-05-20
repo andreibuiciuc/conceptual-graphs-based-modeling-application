@@ -59,51 +59,7 @@ updatedTitleTokenIndex();
 <style scoped lang="sass">
 @use "@/assets/styles/_variables.sass"
 @use "@/assets/styles/_containers.sass"
-
-.landing-animation-wrapper
-    position: absolute
-    overflow: hidden
-    top: 0
-    left: 0
-    right: 0
-    bottom: 0
-    filter: blur(100px)
-
-    .landing-animated-oval
-        border-radius: 100%
-        position: absolute
-        animation-duration: 12s
-        animation-iteration-count: infinite
-
-    .landing-animated-oval:nth-of-type(1)
-        z-index: -1
-        width: 800px
-        height: 800px
-        top: 40%
-        left: 60%
-        background-color: variables.$cassandra-gradient-blue
-        opacity: 0.4
-        animation-name: floating-oval-animation__first
-
-    .landing-animated-oval:nth-of-type(2)
-        z-index: -2
-        width: 600px
-        height: 600px
-        top: 0%
-        left: 40%
-        background-color: variables.$cassandra-gradient-blue-darken
-        opacity: 0.6
-        animation-name: floating-oval-animation__second
-
-    .landing-animated-oval:nth-of-type(3)
-        z-index: -3
-        width: 500px
-        height: 500px
-        top: 50%
-        left: 50%
-        background-color: variables.$cassandra-gradient-blue-darkest
-        opacity: 0.5
-        animation-name: floating-oval-animation__third 
+@use "@/assets/styles/_transitions.sass"
 
 .landing-section-content
     @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)

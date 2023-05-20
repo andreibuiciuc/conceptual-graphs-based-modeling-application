@@ -2,9 +2,10 @@
     <HomepageSection>
         <template #section-content>
             <div class="summary-card-wrapper">
-                <div class="summary-card">
+                <div class="summary-card" id="summary-card">
                     <div class="summary-card-block summary-card-block-top">
                         <span>{{ summaryTitle }}</span>
+                        <span>{{ summarySubtitle }}</span>
                     </div>
                     <div class="summary-card-container">
                         <div class="summary-card-block summary-card-block-bottom">
@@ -31,6 +32,7 @@ import HomepageSection from './HomepageSection.vue';
 
 interface Props {
     summaryTitle: string
+    summarySubtitle?: string
     summaryActions: string[]
     summaryLabel: string
     summaryLabelLink?: string
@@ -61,6 +63,7 @@ computeIndexForNextAction();
 
     .summary-card
         @include containers.flex-container($flex-direction: column, $align-items: center)
+        visibility: hidden
         width: 80%
         height: 70%
         box-shadow: 0 3px 10px rgb(0 0 0 / 0.2)
@@ -102,5 +105,17 @@ computeIndexForNextAction();
                 
                 .summary-link .pi:hover
                     color: variables.$cassandra-app-blue
+
+    .summary-card-fade-in
+        visibility: visible
+        animation: summary-card-fade-in 0.5s cubic-bezier(0.390, 0.575, 0.565, 1.000) both
+
+@keyframes summary-card-fade-in
+    0% 
+        opacity: 0
+        transform: translateY(40px)
+    100%
+        opacity: 1
+        transform: translateY(0)
 
 </style>

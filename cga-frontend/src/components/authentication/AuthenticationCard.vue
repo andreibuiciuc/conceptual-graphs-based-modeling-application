@@ -46,7 +46,7 @@
             v-else-if="currentAuthenticationFormType === 'login'"
             key="login-form"
           >
-            <template #login-message>
+            <template #login-message v-if="isPasswordResetVisible">
               <span @click="currentAuthenticationFormType = 'password'">forgot your password?</span>
             </template>
           </LoginForm>
@@ -75,7 +75,8 @@ import { useUtilsStore } from '@/stores/utils';
 import { useUserStore } from '@/stores/user';
 
 interface Props {
-  isAuthInsideModal?: boolean
+  isAuthInsideModal?: boolean,
+  isPasswordResetVisible: boolean
 };
 
 type AuthenticationForm = 'login' | 'register' | 'password';
