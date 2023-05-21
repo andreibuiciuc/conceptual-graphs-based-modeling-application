@@ -26,7 +26,7 @@
               >
               <span class="concept-type">{{ tableConcept.conceptType }}:</span>
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
-              <!-- <i class="pi" :class="tableConcept.isTableExpanded ? 'pi-minus' : 'pi-plus'" style="font-size: 1.5rem;" @click="expandTable(tableConcept)"></i> -->
+              <i class="pi" :class="tableConcept.isTableExpanded ? 'pi-minus' : 'pi-plus'" style="font-size: 1.5rem;" @click="expandTable(tableConcept, tableIndex)"></i>
             </div>
             <ul>
               <!-- Column level -->
@@ -415,17 +415,23 @@ const removeColumnConcept = async (tableConcept: Concept, columnConcept: Concept
   emit('remove', { tableConcept, columnConcept });
 };
 
-const expandTable = (tableConcept: ConfigurableConcept): void => {
+
+// FUnctionalities related to the changing of arrows visibility.
+const expandTable = (tableConcept: ConfigurableConcept, tableIndex: number): void => {
   tableConcept.isTableExpanded = !tableConcept.isTableExpanded;
-  hideOrShowArrowsForConcept(tableConcept);
+  const currentTableColumns = props.graphMetadata.columns.get(tableConcept.conceptName);
+
+  currentTableColumns.forEach((columnConcept: Concept) => {
+    const arrows = document.querySelectorAll(`[related-concept=${columnConcept.conceptName}]`);
+    handleArrowsSvgVisibility(tableConcept, arrows);
+  });
 };
 
-const hideOrShowArrowsForConcept = (concept: ConfigurableConcept): void => {
-  const arrowSvgs = document.querySelectorAll(`[related-concept=t0]`);
-  arrowSvgs.forEach((svg: Element) => {
+const handleArrowsSvgVisibility = (tableConcept: ConfigurableConcept, arrows: NodeListOf<Element>): void => {
+  arrows.forEach((svg: Element) => {
     const castedSvg = <HTMLElement> svg;
-    if (concept.isTableExpanded) {
-      castedSvg.style.setProperty('visibility', '0')
+    if (tableConcept.isTableExpanded) {
+      castedSvg.style.setProperty('visibility', 'hidden')
     } else {
       castedSvg.style.setProperty('visibility', 'visible')
     }

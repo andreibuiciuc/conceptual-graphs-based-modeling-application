@@ -1,6 +1,7 @@
 import constants from "../../constants/constants";
-import { AggregateFunction, Concept, DataTableColumn, QueryConcepts, QueryItemColumnType } from "../../types/types";
-import { GraphMetadata, QueryItem } from "../../types/types";
+import { AggregateFunction, Concept, DataTableColumn, QueryConcepts, QueryItemColumnType } from "@/types/types";
+import { GraphMetadata, QueryItem } from "@/types/types";
+import { AstraOperator, AstraQueryFilter, AstraQueryPayload } from '@/types/astra/types';
 
 export function useMetadata() {
 
@@ -133,6 +134,8 @@ export function useMetadata() {
      * @returns the set of CQL operators based on the column kind provided
      */
     const getCQLWhereOperatorsByColumnKind = (columnKind: string | undefined): string[] => {
+
+      debugger
       let operators: string[] = [];
       
       if (!columnKind) {
@@ -467,7 +470,50 @@ export function useMetadata() {
       return [constants.inputValues.empty, 0];
     };
 
-    
+    const convertQueryItemOperatorToAstraOperator = (operator: string): AstraOperator => {
+      switch (operator) {
+        case constants.cqlOperators.EQUAL:
+          return "eq";
+        case constants.cqlOperators.LESS:
+          return "lt";
+        case constants.cqlOperators.LESS_EQUAL:
+          return "lte";
+        case constants.cqlOperators.GREATER:
+          return "gt";
+        case constants.cqlOperators.GREATER_EQUAL:
+          return 'gte';
+        case constants.cqlOperators.IN:
+          return "in";
+      }
+    };
+
+    const getAstraQueryFilters = (whereClauseItems: QueryItem[]): AstraQueryFilter[] => {
+      let filters: AstraQueryFilter[] = [];
+      whereClauseItems.forEach((item: QueryItem) => {
+        filters.push({
+          columnName: item.column,
+          operator: convertQueryItemOperatorToAstraOperator(item.relation),
+          value: item.chipValues && item.chipValues.length > 0 ? [... item.chipValues] : (item.value ? [item.value] : [])
+        });
+      });
+      return filters;
+    };
+
+    const createAstraQueryPayload = (queryMetadata: GraphMetadata, whereClauseItems: QueryItem[], queryConcepts: QueryConcepts): AstraQueryPayload => {
+      let queryPayload: AstraQueryPayload = {
+        columnNames: queryMetadata.columns.get(queryMetadata.tables.at(0).conceptName).map((concept: Concept) => concept.conceptName),
+        filters: getAstraQueryFilters(whereClauseItems),
+      };
+
+      if (queryConcepts.orderBy.columns.length) {
+        queryPayload.orderBy = {
+          column: queryConcepts.orderBy.columns.at(0).conceptName
+        };
+      }
+
+      return queryPayload;
+    }
+
     return {
       computeConceptReferentValue,
       computeConceptReferentValueForAggregateFunction,
@@ -479,6 +525,7 @@ export function useMetadata() {
       getQuerySelectionConceptNames,
       getHeadersForQueryResults,
       getPartitionAndClusteringColumnsCount,
-      validateQuery
+      validateQuery,
+      createAstraQueryPayload
     };
 };

@@ -1,45 +1,60 @@
 <template>
-  <vee-form :validation-schema="registerValidationSchema" @submit="register">
-    <vee-field name="firstname" v-slot="{ field, errors }">
+  <vee-form 
+    class="register-form"
+    :validation-schema="registerValidationSchema" 
+    @submit="register">
+    <vee-field 
+      name="firstname" 
+      v-slot="{ field, errors }"
+    >
       <v-text-field
         v-bind="field"
         v-model="registerCredentials.firstname"
         variant="outlined"
-        label="Firstname"
+        label="firstname"
         maxlength="50"
         :value="registerCredentials.firstname"
         :error-messages="errors"
       />
     </vee-field>
-    <vee-field name="lastname" v-slot="{ field, errors }">
+    <vee-field 
+      name="lastname" 
+      v-slot="{ field, errors }"
+    >
       <v-text-field
         v-bind="field"
         v-model="registerCredentials.lastname"
         variant="outlined"
-        label="Lastname"
+        label="lastname"
         maxlength="50"
         :value="registerCredentials.lastname"
         :error-messages="errors"
       />
     </vee-field>
-    <vee-field name="email" v-slot="{ field, errors }">
+    <vee-field 
+      name="email" 
+      v-slot="{ field, errors }"
+    >
       <v-text-field
         v-bind="field"
         v-model="registerCredentials.email"
         variant="outlined"
-        label="Email"
+        label="email"
         maxlength="50"
         suffix="@gmail.com"
         :value="registerCredentials.email"
         :error-messages="errors"
       />
     </vee-field>
-    <vee-field name="password" v-slot="{ field, errors }">
+    <vee-field 
+      name="password" 
+      v-slot="{ field, errors }"
+    >
       <v-text-field
         v-bind="field"
         v-model="registerCredentials.password"
         variant="outlined"
-        label="Password"
+        label="password"
         maxlength="50"
         :type="showPassword ? 'text' : 'password'"
         :value="registerCredentials.password"
@@ -48,7 +63,13 @@
         @click:append-inner="showPassword = !showPassword"
       />
     </vee-field>
-    <Button outlined label="register" :disabled="isRegistrationInSubmission" :loading="isRegistrationInSubmission" @click="register" />
+    <Button 
+      outlined 
+      label="register" 
+      :disabled="isRegistrationInSubmission" 
+      :loading="isRegistrationInSubmission" 
+      @click="register" 
+    />
   </vee-form>
 </template>
 
@@ -61,7 +82,6 @@ import { useUtils } from '@/composables/utils';
 
 import { Ref, ref } from "vue";
 
-// Data
 const registerValidationSchema = {
   firstname: "required|min:3|max:50|alpha_spaces",
   lastname: "required|min:3|max:50|alpha_spaces",
@@ -69,17 +89,17 @@ const registerValidationSchema = {
   password: "required|min:6|max:50",
 };
 
+// Composable mappings
+const { openNotificationToast } = useUtils();
+
+// Store mappings
+const userStore = useUserStore();
+
+// Functionalities related to the registering of an user
 const registerCredentials: Ref<RegisterCredentials> = ref({ ... constants.defaultRegisterCredentials });
 const showPassword: Ref<boolean> = ref(false);
 const isRegistrationInSubmission: Ref<boolean> = ref(false);
 
-// Composables
-const { openNotificationToast } = useUtils();
-
-// Store state and actions mappings
-const userStore = useUserStore();
-
-// Functions related to the Register flow
 const register = async (): Promise<void> => {
   isRegistrationInSubmission.value = true;
 
@@ -102,3 +122,19 @@ const handleUnsuccessfulRegister = (error: Error | any): void => {
 };
 
 </script>
+
+<style scoped lang="sass">
+@use '@/assets/styles/_variables.sass'
+@use '@/assets/styles/_containers.sass'
+
+.register-form
+  @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
+  width: 100%
+
+  .v-input, .p-button
+    width: 100%
+
+  .p-button
+    margin-top: 2.5rem
+
+</style>

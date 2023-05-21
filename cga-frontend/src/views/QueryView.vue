@@ -182,13 +182,12 @@ import CgaTable from '@/components/utilities/CgaTable.vue';
 import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
 import QueryItems from '@/components/design/QueryItems.vue';
 import { 
-  Concept, QueryClause, ColumnMetadata, GraphMetadata, ConfigurableConcept, 
+  Concept, QueryClause, GraphMetadata, ConfigurableConcept, 
   Command, DataTableColumn, QueryItemColumnType, QueryItem, AggregateFunction 
 } from '../types/types';
 import { computed } from '@vue/reactivity';
 import { ComputedRef, Ref, nextTick, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useAxios } from '@/composables/requests/axios';
 import { useConfirm } from "primevue/useconfirm";
 import { useConnectionStore } from '../stores/connection';
 import { useMetadata } from '@/composables/metadata/metadata';
@@ -196,7 +195,7 @@ import { useQuery } from '@/composables/metadata/query';
 import { useQueryStore } from '../stores/query';
 import { useUtils } from '../composables/utils';
 import { useAstra } from '@/composables/requests/astra';
-import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
+import { AstraApiQueryResponse, AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 
 
 const defaultGraphMetadata: GraphMetadata = {
@@ -227,8 +226,7 @@ const { getRelationTypeForColumnConcept,
       } = useMetadata();
 const { openNotificationToast, copyToClipboard } = useUtils();
 const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
-const { manageRequest } = useAxios();
-const { retrieveAllTables, retrieveTable } = useAstra();
+const { retrieveAllTables, retrieveTable, retrieveQueryResults } = useAstra();
 
 // Store state and action mappings
 const connectionStore = useConnectionStore();
@@ -256,8 +254,17 @@ const getColumnsMetadataForTableGraph = (metadata: AstraTableMetadata) => {
   
   const tableColumnConcepts = columns.get(selectedTable.value);
   metadata.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
-    // TODO: const relation = getRelationTypeForColumnConcept()
-    const columnConcept = { conceptName: columnDefinition.name, conceptType: constants.conceptTypes.column };
+    console.log(columnDefinition);
+    
+    let columnKind = constants.columnKinds.regular;
+    if (metadata.primaryKey.partitionKey.includes(columnDefinition.name)) {
+      columnKind = "partition_key";
+    } else if (metadata.primaryKey.clusteringKey.includes(columnDefinition.name)) {
+      columnKind = constants.columnKinds.clustering;
+    }
+    
+    const relation = getRelationTypeForColumnConcept(columnKind)
+    const columnConcept = { conceptName: columnDefinition.name, conceptType: constants.conceptTypes.column, relation, columnKind };
     tableColumnConcepts.push(columnConcept);
 
     const dataTypeConcept = { conceptName: columnDefinition.typeDefinition, conceptType: constants.conceptTypes.dataType };
@@ -324,7 +331,6 @@ const retrieveTableMetadata = async (): Promise<void> => {
 const setConceptualGraphMetadata = (metadata: Ref<GraphMetadata>, tables: Concept[] = [], 
                                     columns: Map<string, Concept[]> = defaultGraphMetadata.columns, 
                                     dataTypes: Map<string, Concept> = defaultGraphMetadata.dataTypes): void => {
-  whereClauseItems.value = [];
   metadata.value.keyspace = { conceptName: currentKeyspace.value ? currentKeyspace.value : constants.inputValues.empty, conceptType: constants.conceptTypes.keyspace };
   metadata.value.tables = JSON.parse(JSON.stringify(tables));
   metadata.value.columns = new Map(JSON.parse(JSON.stringify([... columns])));
@@ -543,7 +549,6 @@ const removeColumnFromQuery = async (columnMetadata): Promise<void> => {
     if (columnConceptIndex > -1) {
       queryMetadata.value.columns.get(tableConceptName)!.splice(columnConceptIndex, 1);
 
-      // TODO: Remove only the query concept which is related to the column removed.
       queryConcepts.value = JSON.parse(JSON.stringify(constants.defaultQueryConcepts));
       
       await nextTick();
@@ -621,14 +626,13 @@ const getDefaultValueForConcept = (concept: Concept): boolean | number | string 
 };
 
 const fetchQueryResuls = async (): Promise<void> => {
-  const response = await manageRequest(constants.requestTypes.GET, 'query_results', {
-    query: generateQueryAsString(cqlQueryCommands.value)
-  });
+  const response = await retrieveQueryResults(currentKeyspace.value, queryMetadata.value.tables.at(0).conceptName, queryMetadata.value);
   if (response && response.data) {
-    if (response.data.status === constants.requestStatus.SUCCESS) {
-      parseQueryResults(response.data.results);
+    const responseData = response.data as AstraApiQueryResponse;
+    if (responseData.count) {
+      parseQueryResults(responseData.rows)
     } else {
-      openNotificationToast(response.data.message, 'error');
+      openNotificationToast('no records in the database for the current query', 'info');
     }
   }
 };
@@ -642,16 +646,8 @@ const parseQueryResults = (results: any[]) => {
   queryResultsTableHeaders.value = [];
   queryResults.value = [];
 
-  const currentColumns = getQuerySelectionConceptNames(queryMetadata.value, queryConcepts.value);
   queryResultsTableHeaders.value = getHeadersForQueryResults(queryMetadata.value, queryConcepts.value);
-
-  results.forEach(resultItem => {
-    let resultForTable = {};
-    for (let index = 0; index < resultItem.length; index ++) {
-      resultForTable[currentColumns[index]] = resultItem[index];
-    }
-    queryResults.value.push(resultForTable);
-  });
+  queryResults.value = [...results];
 
   isQueryResultsModalOpened.value = true;
 };

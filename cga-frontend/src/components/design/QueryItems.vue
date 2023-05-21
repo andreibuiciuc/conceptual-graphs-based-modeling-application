@@ -223,7 +223,6 @@ const addToQuery = (clause: QueryClause, item: QueryItem): void => {
 };
 
 const changeColumn = (clause: QueryClause, item: QueryItem): void => {
-    debugger;
     const currentColumn = props.columns?.find(x => x.conceptName === item.column);
     if (currentColumn) {
         item.operators = getCQLWhereOperatorsByColumnKind(currentColumn.columnKind);

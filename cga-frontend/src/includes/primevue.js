@@ -24,6 +24,7 @@ import Menubar from 'primevue/menubar';
 import Tag from 'primevue/tag';
 import Slider from 'primevue/slider';
 import ScrollTop from 'primevue/scrolltop';
+import Timeline from 'primevue/timeline';
 
 export default {
     install(app) {
@@ -54,6 +55,7 @@ export default {
         app.component('Tag', Tag);
         app.component('Slider', Slider);
         app.component('ScrollTop', ScrollTop);
+        app.component('Timeline', Timeline);
 
         app.directive('tooltip', Tooltip);
     }
