@@ -112,7 +112,7 @@ import { AstraApiResponse } from '@/types/astra/types';
 import { AxiosResponse } from 'axios';
 import { ComputedRef, Ref, ref } from 'vue';
 import { computed } from '@vue/reactivity';
-import { conceptualGraphsCollection } from "../../includes/firebase";
+import { conceptualGraphsCollection } from "@/configurations/firebase";
 import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
 import { useAstra } from '@/composables/requests/astra';
 import { useConnectionStore } from '../../stores/connection';

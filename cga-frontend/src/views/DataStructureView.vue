@@ -74,7 +74,7 @@ import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.
 import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";
 import designToolboxConstants from '../components/design/designToolboxConstants';
 import DesignToolbox from "../components/design/DesignToolbox.vue";
-import { auth, tableGraphsCollection } from '@/includes/firebase';
+import { auth, tableGraphsCollection } from '@/configurations/firebase';
 import { AstraApiResponse } from '@/types/astra/types';
 import { AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';

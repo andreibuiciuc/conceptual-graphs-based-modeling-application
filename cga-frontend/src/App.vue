@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import { auth } from "./includes/firebase";
+import { auth } from "./configurations/firebase";
 import { mapWritableState } from "pinia";
 import { RouterView } from "vue-router";
 import { useUserStore } from './stores/user';
