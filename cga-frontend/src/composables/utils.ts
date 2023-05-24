@@ -13,6 +13,7 @@ export function useUtils() {
     navigator.clipboard.writeText(text);
   };
 
+  const delayExecution = (miliseconds: number): Promise<void> => new Promise(result => setTimeout(result, miliseconds));
 
   const openNotificationToast = (summary: string, severity: ToastSeverity, detail?: string): void => {
     toast.add({
@@ -25,6 +26,7 @@ export function useUtils() {
 
   return {
     copyToClipboard,
+    delayExecution,
     openNotificationToast
   };
 }

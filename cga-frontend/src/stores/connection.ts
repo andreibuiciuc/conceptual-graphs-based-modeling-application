@@ -1,6 +1,6 @@
 
 import constants from '../constants/constants';
-import { Ref, ref } from "vue";
+import { Ref, nextTick, ref } from "vue";
 import { defineStore } from "pinia";
 import { AstraApiResponse } from "@/types/astra/types";
 import { useUtils } from "../composables/utils";
@@ -20,6 +20,8 @@ export const useConnectionStore = defineStore('connection', () => {
   const currentKeyspace: Ref<string> = ref(constants.inputValues.empty);
   const availableKeyspaces: Ref<string[]> = ref([]);
   const isConnectionButtonTriggered: Ref<boolean> = ref(false);
+  const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
+  const keyspaceGraph = ref();
 
   const { openNotificationToast } = useUtils();
   const { retrieveAllKeyspaces } = useAstra();
@@ -34,6 +36,9 @@ export const useConnectionStore = defineStore('connection', () => {
     currentKeyspace.value = constants.inputValues.empty;
     userAstraDatabaseId.value = constants.inputValues.empty;
     userAstraDatabaseRegion.value = constants.inputValues.empty;
+
+    await nextTick();
+    keyspaceGraph.value.removeArrows();
     openNotificationToast(`connection to astra db cassandra server discarded.`, 'success');
   }
 
@@ -68,6 +73,8 @@ export const useConnectionStore = defineStore('connection', () => {
     userAstraClientId,
     userAstraClientSecret,
     isConnectionButtonTriggered,
+    isKeyspaceRetrieveInProgress,
+    keyspaceGraph,
     connect,
     disconnect
   };

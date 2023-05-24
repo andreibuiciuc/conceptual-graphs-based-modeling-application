@@ -26,7 +26,7 @@
             </div>    
         </div>
         <div class="graph-placeholder-text">
-            <span>{{ placeholderText }} ...</span>
+            <span>{{ placeholderText }}</span>
         </div>
     </div>
 </template>

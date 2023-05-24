@@ -49,7 +49,7 @@
             value="force graph is the recommended representation of higher volume keyspaces"
           />
           <Tag 
-            v-else-if="cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
+            v-else-if="cassandraServerCredentials.isCassandraServerConnected && currentKeyspace && !isKeyspaceRetrieveInProgress"
             icon="pi pi-exclamation-triangle"
             severity="warning"
             value="it is recommended to use the force graph representation for higher volume keyspaces"
@@ -85,7 +85,7 @@ const utilsStore = useUtilsStore();
 const { isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
 
 const connectionStore = useConnectionStore();
-const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
+const { currentKeyspace, cassandraServerCredentials, isKeyspaceRetrieveInProgress } = storeToRefs(connectionStore);
 
 onMounted(() => {
   utilsStore.initializeSummaryCardEvent();

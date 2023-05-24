@@ -7,17 +7,17 @@
     </div>
 
     <div class="dashboard-column-container conceptual-graph-wrapper">
-        <template v-if="!forceGraph && graphMetadata.tables.length">
-            <!-- TODO:
-              <svg class="svg-clip-container">
-              <defs>
-                <clipPath id="clip">
-                  <rect x="0" y="0" />
-                </clipPath>
-              </defs>
-            </svg> -->
-          <!-- <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" /> -->
-          <PlaceholderGraph placeholder-text="retrieving keyspace metadata" />
+        <template v-if="!forceGraph">
+          <PlaceholderGraph 
+            v-if="isKeyspaceRetrieveInProgress"
+            :placeholder-text="isKeyspaceRetrieveInProgress ? 'retrieving keyspace metadata ...' : 'please connect and select a keyspace'"
+          />
+          <ConceptualGraph 
+            v-else
+            graph-key="keyspaceGraph" 
+            :graph-metadata="graphMetadata"
+            ref="keyspaceGraph"
+          />
         </template>
       <svg class="svg-container" v-else></svg>
     </div>
@@ -44,7 +44,6 @@ import { useMetadata } from '@/composables/metadata/metadata';
 import { useUtilsStore } from "../../stores/utils";
 import { useUtils } from '../../composables/utils';
 
-// Constants
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],
@@ -52,15 +51,12 @@ const defaultGraphMetadata: GraphMetadata = {
   dataTypes: new Map<string, ConfigurableConcept>()
 };
 
-// Reactive data
-const keyspaceGraph = ref();
 const graphMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
 const keyspaceMetadata: Ref<any> = ref(null);
-const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
 
-// Store mappings
+// Pinia store mappings
 const connectionStore = useConnectionStore();
-const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
+const { currentKeyspace, cassandraServerCredentials, isKeyspaceRetrieveInProgress, keyspaceGraph } = storeToRefs(connectionStore);
 
 const utilsStore = useUtilsStore();
 const { forceGraph } = storeToRefs(utilsStore);
@@ -70,6 +66,7 @@ const { createForceGraphRepresentation } = useForceGraph();
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
 const { retrieveAllTables } = useAstra();
+const { delayExecution } = useUtils();
 
 // Functionalities related to the Force Graph representation of the keyspace metadata
 const conceptForLookup: Ref<Concept | any | null> = ref(null);
@@ -162,6 +159,8 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
   if (currentKeyspace.value) {
     isKeyspaceRetrieveInProgress.value = true;
 
+    await delayExecution(2000);
+
     const response = await retrieveAllTables(currentKeyspace.value);
     if (response && response.data) {
     
@@ -177,8 +176,8 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
       openNotificationToast('Unexpected error occured', 'error');
     }
 
-    await nextTick();
     isKeyspaceRetrieveInProgress.value = false;
+    await nextTick();
 
     if (!forceGraph.value) {
       keyspaceGraph.value.removeArrows();
