@@ -104,7 +104,7 @@ const handleAuthenticationAction = (): void => {
 }
 
 const onAccountItemClick = (): void => {
-  isUserLoggedIn ? signOut() : handleAuthenticationAction();
+  isUserLoggedIn.value ? signOut() : handleAuthenticationAction();
 };
 
 </script>
@@ -113,21 +113,23 @@ const onAccountItemClick = (): void => {
 @use '@/assets/styles/_variables.sass'
 @use '@/assets/styles/_containers.sass'
 
+$blurFilterValue: 8px
+
 .p-menubar-translucent
   background: none !important
-  -webkit-backdrop-filter: blur(8px) !important
-  backdrop-filter: blur(8px) !important
+  -webkit-backdrop-filter: blur($blurFilterValue) !important
+  backdrop-filter: blur($blurFilterValue) !important
 
 .p-menubar-solid
   background: variables.$cassandra-white !important
 
 .p-menubar
-  position: fixed
-  height: 68px
-  z-index: 1004
-  transform: translateY(0%)
-  width: 100%
+  height: variables.$cga-topbar-height
   border-bottom: none !important
+  transform: translateY(0%)
+  position: fixed
+  z-index: 1004
+  width: 100%
 
   &.p-menubar-with-border-bottom
     border-bottom: 1px solid variables.$cassandra-light-gray !important
