@@ -7,19 +7,24 @@
     </div>
 
     <div class="dashboard-column-container conceptual-graph-wrapper">
-        <template v-if="!forceGraph">
-          <PlaceholderGraph 
-            v-if="isKeyspaceRetrieveInProgress"
-            :placeholder-text="isKeyspaceRetrieveInProgress ? 'retrieving keyspace metadata ...' : 'please connect and select a keyspace'"
-          />
-          <ConceptualGraph 
-            v-else
-            graph-key="keyspaceGraph" 
-            :graph-metadata="graphMetadata"
-            ref="keyspaceGraph"
-          />
-        </template>
-      <svg class="svg-container" v-else></svg>
+        
+      <PlaceholderGraph 
+        v-if="isKeyspaceRetrieveInProgress"
+        :placeholder-text="isKeyspaceRetrieveInProgress ? 'retrieving keyspace metadata ...' : 'please connect and select a keyspace'"
+        :is-circular-placeholder="forceGraph ? true : false"
+      />
+      <ConceptualGraph 
+        v-if="!isKeyspaceRetrieveInProgress && !forceGraph"
+        graph-key="keyspaceGraph" 
+        :graph-metadata="graphMetadata"
+        ref="keyspaceGraph"
+      />
+        
+      <svg 
+        v-if="!isKeyspaceRetrieveInProgress && forceGraph"
+        class="svg-container"
+      >
+      </svg>
     </div>
       
     </div>
@@ -71,6 +76,8 @@ const { delayExecution } = useUtils();
 // Functionalities related to the Force Graph representation of the keyspace metadata
 const conceptForLookup: Ref<Concept | any | null> = ref(null);
 const forceSimulation: Ref<any> = ref(null);
+const forceSimulationNodes: Ref<D3Node[]> = ref([]);
+const forceSimulationLinks: Ref<D3Link[]> = ref([]);
 
 // Functionalities related to the parsing of the keyspace metadata
 const parseKeyspaceMetadata = (keyspaceMetadata: AstraTableMetadata[] ): void => {
@@ -140,7 +147,8 @@ const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: AstraTableMetadata[
 const parseKeyspaceMetadataWrapper = (keyspaceMetadata: any): void => {
   if (forceGraph.value) {
     const { nodes, links} = parseKeyspaceMetadataAsForceGraph(keyspaceMetadata);
-    forceSimulation.value = createForceGraphRepresentation(nodes, links, conceptForLookup);
+    forceSimulationNodes.value = JSON.parse(JSON.stringify(nodes));
+    forceSimulationLinks.value = JSON.parse(JSON.stringify(links));
   } else {
     parseKeyspaceMetadata(keyspaceMetadata);
   }
@@ -152,6 +160,7 @@ const resetKeyspaceMetadata = (): void => {
   graphMetadata.value.tables = [];
   graphMetadata.value.columns = new Map<string, ConfigurableConcept[]>();
   graphMetadata.value.dataTypes = new Map<string, ConfigurableConcept>();
+  forceSimulation.value = null;
 };
 
 // Functionalities related to the retrieval of the keyspace metadata
@@ -159,27 +168,35 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
   if (currentKeyspace.value) {
     isKeyspaceRetrieveInProgress.value = true;
 
-    await delayExecution(2000);
+    await delayExecution(3000);
 
     const response = await retrieveAllTables(currentKeyspace.value);
+
     if (response && response.data) {
     
       const responseData = response.data as AstraApiResponse;
+
       if (responseData.data) {
         keyspaceMetadata.value = { ...responseData.data };
         parseKeyspaceMetadataWrapper(responseData.data);
       } else {
         openNotificationToast(responseData.description, 'error');
+        isKeyspaceRetrieveInProgress.value = false;
+        return;
       }
 
     } else {
       openNotificationToast('Unexpected error occured', 'error');
+      isKeyspaceRetrieveInProgress.value = false;
+      return;
     }
 
     isKeyspaceRetrieveInProgress.value = false;
     await nextTick();
 
-    if (!forceGraph.value) {
+    if (forceGraph.value) {
+      createForceGraphRepresentation(forceSimulationNodes.value, forceSimulationLinks.value, conceptForLookup);
+    } else {
       keyspaceGraph.value.removeArrows();
       keyspaceGraph.value.drawInitialArrows();
     }

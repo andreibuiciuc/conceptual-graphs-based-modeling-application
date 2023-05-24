@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="graphMetadata.keyspace.conceptName"
     class="tf-tree conceptual-graph" :id="`${graphKey}_conceptualGraph`"
     :class="{ 'conceptual-graph-inverted': inverted, 'conceptual-graph-with-border': applyBorder }"
   >

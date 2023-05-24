@@ -1,7 +1,7 @@
 <template>
   <Sidebar v-model:visible="isSidebarOpened" class="w-full md:w-25rem lg:w-30rem">
     <template #header>
-      <InputSwitch v-model="forceGraph" :disabled="!currentKeyspace" :class="{ 'animated-switch': !forceGraph && currentKeyspace }" />
+      <InputSwitch v-model="forceGraph" :disabled="!currentKeyspace || isKeyspaceRetrieveInProgress" :class="{ 'animated-switch': !forceGraph && currentKeyspace }" />
       <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
     </template>
     <div class="panel-container">
@@ -50,7 +50,7 @@ import CredentialsCard from '../dashboard/CredentialsCard.vue';
 
 
 const connectionStore = useConnectionStore();
-const { cassandraServerCredentials, isConnectionButtonTriggered, currentKeyspace, availableKeyspaces, userAstraDatabaseId, userAstraToken } = storeToRefs(connectionStore);
+const { cassandraServerCredentials, isConnectionButtonTriggered, currentKeyspace, availableKeyspaces, userAstraDatabaseId, userAstraToken, isKeyspaceRetrieveInProgress } = storeToRefs(connectionStore);
 cassandraServerCredentials.value = { ... constants.defaultLoginCredentials };
 
 const utilsStore = useUtilsStore();
