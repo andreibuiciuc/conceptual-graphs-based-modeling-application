@@ -16,7 +16,8 @@
                 </clipPath>
               </defs>
             </svg> -->
-          <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
+          <!-- <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" /> -->
+          <PlaceholderGraph placeholder-text="retrieving keyspace metadata" />
         </template>
       <svg class="svg-container" v-else></svg>
     </div>
@@ -27,6 +28,7 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import ConceptualGraph from '../graphic/graph/ConceptualGraph.vue';
+import PlaceholderGraph from '@/components/graphic/graph/PlaceholderGraph.vue';
 import CgaLookupCard from '../graphic/cards/CgaLookupCard.vue';
 import CgaForceConfigCard from '../graphic/cards/CgaForceConfigCard.vue';
 import * as d3 from 'd3';

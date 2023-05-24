@@ -25,6 +25,7 @@ import Tag from 'primevue/tag';
 import Slider from 'primevue/slider';
 import ScrollTop from 'primevue/scrolltop';
 import Timeline from 'primevue/timeline';
+import Skeleton from 'primevue/skeleton'
 
 export default {
     install(app) {
@@ -56,6 +57,7 @@ export default {
         app.component('Slider', Slider);
         app.component('ScrollTop', ScrollTop);
         app.component('Timeline', Timeline);
+        app.component('Skeleton', Skeleton);
 
         app.directive('tooltip', Tooltip);
     }
