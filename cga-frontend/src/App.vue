@@ -1,25 +1,26 @@
 <template>
-  <CgaMenubar />
+  <TopbarNavigation />
   <SidebarNavigation />
   <RouterView />
   <Toast />
 </template>
 
-<script>
+<script lang="ts">
+
+import SidebarNavigation from "@/components/navigation/SidebarNavigation.vue";
+import TopbarNavigation from '@/components/navigation/TopbarNavigation.vue';
+
 import { auth } from "./configurations/firebase";
 import { mapWritableState } from "pinia";
 import { RouterView } from "vue-router";
 import { useUserStore } from './stores/user';
-
-import CgaMenubar from "./components/navigation/CgaMenubar.vue";
-import SidebarNavigation from "./components/navigation/SidebarNavigation.vue";
 
 export default {
   name: "App",
   components: {
     RouterView,
     SidebarNavigation,
-    CgaMenubar,
+    TopbarNavigation,
 },
   computed: {
     ...mapWritableState(useUserStore, ["isUserLoggedIn"]),

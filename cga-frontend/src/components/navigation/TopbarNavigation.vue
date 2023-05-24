@@ -40,7 +40,7 @@ import { useUtilsStore } from '../../stores/utils';
 
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
-import { ComputedRef, computed } from 'vue';
+import { ComputedRef, computed, nextTick } from 'vue';
 import { MenuItem } from '@/types/navigation/types';
 
 const SCROLL_Y_POSITION_OFFSET = 10;
@@ -49,7 +49,7 @@ const SCROLL_Y_POSITION_OFFSET = 10;
 const userStore = useUserStore();
 const { isUserLoggedIn } = storeToRefs(userStore);
 
-// Store mappings
+// Pinia store mappings
 const connectionStore = useConnectionStore();
 const { cassandraServerCredentials } = storeToRefs(connectionStore);
 
@@ -72,30 +72,39 @@ const isTranslucentEffectApplied: ComputedRef<boolean> = computed(() => {
 
 // Functionalities related to the menubar navigation
 const menuItems: ComputedRef<MenuItem[]> = computed(() => {
-  if (isUserLoggedIn.value) {
-    return authenticatedMenuItems;
-  } else {
-    return unauthenticatedMenuItems;
-  }
+  return isUserLoggedIn.value ? authenticatedMenuItems : unauthenticatedMenuItems;
 });
 
-const onAccountItemClick = (): void => {
-  if (isUserLoggedIn.value) {
-    if (cassandraServerCredentials.value.isCassandraServerConnected) {
-      connectionStore.disconnect();
-    }
-    userStore.signOut();
-    router.push({ name: 'home' });
-  } else {
-    if (router.currentRoute.value.name === 'home') {
-      const authSectionElement = document.getElementById('auth');
-      if (authSectionElement) {
-        authSectionElement.scrollIntoView({ behavior: "smooth", block: 'end' });
-      }
-    } else {
-      isLoginInModal.value = true;
-    }
+const signOut = async (): Promise<void> => {
+
+  if (cassandraServerCredentials.value.isCassandraServerConnected) {
+    connectionStore.disconnect();
   }
+
+  await userStore.signOut();
+  await router.push({ name: 'home' });
+  await nextTick();
+  utilsStore.initializeSummaryCardEvent();
+  
+};
+
+const handleAuthenticationAction = (): void => {
+
+  if (router.currentRoute.value.name === 'home') {
+
+    const authSectionElement = document.getElementById('auth');
+
+    if (authSectionElement) {
+      authSectionElement.scrollIntoView({ behavior: "smooth", block: 'end' });
+    }
+
+  } else {
+    isLoginInModal.value = true;
+  }
+}
+
+const onAccountItemClick = (): void => {
+  isUserLoggedIn ? signOut() : handleAuthenticationAction();
 };
 
 </script>
