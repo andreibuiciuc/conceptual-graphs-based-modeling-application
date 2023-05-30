@@ -1,10 +1,32 @@
 import constants from '@/constants/constants';
-import { AstraOperator, AstraQueryFilter, AstraQueryPayload } from "@/types/astra/types";
+import { AstraClusteringExpression, AstraOperator, AstraQueryFilter, AstraQueryPayload, AstraTableMetadata } from "@/types/astra/types";
 import { QueryItem, GraphMetadata, QueryConcepts, Concept } from "@/types/types";
 
-export function useMetadata() {
+export function useAstraMetadata() {
     
     // Composable responsible for handling metadata for Astra DB communication
+
+    const getColumnKindFromColumnDefinition = (columnConcept: Concept, tableMetadata: AstraTableMetadata): string => {
+  
+      if (tableMetadata.primaryKey.partitionKey.includes(columnConcept.conceptName)) {
+        return 'partition_key';
+      }
+    
+      if (tableMetadata.primaryKey.clusteringKey.includes(columnConcept.conceptName)) {
+        return constants.columnKinds.clustering;
+      }
+    
+      return constants.columnKinds.regular;
+    };
+    
+    const getColumnClusteringOption = (columnConcept: Concept, tableMetadata: AstraTableMetadata): string => {
+    
+      const columnOption = tableMetadata.tableOptions.clusteringExpression.find((clusterExpression: AstraClusteringExpression) => {
+        clusterExpression.column === columnConcept.conceptName
+      });
+    
+      return columnOption ? columnOption.order : constants.inputValues.empty;
+    };
 
     /**
      * Converts a query item operator to an astra db operator
@@ -72,6 +94,8 @@ export function useMetadata() {
     return {
         convertQueryItemOperatorToAstraOperator,
         getAstraQueryFilters,
+        getColumnClusteringOption,
+        getColumnKindFromColumnDefinition,
         createAstraQueryPayload,
     };
     

@@ -6,8 +6,8 @@ import { useQueryStore } from '@/stores/query';
 export function useForceGraph() {
 
     // Composable responsible for generating Force Graphs
-    const defaultConceptNodeColor = '3B82F6';
-    const defaultConceptNodeSize = 8;
+    const DEFAULT_CONCEPT_NODE_COLOR = '3B82F6';
+    const DEFAULT_CONCEPT_NODE_SIZE = 8;
 
 
     const queryStore = useQueryStore();
@@ -155,8 +155,8 @@ export function useForceGraph() {
 
     
     const resetForceConfigurationsToDefault = (): void => {
-      updateConceptNodeSize(defaultConceptNodeSize);
-      updateConceptNodeColor(defaultConceptNodeColor);
+      updateConceptNodeColor(DEFAULT_CONCEPT_NODE_COLOR);
+      updateConceptNodeSize(DEFAULT_CONCEPT_NODE_SIZE);
     };
 
     return {
@@ -164,5 +164,7 @@ export function useForceGraph() {
         updateConceptNodeSize,
         updateConceptNodeColor,
         resetForceConfigurationsToDefault,
+        DEFAULT_CONCEPT_NODE_COLOR,
+        DEFAULT_CONCEPT_NODE_SIZE,
     };
 }

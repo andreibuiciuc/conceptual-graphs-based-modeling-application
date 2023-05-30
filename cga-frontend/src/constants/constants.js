@@ -38,6 +38,7 @@ export default {
   requestTypes: {
     GET: "get",
     POST: "post",
+    DELETE: "delete",
   },
   requestStatus: {
     SUCCESS: "success",

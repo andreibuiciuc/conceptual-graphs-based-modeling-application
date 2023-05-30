@@ -43,9 +43,19 @@
                     severity="primary" 
                     :disabled="isSaveInProgress" 
                     :loading="isSaveInProgress" 
-                    @click="saveForceConfiguration" 
+                    @click="saveForceConfiguration(false)" 
                 />
+            </div>
 
+            <div class="parameter-container">
+                <Button 
+                    outlined 
+                    label="reset to default" 
+                    severity="primary" 
+                    :disabled="isSaveInProgress" 
+                    :loading="isSaveInProgress" 
+                    @click="saveForceConfiguration(true)" 
+                />
             </div>
 
         </template>
@@ -67,22 +77,26 @@ const { conceptNodeColor, conceptNodeSize } = storeToRefs(queryStore);
     
 // Composable mappings    
 const { openNotificationToast } = useUtils();
-const { updateConceptNodeSize, updateConceptNodeColor, resetForceConfigurationsToDefault } = useForceGraph();
+const { updateConceptNodeSize, updateConceptNodeColor, resetForceConfigurationsToDefault, DEFAULT_CONCEPT_NODE_COLOR, DEFAULT_CONCEPT_NODE_SIZE } = useForceGraph();
 
 // Functionalities related to the saving of the force graph configuration
 const isSaveInProgress: Ref<boolean> = ref(false);
 
-const saveForceConfiguration = async (): Promise<void> => {
+const saveForceConfiguration = async (isResetToDefault: boolean = false): Promise<void> => {
     isSaveInProgress.value = true;
 
     try {
        
         await configurationsCollection.doc(FORCE_CONFIGURATIONS_DOC_ID).update({
-            conceptNodeSize: conceptNodeSize.value,
-            conceptNodeColor: conceptNodeColor.value
+            conceptNodeSize: isResetToDefault ? DEFAULT_CONCEPT_NODE_SIZE : conceptNodeSize.value,
+            conceptNodeColor: isResetToDefault ? DEFAULT_CONCEPT_NODE_COLOR :  conceptNodeColor.value
         });
 
         openNotificationToast('force configuration successfully saved', 'success');
+
+        if (isResetToDefault) {
+            resetForceConfigurationsToDefault();
+        }
 
     } catch (error: any) {
         openNotificationToast(error.message, 'error');
@@ -156,5 +170,9 @@ onBeforeMount(() => {
 
             .p-button
                 width: 100%
+
+        .parameter-container:last-of-type
+            margin-top: 1rem
+            
 
 </style>    

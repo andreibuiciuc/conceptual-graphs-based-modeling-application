@@ -49,15 +49,24 @@ export function useAxios() {
                         ...payload,
                     },
                     headers: {
-                        ... headers
+                        ... headers,
                     }
                 });
             case constants.requestTypes.POST:
                 return axios.post(requestURL, payload, {
                     headers: {
-                        ... headers
+                        ... headers,
                     }
                 });
+            case constants.requestTypes.DELETE:
+                return axios.delete(requestURL, {
+                    params: {
+                        ... payload,
+                    },
+                    headers: {
+                        ... headers,
+                    }
+                })
             default:
                 break;
         }

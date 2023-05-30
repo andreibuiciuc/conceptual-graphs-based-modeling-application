@@ -1,7 +1,6 @@
 import constants from "../../constants/constants";
 import { AggregateFunction, Concept, DataTableColumn, QueryConcepts, QueryItemColumnType } from "@/types/types";
 import { GraphMetadata, QueryItem } from "@/types/types";
-import { AstraOperator, AstraQueryFilter, AstraQueryPayload } from '@/types/astra/types';
 
 export function useMetadata() {
 

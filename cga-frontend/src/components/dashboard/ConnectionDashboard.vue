@@ -51,6 +51,7 @@ import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../
 import { storeToRefs } from 'pinia';
 import { Ref, ref, watch, nextTick } from 'vue';
 import { useAstra } from '@/composables/requests/astra';
+import { useAstraMetadata } from '@/composables/metadata/astra';
 import { useConnectionStore } from "../../stores/connection";
 import { useForceGraph } from '../../composables/forcegraph';
 import { useMetadata } from '@/composables/metadata/metadata';
@@ -74,10 +75,11 @@ const { currentKeyspace, cassandraServerCredentials, isKeyspaceRetrieveInProgres
 const utilsStore = useUtilsStore();
 const { forceGraph } = storeToRefs(utilsStore);
 
-// Composables
+// Composables mappings
 const { createForceGraphRepresentation } = useForceGraph();
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
+const { getColumnClusteringOption, getColumnKindFromColumnDefinition } = useAstraMetadata();
 const { retrieveAllTables } = useAstra();
 const { delayExecution } = useUtils();
 
@@ -88,42 +90,18 @@ const forceSimulationNodes: Ref<D3Node[]> = ref([]);
 const forceSimulationLinks: Ref<D3Link[]> = ref([]);
 
 // Functionalities related to the parsing of the keyspace metadata
-const getColumnKindFromColumnDefinition = (columnConcept: Concept, tableMetadata: AstraTableMetadata): string => {
-  
-  if (tableMetadata.primaryKey.partitionKey.includes(columnConcept.conceptName)) {
-    return 'partition_key';
-  }
-
-  if (tableMetadata.primaryKey.clusteringKey.includes(columnConcept.conceptName)) {
-    return constants.columnKinds.clustering;
-  }
-
-  return constants.columnKinds.regular;
-};
-
-const getColumnClusteringOption = (columnConcept, tableMetadata: AstraTableMetadata): string => {
-
-  const columnOption = tableMetadata.tableOptions.clusteringExpression.find((clusterExpression: AstraClusteringExpression) => {
-    clusterExpression.column === columnConcept.conceptName
-  });
-
-  return columnOption ? columnOption.order : constants.inputValues.empty;
-};
-
 const parseKeyspaceMetadata = (keyspaceMetadata: AstraTableMetadata[] ): void => {
   resetKeyspaceMetadata();
 
-  const keyspaceConcept = {
+  graphMetadata.value.keyspace = {
     conceptType: constants.conceptTypes.keyspace,
     conceptName: currentKeyspace.value
-  };
-  graphMetadata.value.keyspace = Object.assign({}, keyspaceConcept);
+  }
   
   keyspaceMetadata.forEach((table: AstraTableMetadata) => {
     const tableConcept: ConfigurableConcept = {
       conceptType: constants.conceptTypes.table,
       conceptName: table.name,
-      isTableExpanded: true
     };
     graphMetadata.value.tables.push(tableConcept);
     graphMetadata.value.columns.set(tableConcept.conceptName, []);

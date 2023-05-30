@@ -1,18 +1,18 @@
 import { AxiosResponse } from "axios";
-import { useAxios } from "./axios";
+import { useAxios } from './axios';
 import { useConnectionStore } from "@/stores/connection";
 import { storeToRefs } from "pinia";
 import { GraphMetadata } from "@/types/types";
-import { useMetadata } from "../metadata/metadata";
+import { useAstraMetadata } from '@/composables/metadata/astra';
 import { useQueryStore } from "@/stores/query";
 
 export function useAstra() {
     // Composable responsible for communication with a cloud Astra DB server
 
     const { manageRequest } = useAxios();
-    const { createAstraQueryPayload } = useMetadata();
+    const { createAstraQueryPayload } = useAstraMetadata();
 
-    // #region Endpoints
+    //#region Endpoints
     const getBaseUrl = (): string => {
         const connectionStore = useConnectionStore();
         const { userAstraDatabaseId, userAstraDatabaseRegion} = storeToRefs(connectionStore);
@@ -33,14 +33,14 @@ export function useAstra() {
         const baseUrl = getBaseUrl();
         return `${baseUrl}/v2/schemas/keyspaces/${keyspace}/tables/${table}`;
     };
-    // #endregion
 
     const createAstraApiUrlForQuery = (keyspace: string, table: string): string => {
         const baseUrl = getBaseUrl();
         return `${baseUrl}/v1/keyspaces/${keyspace}/tables/${table}/rows/query`;
     }
+    //#endregion
 
-    // #region Headers
+    //#region Headers
     const configureHeaders = (): { [key: string]: string } => {
         const connectionStore = useConnectionStore();
         const { userAstraToken} = storeToRefs(connectionStore);
@@ -51,9 +51,9 @@ export function useAstra() {
           'Access-Control-Allow-Origin' : '*'
         };
       };
-    // #endregion
+    //#endregion
 
-    // #region GET Methods
+    //#region GET Methods
     const retrieveAllKeyspaces = (): Promise<AxiosResponse<any, any>> => {
         const requestUrl = createAstraApiUrlForKeyspaces();
         const headers = configureHeaders();
@@ -82,21 +82,30 @@ export function useAstra() {
         
         return manageRequest('post', requestUrl, payload, requestUrl, headers);
     };
-    // #endregion
+    //#endregion
 
-    // #region POST methods
+    //#region POST methods
     const saveTable = (keyspace: string, data: any): Promise<AxiosResponse<any, any>> => {
         const requestUrl = createAstraApiUrlForTables(keyspace);
         const headers = configureHeaders();
         return manageRequest('post', requestUrl, data, requestUrl, headers);
     };
-    // #endregion
+    //#endregion
+    
+    //#region DELETE methods
+    const deleteTable = (keyspace: string, table: string): Promise<AxiosResponse<any, any>> => {
+        const requestUrl = createAstraApiUrlForTable(keyspace, table);
+        const headers = configureHeaders();
+        return manageRequest('delete', requestUrl, null, requestUrl, headers);
+    };
+    //#endregion
 
     return {
         retrieveAllKeyspaces,
         retrieveAllTables,
         retrieveTable,
         retrieveQueryResults,
-        saveTable
+        saveTable,
+        deleteTable,
     }
 };

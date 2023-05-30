@@ -178,7 +178,6 @@
 </template>
 
 <script setup lang="ts">
-// Constants, types and utility imports
 import constants from '@/constants/constants';
 import CassandraTerminal from '@/components/graphic/terminal/CassandraTerminal.vue';
 import CgaTable from '@/components/utilities/CgaTable.vue';

@@ -29,8 +29,19 @@
             v-model="tableInViewMode"
             placeholder="table"
             :options="availableTables"
+            :disabled="isDropInProgress"
             @change="retrieveKeyspaceTable"
           />
+          <Button
+            outlined
+            severity="danger"
+            icon="pi pi-times"
+            label="drop table"
+            :disabled="!tableInViewMode || isDropInProgress"
+            :loading="isDropInProgress"
+            @click="openConfirmationPopup($event)" 
+          >
+          </Button>
         </template>
       </div>
     </div>
@@ -66,6 +77,14 @@
       @close="closeTerminal" 
     />
   </Dialog>
+  <ConfirmPopup group="dropTable">
+    <template #message="slotProps">
+      <div class="flex align-content-center p-4">
+        <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
+        <p class="pl-2">{{ slotProps.message.message }}</p>
+      </div>
+    </template>
+  </ConfirmPopup>
 </template>
 
 <script setup lang="ts">
@@ -85,16 +104,19 @@ import { useConnectionStore } from "../stores/connection";
 import { useMetadata } from '@/composables/metadata/metadata';
 import { useQuery } from '@/composables/metadata/query';
 import { useUtils } from '@/composables/utils';
+import { useAstraMetadata } from '@/composables/metadata/astra';
+import { useConfirm } from "primevue/useconfirm";
+
 
 // Functions mapped from composables
 const { generateQueryAsString, generateQueryAsCommands } = useQuery();
 const { copyToClipboard, openNotificationToast } = useUtils();
-const { getPartitionAndClusteringColumnsCount } = useMetadata();
+const { getPartitionAndClusteringColumnsCount, getRelationTypeForColumnConcept } = useMetadata();
+const { getColumnClusteringOption, getColumnKindFromColumnDefinition } = useAstraMetadata();
 const { createConfetti } = useConfetti();
-const { retrieveAllTables, retrieveTable, saveTable } = useAstra();
+const { retrieveAllTables, retrieveTable, saveTable, deleteTable } = useAstra();
 
 // Local constants
-// TODO: Move this to the constants file
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],
@@ -211,8 +233,9 @@ const addTableToKeyspace = async (): Promise<void> => {
   
   if (response && response.data) {
     const responseData = response.data as AstraApiResponse;
-    if (responseData.data) {
+    if (responseData) {
       openNotificationToast('table successfully added to the keyspace', 'success');
+      createConfetti();
     } else {
       openNotificationToast(responseData.description, 'error');
     }
@@ -245,7 +268,7 @@ onMounted(() => {
   }
 });
 
-// Functions related to the view mode
+// Functionalities related to the Data Structure View mode
 const availableTables: Ref<string[]> = ref([]);
 const isScreenInViewMode: Ref<boolean> = ref(false);
 const isTableInViewModeReady: Ref<boolean> = ref(false);
@@ -263,15 +286,37 @@ const changeScreenMode = (isViewMode: boolean): void => {
   }
 };
 
-const parseTableForViewMode = async (metadata: any): Promise<void> => {
-  tableMetadata.value = JSON.parse(JSON.stringify(defaultGraphMetadata));
-  tableMetadata.value.keyspace = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
-  tableMetadata.value.tables = JSON.parse(JSON.stringify(metadata.tableConcepts));
-  tableMetadata.value.columns = new Map<string, Concept[]>(Object.entries(metadata.columnConcepts));
-  tableMetadata.value.dataTypes = new Map<string, Concept>(Object.entries(metadata.dataTypeConcepts));
+const parseTableForViewMode = async (tableAstraMetadata: AstraTableMetadata): Promise<void> => {
+  tableMetadata.value.keyspace = {
+    conceptType: constants.conceptTypes.keyspace,
+    conceptName: currentKeyspace.value,
+  };
+
+  tableMetadata.value.tables.push({
+    conceptType: constants.conceptTypes.table,
+    conceptName: tableAstraMetadata.name
+  });
+
+  tableMetadata.value.columns.set(tableAstraMetadata.name, []);
+
+  tableAstraMetadata.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
+    const columnConcept = { conceptType: constants.conceptTypes.column, conceptName: columnDefinition.name };
+
+    const columnKind = getColumnKindFromColumnDefinition(columnConcept, tableAstraMetadata);
+    const columnClusteringOption = getColumnClusteringOption(columnConcept, tableAstraMetadata);
+
+    const relationType = getRelationTypeForColumnConcept(columnKind, columnClusteringOption);
+
+    tableMetadata.value.columns.get(tableAstraMetadata.name).push({ ... columnConcept, relation: relationType });
+
+    const typeConcept = { conceptType: constants.conceptTypes.dataType, conceptName: columnDefinition.typeDefinition };
+    tableMetadata.value.dataTypes.set(columnConcept.conceptName, { ... typeConcept, relation: constants.relationTypes.hasType });
+  });
+
   isGraphRendered.value = true;
   await nextTick();
   tableGraph.value.rerenderArrows();
+  isTableInViewModeReady.value = true;
 };
 
 const retrieveKeyspaceTables = async (): Promise<void> => {
@@ -293,13 +338,61 @@ const retrieveKeyspaceTable = async (): Promise<void> => {
   if (response && response.data) {
     const responseData = response.data as AstraApiResponse;
     if (responseData.data) {
-      console.log(responseData.data);
+      resetTableMetadata();
+      parseTableForViewMode(responseData.data);
     } else {
       openNotificationToast(responseData.description, 'error');
     }
   } else {
     openNotificationToast('error when retrieving the table', 'error');
   }
+};
+
+const resetTableMetadata = (): void => {
+  const defaultConcept = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
+  tableMetadata.value.keyspace = { ... defaultConcept };
+  tableMetadata.value.tables = [];
+  tableMetadata.value.columns = new Map<string, Concept[]>();
+  tableMetadata.value.dataTypes = new Map<string, Concept>();
+};
+
+// Functionalities related to the dropping of tables
+const confirm = useConfirm();
+const isDropInProgress: Ref<boolean> = ref(false);
+
+const dropTable = async (): Promise<void> => {
+  isDropInProgress.value = true;
+
+  const response = await deleteTable(currentKeyspace.value, tableInViewMode.value);
+
+  if (response && response.status === 204) {
+    openNotificationToast('table dropped successfully', 'success');
+    createConfetti();
+
+    isGraphRendered.value = false;
+    isTableInViewModeReady.value = false;
+
+    resetTableMetadata();
+    retrieveKeyspaceTables();
+  } else { 
+    openNotificationToast('error occured when dropping the table', 'error');
+  }
+
+  isDropInProgress.value = false;
+};
+
+const openConfirmationPopup = (event: any): void => {
+  confirm.require({
+    target: event.currentTarget,
+    group: 'dropTable',
+    message: 'are you sure you want to drop the current table?',
+    icon: 'pi pi-question-circle',
+    acceptIcon: 'pi pi-check',
+    rejectIcon: 'pi pi-times',
+    accept: () => {
+      dropTable();
+    }
+  });
 };
 
 </script>
