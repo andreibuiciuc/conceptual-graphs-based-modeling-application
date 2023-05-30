@@ -25,16 +25,19 @@ export default {
 
     configure({
       generateMessage: (context) => {
+
         const errorMessages = {
-          required: `The field ${context.field} is required.`,
-          min: `The field ${context.field} is too short.`,
-          max: `The field ${context.field} is too long.`,
-          alpha_spaces: `The field ${context.field} may only contain alphabetic characters and spaces.`,
-          email: `The field ${context.field} must be a valid email.`,
+          required: `the field ${context.field} is required`,
+          min: `the field ${context.field} is too short`,
+          max: `the field ${context.field} is too long`,
+          alpha_spaces: `the field ${context.field} may only contain alphabetic characters and spaces`,
+          email: `the field ${context.field} must be a valid email`,
         };
+
         const errorMessage = errorMessages[context.rule.name]
           ? errorMessages[context.rule.name]
-          : `The field ${context.field} is invalid.`;
+          : `the field ${context.field} is invalid.`;
+          
         return errorMessage;
       },
     });

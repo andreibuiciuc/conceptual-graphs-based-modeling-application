@@ -33,7 +33,10 @@
           :are-tables-collapsable="false"
           @select="addColumnToQuery" 
         />
-        <ProgressSpinner v-else-if="isTableRetrieveInProgress" />
+        <PlaceholderGraph 
+          v-else-if="isTableRetrieveInProgress"
+          placeholder-text="retrieving table metadata ..." 
+        />
       </SplitterPanel>
       <SplitterPanel>
         <ConceptualGraph 
@@ -180,6 +183,7 @@ import constants from '@/constants/constants';
 import CassandraTerminal from '@/components/graphic/terminal/CassandraTerminal.vue';
 import CgaTable from '@/components/utilities/CgaTable.vue';
 import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
+import PlaceholderGraph from '@/components/graphic/graph/PlaceholderGraph.vue';
 import QueryItems from '@/components/design/QueryItems.vue';
 import { 
   Concept, QueryClause, GraphMetadata, ConfigurableConcept, 
@@ -220,11 +224,10 @@ const { getRelationTypeForColumnConcept,
         computeConceptReferentValueForOrderByItems,
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
-        getQuerySelectionConceptNames,
         getHeadersForQueryResults,
         validateQuery 
       } = useMetadata();
-const { openNotificationToast, copyToClipboard } = useUtils();
+const { openNotificationToast, copyToClipboard, delayExecution } = useUtils();
 const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
 const { retrieveAllTables, retrieveTable, retrieveQueryResults } = useAstra();
 
@@ -254,8 +257,6 @@ const getColumnsMetadataForTableGraph = (metadata: AstraTableMetadata) => {
   
   const tableColumnConcepts = columns.get(selectedTable.value);
   metadata.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
-    console.log(columnDefinition);
-    
     let columnKind = constants.columnKinds.regular;
     if (metadata.primaryKey.partitionKey.includes(columnDefinition.name)) {
       columnKind = "partition_key";
@@ -301,11 +302,13 @@ const retrieveAvailableTables = async (): Promise<void> => {
 
 const retrieveTableMetadata = async (): Promise<void> => {
   isTableRetrieveInProgress.value = true;
+
+  await delayExecution(3000);
+
   const response = await retrieveTable(currentKeyspace.value, selectedTable.value);
   if (response && response.data) {
     const responseData = response.data as AstraApiResponse;
     if (responseData.data) {
-      console.log(responseData.data);
       parseTableMetadata(responseData.data);
       isTableRetrieveInProgress.value = false;
     

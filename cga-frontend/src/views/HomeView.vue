@@ -213,6 +213,6 @@ onMounted(() => {
             
 .console-section
   @include containers.flex-container($flex-direction: column)
-  height: calc(100vh - 68px)
+  height: 100vh
 
 </style>

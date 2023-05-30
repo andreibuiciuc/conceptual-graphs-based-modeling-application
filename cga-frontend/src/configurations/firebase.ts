@@ -14,21 +14,23 @@ const firebaseConfig = {
 const firebaseCollections = {
   USERS: 'users',
   CONCEPTUAL_GRAPHS: 'conceptual-graphs',
+  CONFIGURATION: 'configurations',
   TABLE_GRAPHS: 'table-graphs'
 };
+
+const FORCE_CONFIGURATIONS_DOC_ID = 'forceConfig';
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const database = firebase.firestore();
 const usersCollection = database.collection(firebaseCollections.USERS);
-const conceptualGraphsCollection = database.collection(firebaseCollections.CONCEPTUAL_GRAPHS);
-const tableGraphsCollection = database.collection(firebaseCollections.TABLE_GRAPHS);
+const configurationsCollection = database.collection(firebaseCollections.CONFIGURATION);
 
 export { 
   auth,
   database, 
   usersCollection, 
-  conceptualGraphsCollection, 
-  tableGraphsCollection 
+  configurationsCollection,
+  FORCE_CONFIGURATIONS_DOC_ID
 };

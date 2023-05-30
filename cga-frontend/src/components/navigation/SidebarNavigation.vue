@@ -34,8 +34,6 @@
         @click="renderGraph"
       />
     </div>
-    <Divider />
-    <SyncronizeCard :are-tables-in-sync="true" />
   </Sidebar>
 </template>
 
@@ -44,8 +42,7 @@ import constants from '@/constants/constants';
 import { storeToRefs } from 'pinia';
 import { useUtilsStore } from '@/stores/utils';
 import { useConnectionStore } from '@/stores/connection';
-import { Ref, ref, computed, ComputedRef } from 'vue';
-import SyncronizeCard from '@/components/dashboard/SyncronizeCard.vue';
+import { computed, ComputedRef } from 'vue';
 import CredentialsCard from '../dashboard/CredentialsCard.vue';
 
 

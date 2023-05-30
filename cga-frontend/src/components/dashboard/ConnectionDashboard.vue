@@ -1,18 +1,26 @@
 <template>
   <div class="dashboard">
 
-    <div class="dashboard-column-container" v-if="forceGraph">
-      <CgaLookupCard v-if="forceGraph && graphMetadata.keyspace" :concept-for-lookup="conceptForLookup" />
-      <CgaForceConfigCard v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected" :force-simulation="forceSimulation" />
+    <div v-if="forceGraph"
+      class="dashboard-column-container"
+    >
+      <CgaLookupCard 
+        v-if="forceGraph && graphMetadata.keyspace" 
+        :concept-for-lookup="conceptForLookup"
+      />
+      <CgaForceConfigCard 
+        v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected" 
+        :force-simulation="forceSimulation" 
+      />
     </div>
 
     <div class="dashboard-column-container conceptual-graph-wrapper">
-        
       <PlaceholderGraph 
         v-if="isKeyspaceRetrieveInProgress"
         :placeholder-text="isKeyspaceRetrieveInProgress ? 'retrieving keyspace metadata ...' : 'please connect and select a keyspace'"
         :is-circular-placeholder="forceGraph ? true : false"
       />
+
       <ConceptualGraph 
         v-if="!isKeyspaceRetrieveInProgress && !forceGraph"
         graph-key="keyspaceGraph" 
@@ -38,7 +46,7 @@ import CgaLookupCard from '../graphic/cards/CgaLookupCard.vue';
 import CgaForceConfigCard from '../graphic/cards/CgaForceConfigCard.vue';
 import * as d3 from 'd3';
 
-import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
+import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata, AstraClusteringExpression } from '@/types/astra/types';
 import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../../types/types';
 import { storeToRefs } from 'pinia';
 import { Ref, ref, watch, nextTick } from 'vue';
@@ -80,6 +88,28 @@ const forceSimulationNodes: Ref<D3Node[]> = ref([]);
 const forceSimulationLinks: Ref<D3Link[]> = ref([]);
 
 // Functionalities related to the parsing of the keyspace metadata
+const getColumnKindFromColumnDefinition = (columnConcept: Concept, tableMetadata: AstraTableMetadata): string => {
+  
+  if (tableMetadata.primaryKey.partitionKey.includes(columnConcept.conceptName)) {
+    return 'partition_key';
+  }
+
+  if (tableMetadata.primaryKey.clusteringKey.includes(columnConcept.conceptName)) {
+    return constants.columnKinds.clustering;
+  }
+
+  return constants.columnKinds.regular;
+};
+
+const getColumnClusteringOption = (columnConcept, tableMetadata: AstraTableMetadata): string => {
+
+  const columnOption = tableMetadata.tableOptions.clusteringExpression.find((clusterExpression: AstraClusteringExpression) => {
+    clusterExpression.column === columnConcept.conceptName
+  });
+
+  return columnOption ? columnOption.order : constants.inputValues.empty;
+};
+
 const parseKeyspaceMetadata = (keyspaceMetadata: AstraTableMetadata[] ): void => {
   resetKeyspaceMetadata();
 
@@ -100,9 +130,13 @@ const parseKeyspaceMetadata = (keyspaceMetadata: AstraTableMetadata[] ): void =>
 
     table.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
       const columnConcept = { conceptType: constants.conceptTypes.column, conceptName: columnDefinition.name };
-      // const relationType = getRelationTypeForColumnConcept(column.column_kind, column.clustering_order)
 
-      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: 'todo' });
+      const columnKind = getColumnKindFromColumnDefinition(columnConcept, table);
+      const columnClusteringOption = getColumnClusteringOption(columnConcept, table);
+
+      const relationType = getRelationTypeForColumnConcept(columnKind, columnClusteringOption);
+
+      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: relationType });
 
       const typeConcept = { conceptType: constants.conceptTypes.dataType, conceptName: columnDefinition.typeDefinition };
       graphMetadata.value.dataTypes.set(columnConcept.conceptName, { ... typeConcept, relation: constants.relationTypes.hasType });
@@ -195,7 +229,7 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
     await nextTick();
 
     if (forceGraph.value) {
-      createForceGraphRepresentation(forceSimulationNodes.value, forceSimulationLinks.value, conceptForLookup);
+      forceSimulation.value = createForceGraphRepresentation(forceSimulationNodes.value, forceSimulationLinks.value, conceptForLookup);
     } else {
       keyspaceGraph.value.removeArrows();
       keyspaceGraph.value.drawInitialArrows();

@@ -1,10 +1,16 @@
 import * as d3 from 'd3';
 import { D3Node, D3Link, Concept } from '../types/types';
 import { Ref } from 'vue';
+import { useQueryStore } from '@/stores/query';
 
 export function useForceGraph() {
 
     // Composable responsible for generating Force Graphs
+    const defaultConceptNodeColor = '3B82F6';
+    const defaultConceptNodeSize = 8;
+
+
+    const queryStore = useQueryStore();
 
     /**
      * Creates a Force Graph visualisation using d3.js based on the given metadata
@@ -30,7 +36,7 @@ export function useForceGraph() {
       // Apply a 'center' force in order to render the nodes around the center of the svg container 
       .force('center', d3.forceCenter(svgElementWidth / 2, svgElementHeight / 2));
     
-      const link = svg
+      queryStore.link = svg
         .selectAll<SVGLineElement, any> ('line')
         .data(links)
         .enter()
@@ -38,14 +44,14 @@ export function useForceGraph() {
         .attr('stroke-width', 1)
         .style('stroke', 'black');
     
-      const node = svg
+      queryStore.node = svg
         .selectAll<SVGCircleElement, any>('circle')
         .data(nodes)
         .enter()
         .append('circle')
-        .attr('r', 8)
-        .attr('fill', '#3B82F6')
-        .attr('stroke', '#3B82F6')
+        .attr('r', queryStore.conceptNodeSize)
+        .attr('fill', `#${queryStore.conceptNodeColor}`)
+        .attr('stroke', `#${queryStore.conceptNodeColor}`)
         .on('mouseover', mouseover)
         .on('mouseout', mouseout)
         .call(d3.drag<SVGCircleElement, any>()
@@ -54,13 +60,13 @@ export function useForceGraph() {
           .on('end', dragended));
     
       simulation.on('tick', () => {
-        link
+        queryStore.link
           .attr('x1', (d: any) => d.source.x)
           .attr('y1', (d: any) => d.source.y)
           .attr('x2', (d: any) => d.target.x)
           .attr('y2', (d: any) => d.target.y);
     
-        node
+        queryStore.node
           .attr('cx', (d: any) => d.x)
           .attr('cy', (d: any) => d.y);
       });
@@ -103,7 +109,7 @@ export function useForceGraph() {
         d3.select(this).attr('cursor', 'grab').attr('r', parseInt(nodeSize) + 2);
     
         const childNodes = findChildren(d, links);
-        node.filter(n => childNodes.includes(n)).attr('fill', '#ffcc00');
+        queryStore.node.filter(n => childNodes.includes(n)).attr('fill', '#ffcc00');
     
         conceptForLookup.value = <any>{ conceptName: d.conceptName, conceptType: d.conceptType, childrenCount: childNodes.length };
       }
@@ -115,7 +121,7 @@ export function useForceGraph() {
     
         const oldNodeSize = d3.select(this).attr('r');
         d3.select(this).attr('r', parseInt(oldNodeSize) - 2);
-        node.filter(n => childNodes.includes(n)).attr('fill',' #3B82F6');
+        queryStore.node.filter(n => childNodes.includes(n)).attr('fill', `#${queryStore.conceptNodeColor}`);
       }
       
       return simulation;
@@ -123,19 +129,40 @@ export function useForceGraph() {
 
 
     /**
-     * Updates the Force Graph visualisation
+     * Updates the size of the concept nodes in the Force Graph visualization
      * @param size new size of the nodes
      * @param simulation reference to the current force simulation
      */
-    const updateConceptNodeSize = (size: number, simulation: d3.Simulation<d3.SimulationNodeDatum, undefined>): void => {
-        const svg = d3.select('.svg-container');
-        svg.selectAll<SVGCircleElement, any>('circle').attr('r', size);
-      
-        simulation.restart();
-      };
+    const updateConceptNodeSize = (size: number): void => {
+      queryStore.conceptNodeSize = size;
+
+      const svg = d3.select('.svg-container');
+      svg.selectAll<SVGCircleElement, any>('circle').attr('r', size);
+    };
+
+    
+    /**
+     * Updates the color of the concept nodes in the Force Graph visualisation
+     * @param color new color of the nodes
+     * @param simulation reference to the current force simulation
+     */
+    const updateConceptNodeColor = (color: string): void => {
+      queryStore.conceptNodeColor = color;
+
+      const svg = d3.select('.svg-container');
+      svg.selectAll<SVGCircleElement, any>('circle').attr('fill', `#${color}`).attr('stroke', `#${color}`);
+    };
+
+    
+    const resetForceConfigurationsToDefault = (): void => {
+      updateConceptNodeSize(defaultConceptNodeSize);
+      updateConceptNodeColor(defaultConceptNodeColor);
+    };
 
     return {
         createForceGraphRepresentation,
-        updateConceptNodeSize
+        updateConceptNodeSize,
+        updateConceptNodeColor,
+        resetForceConfigurationsToDefault,
     };
 }

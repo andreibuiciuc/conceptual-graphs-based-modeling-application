@@ -1,3 +1,7 @@
+import "primevue/resources/themes/lara-light-blue/theme.css";     
+import "primevue/resources/primevue.min.css";
+import "primeicons/primeicons.css";
+
 import PrimeVue from 'primevue/config';
 import Card from 'primevue/card';
 import Tooltip from 'primevue/tooltip';
@@ -26,6 +30,7 @@ import Slider from 'primevue/slider';
 import ScrollTop from 'primevue/scrolltop';
 import Timeline from 'primevue/timeline';
 import Skeleton from 'primevue/skeleton'
+import ColorPicker from 'primevue/colorpicker';
 
 export default {
     install(app) {
@@ -58,6 +63,7 @@ export default {
         app.component('ScrollTop', ScrollTop);
         app.component('Timeline', Timeline);
         app.component('Skeleton', Skeleton);
+        app.component('ColorPicker', ColorPicker);
 
         app.directive('tooltip', Tooltip);
     }

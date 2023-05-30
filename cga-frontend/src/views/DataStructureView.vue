@@ -21,7 +21,7 @@
             icon="pi pi-save"
             label="save"
             :disabled="!isGraphRendered"
-            @click="saveAndSyncronizeTable"
+            @click="addTableToKeyspace"
           />
         </template>
         <template v-else>
@@ -29,7 +29,7 @@
             v-model="tableInViewMode"
             placeholder="table"
             :options="availableTables"
-            @change="retrieveSavedTable"
+            @change="retrieveKeyspaceTable"
           />
         </template>
       </div>
@@ -74,7 +74,6 @@ import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.
 import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";
 import designToolboxConstants from '../components/design/designToolboxConstants';
 import DesignToolbox from "../components/design/DesignToolbox.vue";
-import { auth, tableGraphsCollection } from '@/configurations/firebase';
 import { AstraApiResponse } from '@/types/astra/types';
 import { AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';
@@ -92,7 +91,7 @@ const { generateQueryAsString, generateQueryAsCommands } = useQuery();
 const { copyToClipboard, openNotificationToast } = useUtils();
 const { getPartitionAndClusteringColumnsCount } = useMetadata();
 const { createConfetti } = useConfetti();
-const { saveTable } = useAstra();
+const { retrieveAllTables, retrieveTable, saveTable } = useAstra();
 
 // Local constants
 // TODO: Move this to the constants file
@@ -170,7 +169,6 @@ const removeColumnConcept = async (tableAndColumnConcepts: any): Promise<void> =
 const isSaveInProgress: Ref<boolean> = ref(false);
 
 const prepareTableForSaving = (): AstraTableMetadata => {
-  // TODO
   let table: any = {};
   table.name = tableMetadata.value.tables.at(0).conceptName;
   table.keyspace = tableMetadata.value.keyspace.conceptName;
@@ -178,6 +176,7 @@ const prepareTableForSaving = (): AstraTableMetadata => {
   let columns: AstraColumnDefinition[] = [];
   let partitionKeys: string[] = [];
   let clusteringKeys: string[] = [];
+  
   tableMetadata.value.columns.get(table.name).forEach((column: Concept) => {
     columns.push({
       name: column.conceptName,
@@ -205,8 +204,11 @@ const prepareTableForSaving = (): AstraTableMetadata => {
 };
 
 const addTableToKeyspace = async (): Promise<void> => {
+  isSaveInProgress.value = true;
+
   const table = prepareTableForSaving();
   const response = await saveTable(currentKeyspace.value, table);
+  
   if (response && response.data) {
     const responseData = response.data as AstraApiResponse;
     if (responseData.data) {
@@ -217,39 +219,8 @@ const addTableToKeyspace = async (): Promise<void> => {
   } else {
     openNotificationToast('unexpeced error occured', 'error');
   }
-  return;
-};
 
-const saveTableMetadataToCollection = async (): Promise<void> => {
-  isSaveInProgress.value = true;
-  
-  const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
-  if (!isConceptualGraphValid) {
-    openNotificationToast(errorMessage, 'error');
-    isSaveInProgress.value = false;
-    return;
-  }
-
-  try {
-    const currentTableConcept: Concept = tableMetadata.value.tables.at(0)!;
-    await tableGraphsCollection.doc(auth.currentUser?.uid).set({
-      tableName: currentTableConcept.conceptName,
-      tableConcepts: tableMetadata.value.tables,
-      columnConcepts: Object.fromEntries(tableMetadata.value.columns),
-      dataTypeConcepts: Object.fromEntries(tableMetadata.value.dataTypes),
-      inSyncWithKeyspace: false
-    });
-    isSaveInProgress.value = false;
-    openNotificationToast(designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE, 'success');
-    createConfetti();
-  } catch (error) {
-    isSaveInProgress.value = false;
-    openNotificationToast(error.message, 'error');
-  }
-};
-
-const saveAndSyncronizeTable = (): void => {
-  saveTableMetadataToCollection();
+  isSaveInProgress.value = false;
 };
 
 const validateConceptualGraph = (): [boolean, string] => {
@@ -282,7 +253,7 @@ const tableInViewMode: Ref<string> = ref(constants.inputValues.empty);
 
 const changeScreenMode = (isViewMode: boolean): void => {
   if (isViewMode) {
-    retrieveAllSavedTables();
+    retrieveKeyspaceTables();
   } else {
     availableTables.value = [];
     tableInViewMode.value = constants.inputValues.empty;
@@ -303,22 +274,31 @@ const parseTableForViewMode = async (metadata: any): Promise<void> => {
   tableGraph.value.rerenderArrows();
 };
 
-const retrieveAllSavedTables = async (): Promise<void> => {
-  try {
-    const snapshot = await tableGraphsCollection.get();
-    availableTables.value = JSON.parse(JSON.stringify(snapshot.docs.map(doc => doc.data().tableName)));
-  } catch (error: any) {
-    openNotificationToast(error.message, 'error');
+const retrieveKeyspaceTables = async (): Promise<void> => {
+  const response = await retrieveAllTables(currentKeyspace.value);
+  if (response && response.data) {
+    const responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      availableTables.value = JSON.parse(JSON.stringify(responseData.data.map(metadata => metadata.name)));
+    } else {
+      openNotificationToast(responseData.description, 'error');
+    }
+  } else {
+    openNotificationToast('error when saving the table', 'error');
   }
-};
+}
 
-const retrieveSavedTable = async (): Promise<void> => {
-  try {
-    const querySnapshot = await tableGraphsCollection.where('tableName', '==', tableInViewMode.value).get();
-    parseTableForViewMode(querySnapshot.docs.at(0).data());
-    isTableInViewModeReady.value = true;
-  } catch (error: any) {
-    openNotificationToast(error.message, 'error');
+const retrieveKeyspaceTable = async (): Promise<void> => {
+  const response = await retrieveTable(currentKeyspace.value, tableInViewMode.value);
+  if (response && response.data) {
+    const responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      console.log(responseData.data);
+    } else {
+      openNotificationToast(responseData.description, 'error');
+    }
+  } else {
+    openNotificationToast('error when retrieving the table', 'error');
   }
 };
 

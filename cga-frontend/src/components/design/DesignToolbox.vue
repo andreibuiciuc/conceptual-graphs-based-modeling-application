@@ -112,7 +112,6 @@ import { AstraApiResponse } from '@/types/astra/types';
 import { AxiosResponse } from 'axios';
 import { ComputedRef, Ref, ref } from 'vue';
 import { computed } from '@vue/reactivity';
-import { conceptualGraphsCollection } from "@/configurations/firebase";
 import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
 import { useAstra } from '@/composables/requests/astra';
 import { useConnectionStore } from '../../stores/connection';
@@ -203,22 +202,6 @@ const isAddTableConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
   return true;
 });
 
-const checkIfTableExistsInCollection = async (): Promise<boolean> => {
-  try {
-    const snapshot = await conceptualGraphsCollection.where('tableName', '==', currentTableConcept.value.conceptName).get();
-    if (!snapshot.empty) {
-      isTableConceptValid.value = false;
-      openNotificationToast(`table ${currentTableConcept.value.conceptName} is already saved in your collection`, 'error');
-      return true;
-    } else {
-      return false;
-    }
-  } catch (error) {
-    openNotificationToast(error.message, 'error');
-    return true;
-  }
-};
-
 const checkIfTableExistsInKeyspace = async (): Promise<boolean> => {
   let response: AxiosResponse<any, any>, responseData: AstraApiResponse;
   
@@ -245,11 +228,6 @@ const checkIfTableExistsInKeyspace = async (): Promise<boolean> => {
 
 const validateTableName = async (): Promise<void> => {
 
-  const isTableAlreadySavedInCollecton = await checkIfTableExistsInCollection();
-  if (isTableAlreadySavedInCollecton) {
-    return;
-  }
-  
   const doesTableAlreadyExistInKeyspace = await checkIfTableExistsInKeyspace();
   if (doesTableAlreadyExistInKeyspace) {
     return;
