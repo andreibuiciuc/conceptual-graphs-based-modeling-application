@@ -2,7 +2,11 @@
   <div class="design-section">
     <div class="header-container">
       <div class="header-container-title">
-        <InputSwitch v-model="isScreenInViewMode" :disabled="!currentKeyspace" @update:modelValue="changeScreenMode" />
+        <InputSwitch 
+          v-model="isScreenInViewMode" 
+          :disabled="!currentKeyspace" 
+          @update:modelValue="changeScreenMode" 
+        />
         <span>cassandra data structure {{ isScreenInViewMode ? 'view' : 'design' }}</span>
       </div>
       <div class="header-actions">

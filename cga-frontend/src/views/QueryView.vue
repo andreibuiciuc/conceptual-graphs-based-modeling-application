@@ -1,25 +1,49 @@
 <template>
   <div class="query-page">
     <div class="query-section">
-    <div class="header-container">
-      <div>
-        <span>cassandra query design</span>
+      <div class="header-container">
+        <div class="header-container-title">
+          <InputSwitch
+            v-model="isScreenInViewMode"
+            :disabled="!currentKeyspace"
+            @update:modelValue="changeScreenMode"
+          />
+        <span>cassandra query {{ isScreenInViewMode ? 'view' : 'design' }}</span>
       </div>
       <div class="header-actions">
-        <Dropdown 
-          v-model="selectedTable"
-          placeholder="table"
-          :disabled="!currentKeyspace"
-          :options="availableTables"
-          @change="changeTable">
-        </Dropdown>
-        <Button 
-          severity="primary" 
-          label="save" 
-          icon="pi pi-save" 
-          outlined 
-          :disabled="true"
-        />
+       <template v-if="!isScreenInViewMode">
+          <Dropdown 
+            v-model="selectedTable"
+            placeholder="table"
+            :disabled="!currentKeyspace"
+            :options="availableTables"
+            @change="changeTable">
+          </Dropdown>
+          <Button 
+            severity="primary" 
+            label="save" 
+            icon="pi pi-save" 
+            outlined 
+            :disabled="true"
+          />
+        </template>
+        <template v-else>
+          <Dropdown
+            v-model="queryInViewMode"
+            placeholder="query"
+            :options="availableQueries"
+            @change="retrieveSavedQuery"
+          >
+          </Dropdown>
+          <Button
+            outlined
+            severity="danger"
+            icon="pi pi-times"
+            label="delete query"
+            @click="openConfirmationPopup($event, true)"
+          >
+          </Button>
+        </template>
       </div>
     </div>
     <Splitter class="query-canvas-wrapper">
@@ -210,8 +234,8 @@ const defaultGraphMetadata: GraphMetadata = {
 
 const tableGraph = ref();
 const queryGraph = ref();
-const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
-const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
+const tableMetadata: Ref<GraphMetadata> = ref(structuredClone(defaultGraphMetadata));
+const queryMetadata: Ref<GraphMetadata> = ref(structuredClone(defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
 
@@ -667,22 +691,61 @@ const runQuery = (): void => {
   }
 };
 
-
 // Functions related to some utilities
 const confirm = useConfirm();
 
-const openConfirmationPopup = (event: any): void => {
-  confirm.require({
-    target: event.currentTarget,
-    group: 'clear',
-    message: 'are you sure you want to delete the current query?',
-    icon: 'pi pi-question-circle',
-    acceptIcon: 'pi pi-check',
-    rejectIcon: 'pi pi-times',
-    accept: () => {
-      clearQueryMetadata();
-    }
-  });
+const openConfirmationPopup = (event: any, isForDelete: boolean = false): void => {
+  if (!isForDelete) {
+    confirm.require({
+      target: event.currentTarget,
+      group: 'clear',
+      message: 'are you sure you want to clear the current query?',
+      icon: 'pi pi-question-circle',
+      acceptIcon: 'pi pi-check',
+      rejectIcon: 'pi pi-times',
+      accept: () => {
+        clearQueryMetadata();
+      }
+    });
+  }
+};
+
+// Functionalities related to the Query View mode
+const availableQueries: Ref<string[]> = ref([]);
+const isScreenInViewMode: Ref<boolean> = ref(false);
+const isQueryInViewModeReady: Ref<boolean> = ref(false);
+const queryInViewMode: Ref<string> = ref(constants.inputValues.empty);
+
+const changeScreenMode = (isViewMode: boolean): void => {
+  if (isViewMode) {
+    tableMetadata.value = structuredClone(defaultGraphMetadata);
+    queryMetadata.value = structuredClone(defaultGraphMetadata);
+    retrieveSavedQueries();
+  } else {
+    availableQueries.value = [];
+    queryInViewMode.value = constants.inputValues.empty;
+    isQueryInViewModeReady.value = false;
+    tableMetadata.value = structuredClone(defaultGraphMetadata);
+    queryMetadata.value = structuredClone(defaultGraphMetadata);
+  }
+};  
+
+const parseTableForViewMode = async (): Promise<void> => {
+  // TODO:
+};
+
+const parseQueryForViewMode = async (): Promise<void> => {
+  // TODO:
+};
+
+const retrieveSavedQuery = async (): Promise<void> => {
+  // TODO:
+};
+
+const retrieveSavedQueries = async (): Promise<void> => {
+  // TODO:
+  parseTableForViewMode();
+  parseQueryForViewMode();
 };
 
 
@@ -713,18 +776,11 @@ if (currentKeyspace.value) {
     @include containers.flex-container($flex-direction: column)
     height: calc(100vh - variables.$cga-topbar-height)
 
-    .query-header-container
-      @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
-      height: variables.$cga-header-height
-      min-height: variables.$cga-header-height
-      width: 100%
-      padding: 10px 26px
+    .header-container .header-container-title
+      @include containers.flex-container($align-items: center)
 
-      .query-header-actions
-        @include containers.flex-container($flex-direction: row, $justify-content: flex-end, $align-items: center)
-
-        & > *:not(:last-child)
-          margin-right: 10px
+      .p-inputswitch
+        margin-right: 1rem
 
     .query-canvas-wrapper
       padding: 10px

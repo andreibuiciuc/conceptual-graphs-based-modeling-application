@@ -18,7 +18,7 @@
           <!-- Table level -->
           <li
             v-for="(tableConcept, tableIndex) in graphMetadata?.tables"
-            :graphKey="tableConcept.conceptName"
+            :key="tableConcept.conceptName"
           >
             <div 
               :id="`${graphKey}_tableConcept_${tableIndex}`"
@@ -33,7 +33,7 @@
               <!-- Column level -->
               <li
                 :class="{ 'column-concept-hoverable': areColumnsSelectable }" v-if="graphMetadata.columns.size"
-                v-for="(columnConcept, columnIndex) in graphMetadata.columns.get(tableConcept.conceptName)" :graphKey="columnConcept.conceptName"
+                v-for="(columnConcept, columnIndex) in graphMetadata.columns.get(tableConcept.conceptName)" :key="columnConcept.conceptName"
               >
                 <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`">
                   <span class="concept-name">{{ columnConcept.relation }}</span>
@@ -87,14 +87,6 @@
                       <span class="concept-name">groupId</span>
                     </div>
                   </li>
-                  <!-- <li v-if="isOutConceptVisible">
-                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_outConcept`">
-                      <span class="concept-name" >{{ queryConcepts[QueryClause.OUT].conceptRelation }}</span>
-                    </div>
-                    <div class="tf-nc" :id="`${graphKey}_outReferentConcept`">
-                      <span class="concept-name">{{ queryConcepts[QueryClause.OUT].conceptReferent }}</span>
-                    </div>
-                  </li> -->
                 </ul>
               </li>
               <template v-if="isQueryGraph && queryConcepts && queryConcepts[QueryClause.GET]">

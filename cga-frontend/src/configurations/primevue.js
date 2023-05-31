@@ -31,6 +31,7 @@ import ScrollTop from 'primevue/scrolltop';
 import Timeline from 'primevue/timeline';
 import Skeleton from 'primevue/skeleton'
 import ColorPicker from 'primevue/colorpicker';
+import Chips from 'primevue/chips'
 
 export default {
     install(app) {
@@ -64,6 +65,7 @@ export default {
         app.component('Timeline', Timeline);
         app.component('Skeleton', Skeleton);
         app.component('ColorPicker', ColorPicker);
+        app.component('Chips', Chips);
 
         app.directive('tooltip', Tooltip);
     }
