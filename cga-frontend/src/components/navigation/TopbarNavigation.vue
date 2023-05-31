@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { authenticatedMenuItems, unauthenticatedMenuItems } from './navigationConstants';
+import { authenticatedMenuItems } from './navigationConstants';
 
 import { useConnectionStore } from '../../stores/connection';
 import { useUserStore } from '../../stores/user';
@@ -72,7 +72,7 @@ const isTranslucentEffectApplied: ComputedRef<boolean> = computed(() => {
 
 // Functionalities related to the menubar navigation
 const menuItems: ComputedRef<MenuItem[]> = computed(() => {
-  return isUserLoggedIn.value ? authenticatedMenuItems : unauthenticatedMenuItems;
+  return isUserLoggedIn.value ? authenticatedMenuItems : [];
 });
 
 const signOut = async (): Promise<void> => {

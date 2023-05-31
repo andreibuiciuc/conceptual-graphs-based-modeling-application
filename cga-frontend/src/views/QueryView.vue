@@ -42,6 +42,8 @@
             severity="danger"
             icon="pi pi-times"
             label="delete query"
+            :disabled="isQuerySaveInProgress || !queryInViewMode"
+            :loading="isQuerySaveInProgress"
             @click="deleteQuery"
           >
           </Button>
@@ -792,6 +794,8 @@ const deleteQuery = async (): Promise<void> => {
     } catch (error: any) {
       openNotificationToast('error while deleting query', 'error');
     }
+
+    isQuerySaveInProgress.value = false;
 };
 
 const openSaveConfirmationPopup =(event: any): void => {
