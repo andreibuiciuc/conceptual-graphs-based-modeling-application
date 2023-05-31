@@ -13,9 +13,8 @@ const firebaseConfig = {
 
 const firebaseCollections = {
   USERS: 'users',
-  CONCEPTUAL_GRAPHS: 'conceptual-graphs',
+  QUERIES: 'queries',
   CONFIGURATION: 'configurations',
-  TABLE_GRAPHS: 'table-graphs'
 };
 
 const FORCE_CONFIGURATIONS_DOC_ID = 'forceConfig';
@@ -26,11 +25,13 @@ const auth = firebase.auth();
 const database = firebase.firestore();
 const usersCollection = database.collection(firebaseCollections.USERS);
 const configurationsCollection = database.collection(firebaseCollections.CONFIGURATION);
+const queriesCollection = database.collection(firebaseCollections.QUERIES);
 
 export { 
   auth,
   database, 
   usersCollection, 
   configurationsCollection,
+  queriesCollection,
   FORCE_CONFIGURATIONS_DOC_ID
 };
