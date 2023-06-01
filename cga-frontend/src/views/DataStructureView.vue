@@ -69,6 +69,7 @@
           graph-key="tableGraph"
           :are-column-concepts-deletable="!isScreenInViewMode"
           :are-tables-collapsable="false"
+          :are-columns-selectable="true"
           :apply-border="false"
           @remove="removeColumnConcept"
           @hover="hoverColumnConcept"

@@ -99,9 +99,26 @@ section
 .query-panel-item .v-overlay__scrim
     display: none
 
-.p-dialog .p-dialog-content
+.p-dialog:not(.confirmation-dialog) .p-dialog-content
     background: none !important
     padding: 0 !important
+
+.p-dialog.confirmation-dialog .p-dialog-content
+    @include flex-container($flex-direction: column)
+    width: 40rem
+    
+
+    .confirmation-dialog-message
+        @include flex-container($align-items: center)
+        margin-bottom: 2rem 
+
+    .confirmation-dialog-content
+        @include flex-container($flex-direction: column, $align-items: flex-start)
+        width: 100%
+
+        .p-inputtext
+            width: 100%
+        
 
 // PrimeVue classes are overwritten here
 

@@ -26,7 +26,7 @@
             outlined 
             :disabled="queryMetadata.columns.size === 0 || isQuerySaveInProgress"
             :loading="isQuerySaveInProgress"
-            @click="openSaveConfirmationPopup($event)"
+            @click="openSaveConfirmationDialog"
           />
         </template>
         <template v-else>
@@ -216,13 +216,17 @@
     </template>
   </ConfirmPopup>
 
-  <ConfirmPopup group="save">
+  <!-- Save Confirmation Dialog -->
+  <ConfirmDialog 
+    class="confirmation-dialog"
+    :draggable="false"
+  >
     <template #message="slotProps">
-      <div class="flex align-content-center p-4">
+      <div class="confirmation-dialog-message">
         <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
         <p class="pl-2">{{ slotProps.message.message }}</p>
       </div>
-      <div class="flex align-content-center p-4">
+      <div class="confirmation-dialog-content">
         <InputText
           v-model="currentQueryName"
           :class="{ 'p-invalid': !isCurrentQueryNameValid }"
@@ -231,7 +235,7 @@
         />
       </div>
     </template>
-  </ConfirmPopup>
+  </ConfirmDialog>
 
 </template>
 
@@ -630,7 +634,7 @@ const queryResultsTableHeaders: Ref<DataTableColumn[]> = ref([]);
 const isQueryResultsModalOpened: Ref<boolean> = ref(false);
 const currentCQLQuery: Ref<string> = ref(constants.inputValues.empty);
 const currentQueryName: Ref<string> = ref(constants.inputValues.empty);
-const isCurrentQueryNameValid: Ref<boolean> = ref(false);
+const isCurrentQueryNameValid: Ref<boolean> = ref(true);
 
 const adjustInvalidOrderByClause = (): void => {
   // Adjustment for an invalid order by clause
@@ -772,6 +776,7 @@ const changeScreenMode = (isViewMode: boolean): void => {
     isQueryInViewModeReady.value = false;
     tableMetadata.value = structuredClone(defaultGraphMetadata);
     queryMetadata.value = structuredClone(defaultGraphMetadata);
+    currentCQLQuery.value = constants.inputValues.empty;
   }
 };  
 
@@ -788,6 +793,9 @@ const deleteQuery = async (): Promise<void> => {
         const queryDocumentId = queriesSnapshot.docs.at(0).id;
         await queriesCollection.doc(queryDocumentId).delete();
 
+        tableMetadata.value = structuredClone(defaultGraphMetadata);
+        queryMetadata.value = structuredClone(defaultGraphMetadata);
+
         openNotificationToast('query deleted successfully', 'success');
       }
 
@@ -798,21 +806,18 @@ const deleteQuery = async (): Promise<void> => {
     isQuerySaveInProgress.value = false;
 };
 
-const openSaveConfirmationPopup =(event: any): void => {
+const openSaveConfirmationDialog = (): void => {
   confirm.require({
-    target: event.currentTarget,
-    group: 'save',
+    header: 'save confirmation',
     message: 'please provide a name for the query',
     icon: 'pi pi-exclamation-circle',
-    acceptIcon: 'pi pi-check',
-    rejectIcon: 'pi pi-times',
     accept: async () => {
-      
+
       if (currentQueryName.value) {
         await saveQuery();
       }
 
-      isCurrentQueryNameValid.value = false;
+      // isCurrentQueryNameValid.value = false;
       currentQueryName.value = constants.inputValues.empty;
     }
   });
