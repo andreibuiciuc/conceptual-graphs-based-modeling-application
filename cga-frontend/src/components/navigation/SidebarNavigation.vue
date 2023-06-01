@@ -42,12 +42,20 @@ import constants from '@/constants/constants';
 import { storeToRefs } from 'pinia';
 import { useUtilsStore } from '@/stores/utils';
 import { useConnectionStore } from '@/stores/connection';
-import { computed, ComputedRef } from 'vue';
+import { computed, ComputedRef, provide, ref, Ref } from 'vue';
 import CredentialsCard from '../dashboard/CredentialsCard.vue';
 
 
 const connectionStore = useConnectionStore();
-const { cassandraServerCredentials, isConnectionButtonTriggered, currentKeyspace, availableKeyspaces, userAstraDatabaseId, userAstraToken, isKeyspaceRetrieveInProgress } = storeToRefs(connectionStore);
+const { 
+  cassandraServerCredentials, 
+  isConnectionButtonTriggered, 
+  currentKeyspace, availableKeyspaces, 
+  userAstraDatabaseId, userAstraToken, 
+  isKeyspaceRetrieveInProgress, 
+  isRerenderTriggered 
+} = storeToRefs(connectionStore);
+
 cassandraServerCredentials.value = { ... constants.defaultLoginCredentials };
 
 const utilsStore = useUtilsStore();
@@ -67,11 +75,8 @@ const manageServerConnection = (): void => {
 };
 
 const renderGraph = async (): Promise<void> => {
-  const currentKeyspaceValue = currentKeyspace.value;
-  currentKeyspace.value = constants.inputValues.empty;
-  currentKeyspace.value = currentKeyspaceValue;
+  isRerenderTriggered.value = true;
 };
-
 </script>
 
 <style lang="sass">

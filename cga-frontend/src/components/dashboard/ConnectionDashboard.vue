@@ -49,7 +49,7 @@ import * as d3 from 'd3';
 import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata, AstraClusteringExpression } from '@/types/astra/types';
 import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../../types/types';
 import { storeToRefs } from 'pinia';
-import { Ref, ref, watch, nextTick } from 'vue';
+import { Ref, ref, watch, nextTick, inject } from 'vue';
 import { useAstra } from '@/composables/requests/astra';
 import { useAstraMetadata } from '@/composables/metadata/astra';
 import { useConnectionStore } from "../../stores/connection";
@@ -70,7 +70,7 @@ const keyspaceMetadata: Ref<any> = ref(null);
 
 // Pinia store mappings
 const connectionStore = useConnectionStore();
-const { currentKeyspace, cassandraServerCredentials, isKeyspaceRetrieveInProgress, keyspaceGraph } = storeToRefs(connectionStore);
+const { currentKeyspace, cassandraServerCredentials, isKeyspaceRetrieveInProgress, keyspaceGraph, isRerenderTriggered } = storeToRefs(connectionStore);
 
 const utilsStore = useUtilsStore();
 const { forceGraph } = storeToRefs(utilsStore);
@@ -233,6 +233,13 @@ watch(currentKeyspace, async () => {
 
 watch(forceGraph, () => {
   retrieveKeyspaceMetadata();
+});
+
+watch(isRerenderTriggered, async () => {
+  if (isRerenderTriggered.value) {
+    await retrieveKeyspaceMetadata();
+    isRerenderTriggered.value = false;
+  }
 });
 
 </script>

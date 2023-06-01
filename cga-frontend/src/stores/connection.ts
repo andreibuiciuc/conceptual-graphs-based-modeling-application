@@ -12,7 +12,6 @@ export const useConnectionStore = defineStore('connection', () => {
   const userAstraDatabaseId: Ref<string> = ref(constants.inputValues.empty);
   const userAstraDatabaseRegion: Ref<string> = ref(constants.inputValues.empty);
   const userAstraToken: Ref<string> = ref(constants.inputValues.empty);
-
   const userAstraClientId: Ref<string> = ref(constants.inputValues.empty);
   const userAstraClientSecret: Ref<string> = ref(constants.inputValues.empty);
 
@@ -22,6 +21,8 @@ export const useConnectionStore = defineStore('connection', () => {
   const isConnectionButtonTriggered: Ref<boolean> = ref(false);
   const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
   const keyspaceGraph = ref();
+
+  const isRerenderTriggered: Ref<boolean> = ref(false);
 
   const { openNotificationToast } = useUtils();
   const { retrieveAllKeyspaces } = useAstra();
@@ -75,6 +76,7 @@ export const useConnectionStore = defineStore('connection', () => {
     isConnectionButtonTriggered,
     isKeyspaceRetrieveInProgress,
     keyspaceGraph,
+    isRerenderTriggered,
     connect,
     disconnect
   };

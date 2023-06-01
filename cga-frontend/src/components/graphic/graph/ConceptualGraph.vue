@@ -188,30 +188,6 @@ const createArrow = (sourceNode: HTMLElement, targetNode: HTMLElement, relatedCo
   
 };
 
-
-const drawArrowsForConcept = async (tableConcept: Concept): Promise<void> => {
-  await nextTick();
-  const tableIndex = props.graphMetadata.tables.findIndex(table => table.conceptName === tableConcept.conceptName);
-  const tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${tableIndex}`);
-  for (let columnIndex in props.graphMetadata.columns.get(tableConcept.conceptName)) {
-    const currentColumnConcept: Concept | undefined = props.graphMetadata.columns.get(tableConcept.conceptName)?.at(parseInt(columnIndex, 10));
-
-    const columnConceptRelationElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`);
-    const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_columnConcept_${columnIndex}`);
-
-    createArrow(tableConceptElement, columnConceptRelationElement, currentColumnConcept);
-    createArrow(columnConceptRelationElement, columnConceptElement, currentColumnConcept);
-
-    if (props.graphMetadata.dataTypes.size) {
-      const typeConceptRelationElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`);
-      const typeConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_typeConcept_${columnIndex}`);
-
-      createArrow(columnConceptElement, typeConceptRelationElement, currentColumnConcept);
-      createArrow(typeConceptRelationElement, typeConceptElement, currentColumnConcept);
-    }
-  }
-};
-
 const drawArrowsForConcepts = async (): Promise<void> => {
   await nextTick();
   for (let tableIndex in props.graphMetadata?.tables) {
