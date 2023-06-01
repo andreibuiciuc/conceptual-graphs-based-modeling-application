@@ -26,7 +26,7 @@
             outlined 
             :disabled="queryMetadata.columns.size === 0 || isQuerySaveInProgress"
             :loading="isQuerySaveInProgress"
-            @click="openSaveConfirmationDialog"
+            @click="openSaveConfirmationDialog(false)"
           />
         </template>
         <template v-else>
@@ -44,7 +44,7 @@
             label="delete query"
             :disabled="isQuerySaveInProgress || !queryInViewMode"
             :loading="isQuerySaveInProgress"
-            @click="deleteQuery"
+            @click="openSaveConfirmationDialog(true)"
           >
           </Button>
         </template>
@@ -216,7 +216,7 @@
     </template>
   </ConfirmPopup>
 
-  <!-- Save Confirmation Dialog -->
+  <!-- Confirmation Dialog -->
   <ConfirmDialog 
     class="confirmation-dialog"
     :draggable="false"
@@ -226,7 +226,10 @@
         <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
         <p class="pl-2">{{ slotProps.message.message }}</p>
       </div>
-      <div class="confirmation-dialog-content">
+      <div 
+        v-if="currentConfirmationType === 'save'"
+        class="confirmation-dialog-content"
+      >
         <InputText
           v-model="currentQueryName"
           :class="{ 'p-invalid': !isCurrentQueryNameValid }"
@@ -806,19 +809,36 @@ const deleteQuery = async (): Promise<void> => {
     isQuerySaveInProgress.value = false;
 };
 
-const openSaveConfirmationDialog = (): void => {
+
+const currentConfirmationType: Ref<string> = ref(constants.inputValues.empty);
+
+const openSaveConfirmationDialog = (isDeleteConfirmation: boolean = false): void => {
+  debugger
+  currentConfirmationType.value = isDeleteConfirmation ? 'delete' : 'save';
   confirm.require({
-    header: 'save confirmation',
-    message: 'please provide a name for the query',
+    header: isDeleteConfirmation ? 'delete confirmation' : 'save confirmation',
+    message: isDeleteConfirmation ? 'are you sure you want to delete this query' : 'please provide a name for the query',
     icon: 'pi pi-exclamation-circle',
     accept: async () => {
 
-      if (currentQueryName.value) {
-        await saveQuery();
-      }
+      if (isDeleteConfirmation) {
+        await deleteQuery();
+        
+        tableMetadata.value = structuredClone(defaultGraphMetadata);
+        queryMetadata.value = structuredClone(defaultGraphMetadata);
+        
+        await retrieveSavedQueries();
+      } else {
 
-      // isCurrentQueryNameValid.value = false;
-      currentQueryName.value = constants.inputValues.empty;
+        if (currentQueryName.value) {
+          await saveQuery();
+        }
+
+        currentQueryName.value = constants.inputValues.empty;
+      }
+    },
+    reject: () => {
+      currentConfirmationType.value = constants.inputValues.empty;
     }
   });
 };
