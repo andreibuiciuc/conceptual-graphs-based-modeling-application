@@ -11,7 +11,7 @@
         <span>cassandra query {{ isScreenInViewMode ? 'view' : 'design' }}</span>
       </div>
       <div class="header-actions">
-       <template v-if="!isScreenInViewMode">
+        <template v-if="!isScreenInViewMode">
           <Dropdown 
             v-model="selectedTable"
             placeholder="table"
@@ -49,6 +49,17 @@
           </Button>
         </template>
       </div>
+    </div>
+    <div 
+      v-if="isScreenInViewMode && isQueryInViewModeReady"
+      class="message-container"
+    >
+      <Message 
+        severity="info" 
+        :closable="false"
+      >
+        {{ currentCQLQuery }}
+      </Message>
     </div>
     <Splitter class="query-canvas-wrapper">
       <SplitterPanel>
@@ -134,7 +145,7 @@
           />
         </div>
       </div>
-      <v-divider></v-divider>
+      <Divider />
       <div class="query-panel-container">
         <div class="query-panel-item">
           <Transition name="pop-in" mode="out-in">
@@ -182,14 +193,6 @@
             />
           </Transition>
         </div>
-      </div>
-    </div>
-    <div 
-      v-else
-      class="query-information-container"  
-    >
-      <div v-if="currentCQLQuery">
-        {{ currentCQLQuery }}
       </div>
     </div>
   </div>
@@ -565,7 +568,6 @@ const checkIfClusteringColumnsAreSelected = (): boolean => {
   return queryMetadata.value.columns.get(queryMetadata.value.tables.at(0).conceptName).some((columnConcept: Concept) => columnConcept.columnKind === constants.columnKinds.clustering);
 };
 
-
 // Functions related to the removal of query columns, clauses and data
 const clearQueryMetadata = () => {
   // Reset the state of the clause items and query concepts
@@ -672,8 +674,8 @@ const adjustInvalidOrderByClause = (): void => {
 };
 
 const closeCassandraTerminal = (): void => {
-  currentCQLQuery.value = generateQueryAsString(cqlQueryCommands.value);
-  copyToClipboard(currentCQLQuery.value);
+  const query = generateQueryAsString(cqlQueryCommands.value);
+  copyToClipboard(query);
   openNotificationToast('cql query was copied to clipboard', 'info');
   isQueryTerminalOpened.value = false;
 }
@@ -799,6 +801,8 @@ const deleteQuery = async (): Promise<void> => {
         tableMetadata.value = structuredClone(defaultGraphMetadata);
         queryMetadata.value = structuredClone(defaultGraphMetadata);
 
+        isQueryInViewModeReady.value = false;
+
         openNotificationToast('query deleted successfully', 'success');
       }
 
@@ -813,7 +817,6 @@ const deleteQuery = async (): Promise<void> => {
 const currentConfirmationType: Ref<string> = ref(constants.inputValues.empty);
 
 const openSaveConfirmationDialog = (isDeleteConfirmation: boolean = false): void => {
-  debugger
   currentConfirmationType.value = isDeleteConfirmation ? 'delete' : 'save';
   confirm.require({
     header: isDeleteConfirmation ? 'delete confirmation' : 'save confirmation',
@@ -876,6 +879,9 @@ const retrieveSavedQuery = async (): Promise<void> => {
     if (queriesSnapshot.docs.length === 0) {
       openNotificationToast('error retrieving saved query', 'error');
     } else {
+      tableMetadata.value = structuredClone(defaultGraphMetadata);
+      queryMetadata.value = structuredClone(defaultGraphMetadata);
+
       const jsonQueryMetadata = queriesSnapshot.docs.at(0).data();
       currentCQLQuery.value = jsonQueryMetadata.cqlQueryCommand;
       parseMetadataForViewMode(jsonQueryMetadata);
@@ -910,10 +916,12 @@ const saveQuery = async (): Promise<void> => {
   isQuerySaveInProgress.value = true;
 
   try {
+    const queryCommands = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value, queryConcepts.value);
+    const queryString = generateQueryAsString(queryCommands);
 
     const jsonQueryMetadata = {
       queryName: currentQueryName.value,
-      cqlQueryCommand: currentCQLQuery.value,
+      cqlQueryCommand: queryString,
       userUid: auth.currentUser.uid,
       keyspace: currentKeyspace.value,
       tableMetadata: {
@@ -976,6 +984,19 @@ if (currentKeyspace.value) {
 
       .p-inputswitch
         margin-right: 1rem
+
+    .message-container
+      width: 100%
+      padding: 0  1rem
+
+      .p-message.p-message-info
+        background: transparent
+        border: 1px solid variables.$cassandra-app-blue !important
+        border-left-width: 0.4rem !important
+        color: variables.$cassandra-app-blue !important
+
+        .p-message-wrapper .p-message-icon
+          color: variables.$cassandra-app-blue !important
 
     .query-canvas-wrapper
       padding: 10px

@@ -14,8 +14,6 @@ export function useConfetti() {
         let canvas = document.createElement('canvas');
         document.body.appendChild(canvas);
 
-        debugger
-
         let confettiBurst = (<any>window).confetti.create(canvas, {
             resize: true,
             useWorker: true

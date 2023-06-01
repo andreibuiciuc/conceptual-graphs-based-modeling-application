@@ -103,21 +103,29 @@ section
     background: none !important
     padding: 0 !important
 
-.p-dialog.confirmation-dialog .p-dialog-content
-    @include flex-container($flex-direction: column)
-    width: 40rem
-    
+.p-dialog.confirmation-dialog
+    .p-confirm-dialog-accept
+        color: variables.$cassandra-app-blue
+        background-color: transparent
 
-    .confirmation-dialog-message
-        @include flex-container($align-items: center)
+        &:hover
+            background: rgba(59, 130, 246, 0.04)
 
-    .confirmation-dialog-content
-        @include flex-container($flex-direction: column, $align-items: flex-start)
-        width: 100%
-        margin-top: 2rem 
+    .p-dialog-content
+        @include flex-container($flex-direction: column)
+        width: 40rem
+        
 
-        .p-inputtext
+        .confirmation-dialog-message
+            @include flex-container($align-items: center)
+
+        .confirmation-dialog-content
+            @include flex-container($flex-direction: column, $align-items: flex-start)
             width: 100%
+            margin-top: 2rem 
+
+            .p-inputtext
+                width: 100%
         
 
 // PrimeVue classes are overwritten here

@@ -26,6 +26,7 @@ import Divider from 'primevue/divider';
 import Dropdown from 'primevue/dropdown';
 import InputSwitch from 'primevue/inputswitch';
 import InputText from 'primevue/inputtext';
+import Message from 'primevue/message';
 import Menubar from 'primevue/menubar';
 import ProgressSpinner from 'primevue/progressspinner';
 import ScrollTop from 'primevue/scrolltop';
@@ -73,6 +74,7 @@ export default {
         app.component('ColorPicker', ColorPicker);
         app.component('Chips', Chips);
         app.component('ConfirmDialog', ConfirmDialog);
+        app.component('Message', Message);
 
         app.directive('tooltip', Tooltip);
     }
