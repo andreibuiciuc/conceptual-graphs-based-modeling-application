@@ -27,7 +27,6 @@
               >
               <span class="concept-type">{{ tableConcept.conceptType }}:</span>
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
-              <i class="pi" :class="tableConcept.isTableExpanded ? 'pi-minus' : 'pi-plus'" style="font-size: 1.5rem;" @click="expandTable(tableConcept, tableIndex)"></i>
             </div>
             <ul>
               <!-- Column level -->
@@ -41,6 +40,8 @@
                 <div :id="`${graphKey}_${tableConcept.conceptName}_columnConcept_${columnIndex}`"
                   class="tf-nc" :class="{ 'column-concept--selectable': areColumnsSelectable }"
                   @click.prevent="selectColumn(columnConcept)"
+                  @mouseover="hoverColumn(columnConcept)"
+                  @mouseout="hoverOffColumn(columnConcept)"
                   >
                   <span class="concept-type">{{ columnConcept.conceptType }}:</span>
                   <span class="concept-name">{{ columnConcept.conceptName }}</span>
@@ -123,7 +124,7 @@
 
 <script setup lang="ts">
 import constants from '../../../constants/constants';
-import { QueryClause, Concept, ConfigurableConcept, GraphMetadata } from "../../../types/types";
+import { QueryClause, Concept, GraphMetadata } from "../../../types/types";
 
 import { useQueryStore } from '@/stores/query';
 
@@ -138,14 +139,13 @@ interface Props {
   applyBorder?: boolean
   noKeyspace?: boolean
   isQueryGraph?: boolean
-  areTablesCollapsable?: boolean,
   areColumnConceptsDeletable?: boolean
   areColumnsSelectable?: boolean
   graphKey: string
 };
 
 const props = defineProps<Props>();
-const emit = defineEmits(['select', 'remove']);
+const emit = defineEmits(['select', 'remove', 'hover', 'hoveroff']);
 
 // Store mappings
 const queryStore = useQueryStore();
@@ -385,28 +385,7 @@ const removeColumnConcept = async (tableConcept: Concept, columnConcept: Concept
 };
 
 
-// FUnctionalities related to the changing of arrows visibility.
-const expandTable = (tableConcept: ConfigurableConcept, tableIndex: number): void => {
-  tableConcept.isTableExpanded = !tableConcept.isTableExpanded;
-  const currentTableColumns = props.graphMetadata.columns.get(tableConcept.conceptName);
-
-  currentTableColumns.forEach((columnConcept: Concept) => {
-    const arrows = document.querySelectorAll(`[related-concept=${columnConcept.conceptName}]`);
-    handleArrowsSvgVisibility(tableConcept, arrows);
-  });
-};
-
-const handleArrowsSvgVisibility = (tableConcept: ConfigurableConcept, arrows: NodeListOf<Element>): void => {
-  arrows.forEach((svg: Element) => {
-    const castedSvg = <HTMLElement> svg;
-    if (tableConcept.isTableExpanded) {
-      castedSvg.style.setProperty('visibility', 'hidden')
-    } else {
-      castedSvg.style.setProperty('visibility', 'visible')
-    }
-  });
-};
-
+// Functionalities related to events
 const selectColumn = (columnConcept: Concept) => {
   emit("select", columnConcept);
 };
@@ -417,6 +396,22 @@ const isOutConceptVisible: ComputedRef<boolean> = computed(() => {
 
 const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
   return tableConcept && props.graphMetadata.tables.length && props.graphMetadata.columns && props.graphMetadata.columns.size;
+}
+
+const getTypeConceptForColumnConcept = (columnConcept: Concept): Concept => {
+  return props.graphMetadata.dataTypes.get(columnConcept.conceptName);
+}
+
+const hoverColumn = (columnConcept: Concept) => {
+  const dataTypeConcept = getTypeConceptForColumnConcept(columnConcept);
+  emit('hover', {
+    columnConcept,
+    dataTypeConcept
+  });
+};
+
+const hoverOffColumn = (columnConcept: Concept) => {
+  emit('hoveroff', columnConcept);
 }
 
 const rerenderArrows = (): void => {

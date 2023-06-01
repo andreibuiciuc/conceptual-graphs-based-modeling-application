@@ -4,7 +4,7 @@
       class="design-toolbox"
       :class="{ 'toolbox-warning': !currentKeyspace }"
     >
-      <template #title>data structure config</template>
+      <template #title>{{ isTableInViewMode ? 'data structure config' : 'data structure lookup' }}</template>
       <template #content>
         
         <!-- Table concept input -->
@@ -19,9 +19,12 @@
                 :readonly="isGraphRendered"
                 @change="changeTableConcept"
               />
-              <InputText v-else 
+              <InputText 
+                v-else 
                 v-model="tableName"
+                class="input-lookup"
                 :disabled="true"
+                placeholder="no table selected"
                 :readonly="true"
               />
           </div>
@@ -51,24 +54,52 @@
           <div class="design-toolbox-input-group">
             <div class="flex flex-column gap-2">
               <InputText
+                v-if="!isTableInViewMode"
                 v-model="currentColumnConcept.conceptName"
                 :class="{ 'p-invalid': doesColumnConceptAlreadyExists }"
                 placeholder="column name"
                 :disabled="!currentTableConcept.conceptName || !isGraphRendered"
               />
+              <InputText 
+                v-else
+                v-model="hoveredColumn.conceptName"  
+                class="input-lookup"
+                :disabled="true"
+                placeholder="no column hovered"
+                :readonly="true"
+              />
               <small class="p-error">{{ getColumnNameErrorMessage }}</small>
             </div>
             <Dropdown 
+              v-if="!isTableInViewMode"
               v-model="currentColumnConcept.columnKind"
               placeholder="column kind"
               :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
               :options="designToolboxConstants.CQL_COLUMN_OPTIONS"
             />
+            <InputText
+              v-else
+              v-model="hoveredColumn.columnKind"
+              class="input-lookup"
+              :disabled="true"
+              placeholder="no column hovered"
+              :readonly="true"
+            >
+            </InputText>
             <Dropdown 
+              v-if="!isTableInViewMode"
               v-model="currentDataTypeConcept.conceptName"
               placeholder="column type"
               :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
               :options="designToolboxConstants.CQL_DATA_TYPES"
+            />
+            <InputText 
+              v-else
+              v-model="dataTypeForHoveredColumn.conceptName"
+              class="input-lookup"
+              :disabled="true"
+              placeholder="no column hovered"
+              :readonly="true"
             />
           </div>
           <Button v-if="!isTableInViewMode"
@@ -79,11 +110,11 @@
           />
         </div>
 
-        <Divider />
+        <Divider v-if="!isTableInViewMode" />
 
         <!-- Clustering column concepts options input -->
 
-        <div class="design-toolbox-input-container">
+        <div class="design-toolbox-input-container" v-if="!isTableInViewMode">
           <div class="design-toolbox-input-group">
             <Dropdown
               v-model="currentClusteringOrderOption.clusteringColumn"
@@ -124,6 +155,8 @@ interface Props {
   isTableInViewMode: boolean,
   isTableInViewModeReady: boolean,
   tableInViewMode?: GraphMetadata
+  hoveredColumn: Concept
+  dataTypeForHoveredColumn: Concept
 };
 
 const props = defineProps<Props>();
@@ -290,7 +323,6 @@ const renderConceptualGraph = (onInitialLoad?: boolean): void => {
 };
 
 resetToolbox();
-
 </script>
 
 <style scoped lang="sass">
@@ -308,6 +340,7 @@ resetToolbox();
 
       .design-toolbox-input-group
         @include containers.flex-container($flex-direction: column)
+        width: auto !important
 
         .flex.flex-column
           margin-bottom: 1rem
@@ -317,6 +350,16 @@ resetToolbox();
 
         .p-dropdown:not(:last-of-type)
           margin-bottom: 1rem
+
+        .p-inputtext.input-lookup
+          width: auto !important
+
+          &:not(:last-of-type)
+            margin-bottom: 1rem
+
+          &[disabled]
+            color: variables.$cassandra-app-blue
+            opacity: 1
 
       .design-toolbox-action-group
         @include containers.flex-container

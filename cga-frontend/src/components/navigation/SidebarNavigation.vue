@@ -22,7 +22,7 @@
         v-model="currentKeyspace"
         outlined
         placeholder="keyspace"
-        :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+        :disabled="!cassandraServerCredentials.isCassandraServerConnected || isKeyspaceRetrieveInProgress"
         :options="availableKeyspaces"
       />
       <Button 
@@ -30,7 +30,7 @@
         severity="primary"
         icon="pi pi-sitemap"
         label="re-render conceptual graph"
-        :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+        :disabled="!cassandraServerCredentials.isCassandraServerConnected || isKeyspaceRetrieveInProgress"
         @click="renderGraph"
       />
     </div>
@@ -42,7 +42,7 @@ import constants from '@/constants/constants';
 import { storeToRefs } from 'pinia';
 import { useUtilsStore } from '@/stores/utils';
 import { useConnectionStore } from '@/stores/connection';
-import { computed, ComputedRef, provide, ref, Ref } from 'vue';
+import { computed, ComputedRef } from 'vue';
 import CredentialsCard from '../dashboard/CredentialsCard.vue';
 
 
@@ -64,7 +64,6 @@ const { isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
 const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
     return !!userAstraDatabaseId.value && !!userAstraToken.value;
 })
-
 
 const manageServerConnection = (): void => {
   if (cassandraServerCredentials.value.isCassandraServerConnected) {

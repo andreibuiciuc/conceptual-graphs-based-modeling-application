@@ -7,6 +7,7 @@
       <CgaLookupCard 
         v-if="forceGraph && graphMetadata.keyspace" 
         :concept-for-lookup="conceptForLookup"
+
       />
       <CgaForceConfigCard 
         v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected" 
@@ -46,10 +47,10 @@ import CgaLookupCard from '../graphic/cards/CgaLookupCard.vue';
 import CgaForceConfigCard from '../graphic/cards/CgaForceConfigCard.vue';
 import * as d3 from 'd3';
 
-import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata, AstraClusteringExpression } from '@/types/astra/types';
+import { AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../../types/types';
 import { storeToRefs } from 'pinia';
-import { Ref, ref, watch, nextTick, inject } from 'vue';
+import { Ref, ref, watch, nextTick } from 'vue';
 import { useAstra } from '@/composables/requests/astra';
 import { useAstraMetadata } from '@/composables/metadata/astra';
 import { useConnectionStore } from "../../stores/connection";
@@ -64,6 +65,8 @@ const defaultGraphMetadata: GraphMetadata = {
   columns: new Map<string, ConfigurableConcept[]>(),
   dataTypes: new Map<string, ConfigurableConcept>()
 };
+
+const emit = defineEmits(['hover']);
 
 const graphMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
 const keyspaceMetadata: Ref<any> = ref(null);

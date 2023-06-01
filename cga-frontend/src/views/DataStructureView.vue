@@ -55,6 +55,8 @@
           :is-table-in-view-mode="isScreenInViewMode"
           :is-table-in-view-mode-ready="isTableInViewModeReady"
           :table-in-view-mode="tableMetadata"
+          :hovered-column="hoveredColumn"
+          :data-type-for-hovered-column="dataTypeForHoveredColumn"
           @openTerminal="openTerminal"
           @render="renderConceptualGraph">
         </DesignToolbox>
@@ -68,7 +70,9 @@
           :are-column-concepts-deletable="!isScreenInViewMode"
           :are-tables-collapsable="false"
           :apply-border="false"
-          @remove="removeColumnConcept">
+          @remove="removeColumnConcept"
+          @hover="hoverColumnConcept"
+          @hoveroff="hoverOffColumnConcept">
         </ConceptualGraph>
     </Transition>
   </div>
@@ -277,6 +281,9 @@ const availableTables: Ref<string[]> = ref([]);
 const isScreenInViewMode: Ref<boolean> = ref(false);
 const isTableInViewModeReady: Ref<boolean> = ref(false);
 const tableInViewMode: Ref<string> = ref(constants.inputValues.empty);
+const hoveredColumn: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const dataTypeForHoveredColumn: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const astraMetadata: Ref<AstraTableMetadata> = ref(null);
 
 const changeScreenMode = (isViewMode: boolean): void => {
   if (isViewMode) {
@@ -290,7 +297,26 @@ const changeScreenMode = (isViewMode: boolean): void => {
   }
 };
 
+const hoverColumnConcept = (concepts: { [key: string]: Concept}): void => {
+  if (isScreenInViewMode.value) {
+    const { columnConcept, dataTypeConcept } = concepts;
+
+    const columnKind = getColumnKindFromColumnDefinition(columnConcept, astraMetadata.value);
+    hoveredColumn.value = { ... columnConcept, columnKind };
+    dataTypeForHoveredColumn.value = { ... dataTypeConcept };
+  }
+}
+
+const hoverOffColumnConcept = (): void => {
+  if (isScreenInViewMode.value) {
+    hoveredColumn.value = { ... constants.defaultConcept };
+    dataTypeForHoveredColumn.value = { ... constants.dataTypeForHoveredColumn };
+  }
+}
+
 const parseTableForViewMode = async (tableAstraMetadata: AstraTableMetadata): Promise<void> => {
+  astraMetadata.value = { ... tableAstraMetadata };
+
   tableMetadata.value.keyspace = {
     conceptType: constants.conceptTypes.keyspace,
     conceptName: currentKeyspace.value,
