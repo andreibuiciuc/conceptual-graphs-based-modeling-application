@@ -574,9 +574,9 @@ const clearQueryMetadata = () => {
   queryStore.resetQueryClauseItems();
   queryStore.resetQueryConcepts();
   whereClauseItemsState.value = constants.inputValues.empty;
-  groupByClauseItems.value = constants.inputValues.empty;
-  orderByClauseItems.value = constants.inputValues.empty;
-  aggregateFunctionsItems.value = constants.inputValues.empty;
+  groupByClauseItemsState.value = constants.inputValues.empty;
+  orderByClauseItemsState.value = constants.inputValues.empty;
+  aggregateFunctionsItemsState.value = constants.inputValues.empty;
   
   // Reset the commands for Cassandra Terminal
   cqlQueryCommands.value = [];
