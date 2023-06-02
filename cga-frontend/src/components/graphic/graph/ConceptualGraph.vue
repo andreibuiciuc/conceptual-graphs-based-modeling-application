@@ -71,7 +71,7 @@
                       <span class="concept-name">{{ queryConcepts[QueryClause.WHERE].conceptRelation }}</span>
                     </div>
                     <div class="tf-nc" :id="`${graphKey}_filterReferentConcept`">
-                      <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
+                      <span class="concept-type">C:</span>
                       <span class="concept-name">{{ queryConcepts[QueryClause.WHERE].conceptReferent }}</span>
                     </div>
                   </li>
@@ -109,7 +109,7 @@
                     <span class="concept-name">groupBy</span>
                   </div>
                   <div class="tf-nc" :id="`${graphKey}_groupByReferentConcept`">
-                    <span class="concept-type">CL:</span>
+                    <span class="concept-type">C:</span>
                     <span class="concept-name">{{ queryConcepts[QueryClause.GROUP_BY].conceptReferent }}</span>
                   </div>
                 </li>

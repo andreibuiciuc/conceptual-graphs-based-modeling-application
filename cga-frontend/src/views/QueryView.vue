@@ -573,6 +573,10 @@ const clearQueryMetadata = () => {
   // Reset the state of the clause items and query concepts
   queryStore.resetQueryClauseItems();
   queryStore.resetQueryConcepts();
+  whereClauseItemsState.value = constants.inputValues.empty;
+  groupByClauseItems.value = constants.inputValues.empty;
+  orderByClauseItems.value = constants.inputValues.empty;
+  aggregateFunctionsItems.value = constants.inputValues.empty;
   
   // Reset the commands for Cassandra Terminal
   cqlQueryCommands.value = [];
@@ -655,7 +659,7 @@ const adjustInvalidOrderByClause = (): void => {
   }
 
   whereClauseItems.value = [];
-  currentColumns.forEach((columnConcept: Concept) => {
+  currentColumns.forEach(async (columnConcept: Concept) => {
     if (columnConcept.columnKind === 'partition_key') {
       whereClauseItems.value.push({
         column: columnConcept.conceptName,
@@ -668,6 +672,13 @@ const adjustInvalidOrderByClause = (): void => {
         type: getColumnInputType(columnConcept, tableMetadata.value)
       });
       whereClauseItemsState.value = 'warn';
+      
+      const index = queryMetadata.value.columns.get(currentTable.conceptName).findIndex((concept: Concept) => concept.conceptName === columnConcept.conceptName);
+      if (index < 0) {
+        queryMetadata.value.columns.get(currentTable.conceptName).push({ ... columnConcept, relation: constants.relationTypes.has });
+        await nextTick();
+        queryGraph.value.rerenderArrows();
+      }
     }
   });
 
@@ -713,8 +724,17 @@ const fetchQueryResuls = async (): Promise<void> => {
 };
 
 const openQueryTerminal = (): void => {
-  cqlQueryCommands.value = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value, queryConcepts.value);
-  isQueryTerminalOpened.value = true;
+  const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value);
+  if (error) {
+    openNotificationToast(error, 'error');
+    if (errorCode == 1) {
+      adjustInvalidOrderByClause();
+      openNotificationToast('query items have been adjusted', 'warn', 'partition columns have been restricted with a where clause');
+    }
+  } else {
+    cqlQueryCommands.value = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value, queryConcepts.value);
+    isQueryTerminalOpened.value = true;
+  }
 };
 
 const parseQueryResults = (results: any[]) => {
@@ -899,6 +919,8 @@ const retrieveSavedQueries = async (): Promise<void> => {
   try {
 
     const queriesSnapshot = await queriesCollection.where('userUid', '==', auth.currentUser.uid).get();
+    
+    availableQueries.value = [];
     queriesSnapshot.forEach((document) => {
       availableQueries.value.push(document.data().queryName);
     });

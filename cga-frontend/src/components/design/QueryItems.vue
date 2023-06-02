@@ -24,13 +24,13 @@
                 class="query-panel-item-clause"
             >
                 
-                <Button 
+                <!--TODO: <Button 
                     aria-label="Remove" 
                     icon="pi pi-times" 
                     class="remove-icon-button"
                     text 
                     @click="removeItem(clause, item)" 
-                />
+                /> -->
 
                 <span v-if="clause === QueryClause.WHERE" class="item-clause-label">
                     {{ index === 0 ? 'where' : 'and' }}
@@ -55,10 +55,10 @@
                     @change="changeColumn(clause, item)">
                 </Dropdown>
 
-                <i  v-if="clause === QueryClause.GROUP_BY"
+                <!--TODO <i  v-if="clause === QueryClause.GROUP_BY"
                     class="pi pi-info" 
                     v-tooltip="item.tooltip">
-                </i>
+                </i> -->
 
                 <template v-if="clause === QueryClause.WHERE">
                     <Dropdown 
@@ -68,10 +68,10 @@
                         :disabled="item.toQuery"
                         @change="changeOperator(item)">
                     </Dropdown>
-                    <i 
+                    <!--TODO <i 
                         class="pi pi-info" 
                         v-tooltip="item.tooltip">
-                    </i>
+                    </i> -->
                     <template v-if="[constants.cqlOperators.IN, constants.cqlOperators.NOT_IN].includes(item.relation!)">
                         <div class="card p-fluid">
                             <Chips v-model="item.chipValues" separator=" " :disabled="item.toQuery" :max="5" />
@@ -155,7 +155,7 @@ interface Props {
     state: string
 };
 
-const orderByOptions = [ "asc", "desc" ];
+const orderByOptions = [ "ascending", "descending" ];
 const aggregateFunctionsOptions: AggregateFunction[] = [ 'max', 'min', 'sum', 'avg', 'count' ];
 
 const informationMessages = {
@@ -166,6 +166,7 @@ const informationMessages = {
 };
 
 const tooltips = {
+    // TODO:
     [QueryClause.WHERE]: {
         partition_key: "the partition key columns support only two operators: = and IN",
         clustering: "the clustering columns support only the following operators: =, IN, >, >=, <, <=",
@@ -226,7 +227,6 @@ const changeColumn = (clause: QueryClause, item: QueryItem): void => {
     const currentColumn = props.columns?.find(x => x.conceptName === item.column);
     if (currentColumn) {
         item.operators = getCQLWhereOperatorsByColumnKind(currentColumn.columnKind);
-        // item.tooltip = tooltips[clause][currentColumn.columnKind];
         item.type = getColumnInputType(currentColumn, props.tableMetadata);
     } else {
         item.operators = [];

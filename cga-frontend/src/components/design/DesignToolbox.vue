@@ -139,9 +139,7 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import designToolboxConstants from "../design/designToolboxConstants";
-import { AstraApiResponse } from '@/types/astra/types';
-import { AxiosResponse } from 'axios';
-import { ComputedRef, Ref, ref } from 'vue';
+import { ComputedRef, Ref, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
 import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
 import { useAstra } from '@/composables/requests/astra';
@@ -186,15 +184,15 @@ const connectionStore = useConnectionStore();
 const { currentKeyspace } = storeToRefs(connectionStore);
 
 // Reactive data related to the data structure configurations
-const currentTableConcept: Ref<Concept> = ref({ ... constants.defaultConcept });
-const currentColumnConcept: Ref<Concept> = ref({ ... constants.defaultConcept });
-const currentDataTypeConcept: Ref<Concept> = ref({ ... constants.defaultConcept });  
-const currentClusteringOrderOption: Ref<ClusteringOption> = ref({ ... defaultClusteringOption });
+const currentTableConcept: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const currentColumnConcept: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const currentDataTypeConcept: Ref<Concept> = ref(structuredClone(constants.defaultConcept));  
+const currentClusteringOrderOption: Ref<ClusteringOption> = ref(structuredClone(defaultClusteringOption));
 const isClusteringSectionEnabled: Ref<boolean> = ref(false);
 const clusteringColumnOptions: Ref<string[]> = ref([]);
 
 // Reactive data related to the rendering of the conceptual graph
-const tableMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
+const tableMetadata: Ref<GraphMetadata> = ref(structuredClone(defaultGraphMetadata));
 const isGraphRendered: Ref<boolean> = ref(false);
 
 
@@ -231,32 +229,25 @@ const getColumnNameErrorMessage: ComputedRef<string> = computed(() => {
 });
 
 const isAddTableConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
-  // return !!currentTableConcept.value.conceptName && !isGraphRendered.value;
-  return true;
+  return !!currentTableConcept.value.conceptName && !isGraphRendered.value;
 });
 
 const checkIfTableExistsInKeyspace = async (): Promise<boolean> => {
-  let response: AxiosResponse<any, any>, responseData: AstraApiResponse;
+  let isTableAlreadyInKeyspace = false;
   
   try {
-    response = await retrieveTable(currentKeyspace.value, currentTableConcept.value.conceptName);
+    await retrieveTable(currentKeyspace.value, currentTableConcept.value.conceptName);
+    isTableAlreadyInKeyspace = true;
   } catch (error: any) {
-    openNotificationToast(error.message, 'error');
-    return false;
+    isTableAlreadyInKeyspace = false;
   }
 
-  if (response && response.data) {
-    responseData = response.data as AstraApiResponse;
-    if (responseData.data) {
-      isTableConceptValid.value = true;
-      openNotificationToast(`table ${currentTableConcept.value.conceptName} already exists in the current keyspace`, 'error');
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    openNotificationToast(responseData.description, 'error');
+  if (isTableAlreadyInKeyspace) {
+    isTableConceptValid.value = false;
+    openNotificationToast(`table ${currentTableConcept.value.conceptName} already exists in the current keyspace`, 'error');
   }
+
+  return isTableAlreadyInKeyspace;
 };
 
 const validateTableName = async (): Promise<void> => {
@@ -323,6 +314,11 @@ const renderConceptualGraph = (onInitialLoad?: boolean): void => {
 };
 
 resetToolbox();
+
+watch(() => props.isTableInViewMode, () => {
+  resetToolbox();
+});
+
 </script>
 
 <style scoped lang="sass">
