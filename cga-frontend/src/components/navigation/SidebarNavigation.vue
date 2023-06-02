@@ -1,7 +1,7 @@
 <template>
   <Sidebar v-model:visible="isSidebarOpened" class="w-full md:w-25rem lg:w-30rem">
     <template #header>
-      <InputSwitch v-model="forceGraph" :disabled="!currentKeyspace" :class="{ 'animated-switch': !forceGraph && currentKeyspace }" />
+      <InputSwitch v-model="forceGraph" :disabled="!currentKeyspace || isKeyspaceRetrieveInProgress" :class="{ 'animated-switch': !forceGraph && currentKeyspace }" />
       <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
     </template>
     <div class="panel-container">
@@ -22,7 +22,7 @@
         v-model="currentKeyspace"
         outlined
         placeholder="keyspace"
-        :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+        :disabled="!cassandraServerCredentials.isCassandraServerConnected || isKeyspaceRetrieveInProgress"
         :options="availableKeyspaces"
       />
       <Button 
@@ -30,12 +30,10 @@
         severity="primary"
         icon="pi pi-sitemap"
         label="re-render conceptual graph"
-        :disabled="!cassandraServerCredentials.isCassandraServerConnected"
+        :disabled="!cassandraServerCredentials.isCassandraServerConnected || isKeyspaceRetrieveInProgress"
         @click="renderGraph"
       />
     </div>
-    <Divider />
-    <SyncronizeCard :are-tables-in-sync="true" />
   </Sidebar>
 </template>
 
@@ -44,13 +42,20 @@ import constants from '@/constants/constants';
 import { storeToRefs } from 'pinia';
 import { useUtilsStore } from '@/stores/utils';
 import { useConnectionStore } from '@/stores/connection';
-import { Ref, ref, computed, ComputedRef } from 'vue';
-import SyncronizeCard from '@/components/dashboard/SyncronizeCard.vue';
+import { computed, ComputedRef } from 'vue';
 import CredentialsCard from '../dashboard/CredentialsCard.vue';
 
 
 const connectionStore = useConnectionStore();
-const { cassandraServerCredentials, isConnectionButtonTriggered, currentKeyspace, availableKeyspaces, userAstraDatabaseId, userAstraToken } = storeToRefs(connectionStore);
+const { 
+  cassandraServerCredentials, 
+  isConnectionButtonTriggered, 
+  currentKeyspace, availableKeyspaces, 
+  userAstraDatabaseId, userAstraToken, 
+  isKeyspaceRetrieveInProgress, 
+  isRerenderTriggered 
+} = storeToRefs(connectionStore);
+
 cassandraServerCredentials.value = { ... constants.defaultLoginCredentials };
 
 const utilsStore = useUtilsStore();
@@ -59,7 +64,6 @@ const { isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
 const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
     return !!userAstraDatabaseId.value && !!userAstraToken.value;
 })
-
 
 const manageServerConnection = (): void => {
   if (cassandraServerCredentials.value.isCassandraServerConnected) {
@@ -70,11 +74,8 @@ const manageServerConnection = (): void => {
 };
 
 const renderGraph = async (): Promise<void> => {
-  const currentKeyspaceValue = currentKeyspace.value;
-  currentKeyspace.value = constants.inputValues.empty;
-  currentKeyspace.value = currentKeyspaceValue;
+  isRerenderTriggered.value = true;
 };
-
 </script>
 
 <style lang="sass">

@@ -1,30 +1,44 @@
+import "primevue/resources/themes/lara-light-blue/theme.css";     
+import "primevue/resources/primevue.min.css";
+import "primeicons/primeicons.css";
+
+// PrimeVue configuration
 import PrimeVue from 'primevue/config';
-import Card from 'primevue/card';
-import Tooltip from 'primevue/tooltip';
-import Button from 'primevue/button';
-import Divider from 'primevue/divider';
-import Dropdown from 'primevue/dropdown';
-import InputText from 'primevue/inputtext';
+
+// Primevue services
+import ConfirmationService from 'primevue/confirmationservice';
+import ToastService from 'primevue/toastservice';
+
+// PrimeVue components
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Sidebar from 'primevue/sidebar';
-import InputSwitch from 'primevue/inputswitch';
+import Button from 'primevue/button';
+import Card from 'primevue/card';
+import Chip from 'primevue/chip';
+import Chips from 'primevue/chips'
+import ColorPicker from 'primevue/colorpicker';
+import Column from 'primevue/column';
+import ConfirmDialog from 'primevue/confirmdialog';
 import ConfirmPopup from 'primevue/confirmpopup';
-import ConfirmationService from 'primevue/confirmationservice';
+import DataTable from 'primevue/datatable';
+import Dialog from 'primevue/dialog';
+import Divider from 'primevue/divider';
+import Dropdown from 'primevue/dropdown';
+import InputSwitch from 'primevue/inputswitch';
+import InputText from 'primevue/inputtext';
+import Message from 'primevue/message';
+import Menubar from 'primevue/menubar';
+import ProgressSpinner from 'primevue/progressspinner';
+import ScrollTop from 'primevue/scrolltop';
+import Sidebar from 'primevue/sidebar';
+import Skeleton from 'primevue/skeleton'
+import Slider from 'primevue/slider';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel";
-import Dialog from 'primevue/dialog';
-import Toast from 'primevue/toast';
-import ToastService from 'primevue/toastservice';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import ProgressSpinner from 'primevue/progressspinner';
-import Chip from 'primevue/chip';
-import Menubar from 'primevue/menubar';
 import Tag from 'primevue/tag';
-import Slider from 'primevue/slider';
-import ScrollTop from 'primevue/scrolltop';
 import Timeline from 'primevue/timeline';
+import Toast from 'primevue/toast';
+import Tooltip from 'primevue/tooltip';
 
 export default {
     install(app) {
@@ -56,6 +70,11 @@ export default {
         app.component('Slider', Slider);
         app.component('ScrollTop', ScrollTop);
         app.component('Timeline', Timeline);
+        app.component('Skeleton', Skeleton);
+        app.component('ColorPicker', ColorPicker);
+        app.component('Chips', Chips);
+        app.component('ConfirmDialog', ConfirmDialog);
+        app.component('Message', Message);
 
         app.directive('tooltip', Tooltip);
     }

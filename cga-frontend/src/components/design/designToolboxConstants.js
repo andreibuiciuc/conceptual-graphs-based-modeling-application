@@ -15,9 +15,9 @@ export default {
     "double", 
     "float", 
     "int", 
-    "list", 
-    "map", 
-    "set", 
+    // "list", TODO
+    // "map", TODO
+    // "set", TODO
     "smallint",
     "time", 
     "timestamp",

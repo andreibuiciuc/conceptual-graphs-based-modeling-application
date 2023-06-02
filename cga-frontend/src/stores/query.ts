@@ -15,6 +15,12 @@ export const useQueryStore  = defineStore('query', () => {
     // Query concepts related to the clause items
     const queryConcepts: Ref<QueryConcepts | null> = ref(null);
 
+    // Force Graph
+    const conceptNodeSize: Ref<number> = ref(8);
+    const conceptNodeColor: Ref<string> = ref('3B82F6');
+    const link: Ref<any> = ref(null);
+    const node: Ref<any> = ref(null);
+
     function resetQueryClauseItems (): void {
         whereClauseItems.value = [];
         orderByClauseItems.value = [];
@@ -31,9 +37,13 @@ export const useQueryStore  = defineStore('query', () => {
         orderByClauseItems,
         groupByClauseItems,
         aggregateFunctionsItems,
+        conceptNodeSize,
+        conceptNodeColor,
         queryConcepts,
+        link,
+        node,
         resetQueryClauseItems,
-        resetQueryConcepts
+        resetQueryConcepts,
     };
     
 });

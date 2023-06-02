@@ -49,7 +49,7 @@
             value="force graph is the recommended representation of higher volume keyspaces"
           />
           <Tag 
-            v-else-if="cassandraServerCredentials.isCassandraServerConnected && currentKeyspace"
+            v-else-if="cassandraServerCredentials.isCassandraServerConnected && currentKeyspace && !isKeyspaceRetrieveInProgress"
             icon="pi pi-exclamation-triangle"
             severity="warning"
             value="it is recommended to use the force graph representation for higher volume keyspaces"
@@ -62,58 +62,33 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { Ref, ref } from '@vue/reactivity';
-import { storeToRefs } from 'pinia';
 
 import AuthenticationCard from '../components/authentication/AuthenticationCard.vue';
 import ConnectionDashboard from '../components/dashboard/ConnectionDashboard.vue';
 import HomepageSection from '@/components/graphic/sections/HomepageSection.vue';
 import LandingSection from '@/components/graphic/sections/LandingSection.vue';
+import StepsSection from '@/components/graphic/sections/StepsSection.vue';
 import SummarySection from '@/components/graphic/sections/SummarySection.vue';
 
-
-import { useUtilsStore } from '../stores/utils';
-import { useUserStore } from '../stores/user';
+import { onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useConnectionStore } from '../stores/connection';
-import StepsSection from '@/components/graphic/sections/StepsSection.vue';
+import { useUserStore } from '../stores/user';
+import { useUtilsStore } from '../stores/utils';
 
 
-// Store state mappings
+// Pinia store mappings
 const userStore = useUserStore();
-const utilsStore = useUtilsStore();
-
 const { isUserLoggedIn } = storeToRefs(userStore);
-const { currentScrollYPosition, isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
 
-// Store mappings
+const utilsStore = useUtilsStore();
+const { isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
+
 const connectionStore = useConnectionStore();
-const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
-
-const homepageElement: Ref<HTMLElement | null> = ref(null);
-const summaryCardElement: Ref<HTMLElement | null> = ref(null);
-const summaryCardElementYPosition: Ref<number> = ref(0);
-
-const handleScrollEvent = (): void => {
-  if (homepageElement.value) {
-    currentScrollYPosition.value = homepageElement.value.scrollTop;
-    if (currentScrollYPosition.value >= summaryCardElementYPosition.value - 2 * window.innerHeight / 4) {
-      summaryCardElement.value?.classList.add('summary-card-fade-in');
-    }
-  } else {
-    currentScrollYPosition.value = 0;
-  }
-}
+const { currentKeyspace, cassandraServerCredentials, isKeyspaceRetrieveInProgress } = storeToRefs(connectionStore);
 
 onMounted(() => {
-  homepageElement.value = document.getElementById('homepage');
-  if (homepageElement.value) {
-    homepageElement.value.addEventListener('scroll', handleScrollEvent);
-    summaryCardElement.value = document.getElementById('summary-card');
-    if (summaryCardElement.value) {
-      summaryCardElementYPosition.value = homepageElement.value.scrollTop + summaryCardElement.value.getBoundingClientRect().top;
-    }
-  }
+  utilsStore.initializeSummaryCardEvent();
 });
 
 </script>
@@ -238,6 +213,6 @@ onMounted(() => {
             
 .console-section
   @include containers.flex-container($flex-direction: column)
-  height: calc(100vh - 68px)
+  height: 100vh
 
 </style>

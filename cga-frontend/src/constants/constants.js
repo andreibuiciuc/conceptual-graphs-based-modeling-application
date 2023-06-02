@@ -38,6 +38,7 @@ export default {
   requestTypes: {
     GET: "get",
     POST: "post",
+    DELETE: "delete",
   },
   requestStatus: {
     SUCCESS: "success",
@@ -59,8 +60,8 @@ export default {
     has: "has",
     hasMore: "hasMore",
     hasPartitionKey: "hasPartitionKey",
-    hasClusteringKeyASC: "hasClusteringKeyASC",
-    hasClusteringKeyDESC: "hasClusteringKeyDESC",
+    hasClusteringKeyASC: "hasClusteringKeyAsc",
+    hasClusteringKeyDESC: "hasClusteringKeyDesc",
     isOptional: "isOptional",
     hasType: "hasType",
   },
@@ -70,8 +71,8 @@ export default {
     partitionKey: "partitionKey",
   },
   clusteringOrders: {
-    ascending: "asc",
-    descending: "desc",
+    ascending: "ascending",
+    descending: "descending",
   },
   cqlOperators: {
     LESS: '<',

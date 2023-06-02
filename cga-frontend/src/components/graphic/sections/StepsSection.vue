@@ -2,7 +2,7 @@
     <HomepageSection>
         <template #section-content>
             <div class="timeline-wrapper">
-                <Timeline :value="steps" class="w-full md:w-20rem" align="alternate">
+                <Timeline :value="steps" class="w-full" align="alternate">
                     <template #content="slotProps">
                         <Card>
                             <template #title>
@@ -11,7 +11,7 @@
                                 </span>
                             </template>
                             <template #subtitle>
-                                <b>{{ slotProps.item.subtitle }}</b> application
+                                <b>{{ slotProps.item.subtitle }}</b> <span>application</span>
                             </template>
                             <template #content>
                                 {{ slotProps.item.content }}
@@ -42,16 +42,24 @@ const steps: Ref<any> = ref([
 @use "@/assets/styles/_containers.sass"
 
 .timeline-wrapper
-    width: 40rem
+    width: 60rem
 
-    .p-card
-        box-shadow: none
-        border: 1px solid variables.$cassandra-light-gray
-    
-    .p-timeline-event:nth-of-type(odd) .p-card
-        border-left: 0.25rem solid variables.$cassandra-app-blue !important
+    .p-timeline .p-timeline-event
 
-    .p-timeline-event:nth-of-type(even) .p-card
-        border-right: 0.25rem solid variables.$cassandra-yellow !important
+        .p-card
+            box-shadow: none
+            border: 1px solid variables.$cassandra-light-gray
+
+            .p-card-body > .p-card-title > span
+                font-size: 2rem
+
+            .p-card-body > .p-card-subtitle b, .p-card-body > .p-card-subtitle span
+                font-size: 1.5rem
+        
+        &:nth-of-type(odd) .p-card
+            border-left: 0.25rem solid variables.$cassandra-app-blue !important
+
+        &:nth-of-type(even) .p-card
+            border-right: 0.25rem solid variables.$cassandra-yellow !important
 
 </style>

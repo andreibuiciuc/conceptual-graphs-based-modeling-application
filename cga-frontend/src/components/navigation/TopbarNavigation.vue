@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { authenticatedMenuItems, unauthenticatedMenuItems } from './navigationConstants';
+import { authenticatedMenuItems } from './navigationConstants';
 
 import { useConnectionStore } from '../../stores/connection';
 import { useUserStore } from '../../stores/user';
@@ -40,7 +40,7 @@ import { useUtilsStore } from '../../stores/utils';
 
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
-import { ComputedRef, computed } from 'vue';
+import { ComputedRef, computed, nextTick } from 'vue';
 import { MenuItem } from '@/types/navigation/types';
 
 const SCROLL_Y_POSITION_OFFSET = 10;
@@ -49,7 +49,7 @@ const SCROLL_Y_POSITION_OFFSET = 10;
 const userStore = useUserStore();
 const { isUserLoggedIn } = storeToRefs(userStore);
 
-// Store mappings
+// Pinia store mappings
 const connectionStore = useConnectionStore();
 const { cassandraServerCredentials } = storeToRefs(connectionStore);
 
@@ -72,30 +72,39 @@ const isTranslucentEffectApplied: ComputedRef<boolean> = computed(() => {
 
 // Functionalities related to the menubar navigation
 const menuItems: ComputedRef<MenuItem[]> = computed(() => {
-  if (isUserLoggedIn.value) {
-    return authenticatedMenuItems;
-  } else {
-    return unauthenticatedMenuItems;
-  }
+  return isUserLoggedIn.value ? authenticatedMenuItems : [];
 });
 
-const onAccountItemClick = (): void => {
-  if (isUserLoggedIn.value) {
-    if (cassandraServerCredentials.value.isCassandraServerConnected) {
-      connectionStore.disconnect();
-    }
-    userStore.signOut();
-    router.push({ name: 'home' });
-  } else {
-    if (router.currentRoute.value.name === 'home') {
-      const authSectionElement = document.getElementById('auth');
-      if (authSectionElement) {
-        authSectionElement.scrollIntoView({ behavior: "smooth", block: 'end' });
-      }
-    } else {
-      isLoginInModal.value = true;
-    }
+const signOut = async (): Promise<void> => {
+
+  if (cassandraServerCredentials.value.isCassandraServerConnected) {
+    connectionStore.disconnect();
   }
+
+  await userStore.signOut();
+  await router.push({ name: 'home' });
+  await nextTick();
+  utilsStore.initializeSummaryCardEvent();
+  
+};
+
+const handleAuthenticationAction = (): void => {
+
+  if (router.currentRoute.value.name === 'home') {
+
+    const authSectionElement = document.getElementById('auth');
+
+    if (authSectionElement) {
+      authSectionElement.scrollIntoView({ behavior: "smooth", block: 'end' });
+    }
+
+  } else {
+    isLoginInModal.value = true;
+  }
+}
+
+const onAccountItemClick = (): void => {
+  isUserLoggedIn.value ? signOut() : handleAuthenticationAction();
 };
 
 </script>
@@ -104,21 +113,23 @@ const onAccountItemClick = (): void => {
 @use '@/assets/styles/_variables.sass'
 @use '@/assets/styles/_containers.sass'
 
+$blurFilterValue: 8px
+
 .p-menubar-translucent
   background: none !important
-  -webkit-backdrop-filter: blur(8px) !important
-  backdrop-filter: blur(8px) !important
+  -webkit-backdrop-filter: blur($blurFilterValue) !important
+  backdrop-filter: blur($blurFilterValue) !important
 
 .p-menubar-solid
   background: variables.$cassandra-white !important
 
 .p-menubar
-  position: fixed
-  height: 68px
-  z-index: 1004
-  transform: translateY(0%)
-  width: 100%
+  height: variables.$cga-topbar-height
   border-bottom: none !important
+  transform: translateY(0%)
+  position: fixed
+  z-index: 1004
+  width: 100%
 
   &.p-menubar-with-border-bottom
     border-bottom: 1px solid variables.$cassandra-light-gray !important

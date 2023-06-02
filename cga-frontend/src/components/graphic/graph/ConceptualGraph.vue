@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="graphMetadata.keyspace.conceptName"
     class="tf-tree conceptual-graph" :id="`${graphKey}_conceptualGraph`"
     :class="{ 'conceptual-graph-inverted': inverted, 'conceptual-graph-with-border': applyBorder }"
   >
@@ -17,7 +18,7 @@
           <!-- Table level -->
           <li
             v-for="(tableConcept, tableIndex) in graphMetadata?.tables"
-            :graphKey="tableConcept.conceptName"
+            :key="tableConcept.conceptName"
           >
             <div 
               :id="`${graphKey}_tableConcept_${tableIndex}`"
@@ -26,13 +27,12 @@
               >
               <span class="concept-type">{{ tableConcept.conceptType }}:</span>
               <span class="concept-name">{{ tableConcept.conceptName }}</span>
-              <i class="pi" :class="tableConcept.isTableExpanded ? 'pi-minus' : 'pi-plus'" style="font-size: 1.5rem;" @click="expandTable(tableConcept, tableIndex)"></i>
             </div>
             <ul>
               <!-- Column level -->
               <li
                 :class="{ 'column-concept-hoverable': areColumnsSelectable }" v-if="graphMetadata.columns.size"
-                v-for="(columnConcept, columnIndex) in graphMetadata.columns.get(tableConcept.conceptName)" :graphKey="columnConcept.conceptName"
+                v-for="(columnConcept, columnIndex) in graphMetadata.columns.get(tableConcept.conceptName)" :key="columnConcept.conceptName"
               >
                 <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`">
                   <span class="concept-name">{{ columnConcept.relation }}</span>
@@ -40,6 +40,8 @@
                 <div :id="`${graphKey}_${tableConcept.conceptName}_columnConcept_${columnIndex}`"
                   class="tf-nc" :class="{ 'column-concept--selectable': areColumnsSelectable }"
                   @click.prevent="selectColumn(columnConcept)"
+                  @mouseover="hoverColumn(columnConcept)"
+                  @mouseout="hoverOffColumn(columnConcept)"
                   >
                   <span class="concept-type">{{ columnConcept.conceptType }}:</span>
                   <span class="concept-name">{{ columnConcept.conceptName }}</span>
@@ -69,7 +71,7 @@
                       <span class="concept-name">{{ queryConcepts[QueryClause.WHERE].conceptRelation }}</span>
                     </div>
                     <div class="tf-nc" :id="`${graphKey}_filterReferentConcept`">
-                      <span class="concept-type">{{ constants.conceptTypes.column }}:</span>
+                      <span class="concept-type">C:</span>
                       <span class="concept-name">{{ queryConcepts[QueryClause.WHERE].conceptReferent }}</span>
                     </div>
                   </li>
@@ -86,14 +88,6 @@
                       <span class="concept-name">groupId</span>
                     </div>
                   </li>
-                  <!-- <li v-if="isOutConceptVisible">
-                    <div class="tf-nc conceptual-graph-relation" :id="`${graphKey}_outConcept`">
-                      <span class="concept-name" >{{ queryConcepts[QueryClause.OUT].conceptRelation }}</span>
-                    </div>
-                    <div class="tf-nc" :id="`${graphKey}_outReferentConcept`">
-                      <span class="concept-name">{{ queryConcepts[QueryClause.OUT].conceptReferent }}</span>
-                    </div>
-                  </li> -->
                 </ul>
               </li>
               <template v-if="isQueryGraph && queryConcepts && queryConcepts[QueryClause.GET]">
@@ -115,7 +109,7 @@
                     <span class="concept-name">groupBy</span>
                   </div>
                   <div class="tf-nc" :id="`${graphKey}_groupByReferentConcept`">
-                    <span class="concept-type">CL:</span>
+                    <span class="concept-type">C:</span>
                     <span class="concept-name">{{ queryConcepts[QueryClause.GROUP_BY].conceptReferent }}</span>
                   </div>
                 </li>
@@ -130,7 +124,7 @@
 
 <script setup lang="ts">
 import constants from '../../../constants/constants';
-import { QueryClause, Concept, ConfigurableConcept, GraphMetadata } from "../../../types/types";
+import { QueryClause, Concept, GraphMetadata } from "../../../types/types";
 
 import { useQueryStore } from '@/stores/query';
 
@@ -145,14 +139,13 @@ interface Props {
   applyBorder?: boolean
   noKeyspace?: boolean
   isQueryGraph?: boolean
-  areTablesCollapsable?: boolean,
   areColumnConceptsDeletable?: boolean
   areColumnsSelectable?: boolean
   graphKey: string
 };
 
 const props = defineProps<Props>();
-const emit = defineEmits(['select', 'remove']);
+const emit = defineEmits(['select', 'remove', 'hover', 'hoveroff']);
 
 // Store mappings
 const queryStore = useQueryStore();
@@ -193,30 +186,6 @@ const createArrow = (sourceNode: HTMLElement, targetNode: HTMLElement, relatedCo
     arrows.value.push(arrow);
   }
   
-};
-
-
-const drawArrowsForConcept = async (tableConcept: Concept): Promise<void> => {
-  await nextTick();
-  const tableIndex = props.graphMetadata.tables.findIndex(table => table.conceptName === tableConcept.conceptName);
-  const tableConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_tableConcept_${tableIndex}`);
-  for (let columnIndex in props.graphMetadata.columns.get(tableConcept.conceptName)) {
-    const currentColumnConcept: Concept | undefined = props.graphMetadata.columns.get(tableConcept.conceptName)?.at(parseInt(columnIndex, 10));
-
-    const columnConceptRelationElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_columnConceptRelation_${columnIndex}`);
-    const columnConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_columnConcept_${columnIndex}`);
-
-    createArrow(tableConceptElement, columnConceptRelationElement, currentColumnConcept);
-    createArrow(columnConceptRelationElement, columnConceptElement, currentColumnConcept);
-
-    if (props.graphMetadata.dataTypes.size) {
-      const typeConceptRelationElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_typeConceptRelation_${columnIndex}`);
-      const typeConceptElement: HTMLElement | null = document.getElementById(`${props.graphKey}_${tableConcept.conceptName}_typeConcept_${columnIndex}`);
-
-      createArrow(columnConceptElement, typeConceptRelationElement, currentColumnConcept);
-      createArrow(typeConceptRelationElement, typeConceptElement, currentColumnConcept);
-    }
-  }
 };
 
 const drawArrowsForConcepts = async (): Promise<void> => {
@@ -416,28 +385,7 @@ const removeColumnConcept = async (tableConcept: Concept, columnConcept: Concept
 };
 
 
-// FUnctionalities related to the changing of arrows visibility.
-const expandTable = (tableConcept: ConfigurableConcept, tableIndex: number): void => {
-  tableConcept.isTableExpanded = !tableConcept.isTableExpanded;
-  const currentTableColumns = props.graphMetadata.columns.get(tableConcept.conceptName);
-
-  currentTableColumns.forEach((columnConcept: Concept) => {
-    const arrows = document.querySelectorAll(`[related-concept=${columnConcept.conceptName}]`);
-    handleArrowsSvgVisibility(tableConcept, arrows);
-  });
-};
-
-const handleArrowsSvgVisibility = (tableConcept: ConfigurableConcept, arrows: NodeListOf<Element>): void => {
-  arrows.forEach((svg: Element) => {
-    const castedSvg = <HTMLElement> svg;
-    if (tableConcept.isTableExpanded) {
-      castedSvg.style.setProperty('visibility', 'hidden')
-    } else {
-      castedSvg.style.setProperty('visibility', 'visible')
-    }
-  });
-};
-
+// Functionalities related to events
 const selectColumn = (columnConcept: Concept) => {
   emit("select", columnConcept);
 };
@@ -448,6 +396,22 @@ const isOutConceptVisible: ComputedRef<boolean> = computed(() => {
 
 const doesGraphHaveOnlyTableConcept = (tableConcept: Concept) => {
   return tableConcept && props.graphMetadata.tables.length && props.graphMetadata.columns && props.graphMetadata.columns.size;
+}
+
+const getTypeConceptForColumnConcept = (columnConcept: Concept): Concept => {
+  return props.graphMetadata.dataTypes.get(columnConcept.conceptName);
+}
+
+const hoverColumn = (columnConcept: Concept) => {
+  const dataTypeConcept = getTypeConceptForColumnConcept(columnConcept);
+  emit('hover', {
+    columnConcept,
+    dataTypeConcept
+  });
+};
+
+const hoverOffColumn = (columnConcept: Concept) => {
+  emit('hoveroff', columnConcept);
 }
 
 const rerenderArrows = (): void => {

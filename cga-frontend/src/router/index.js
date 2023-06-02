@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import { useUserStore } from '../stores/user';
 
-import AstraView from '@/views/AstraView.vue';
 import HomeView from "@/views/HomeView.vue";
 import DataStructureView from "@/views/DataStructureView.vue";
 import QueryView from "@/views/QueryView.vue";
@@ -12,11 +11,6 @@ const routes = [
     path: "/",
     name: "home",
     component: HomeView,
-  },
-  {
-    path: "/demo",
-    name: "demo",
-    component: AstraView  
   },
   {
     path: "/data-structure",

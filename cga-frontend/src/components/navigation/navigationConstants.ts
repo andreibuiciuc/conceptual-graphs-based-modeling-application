@@ -46,16 +46,7 @@ const authenticatedMenuItems: MenuItem[] = [
   }
 ];
 
-const unauthenticatedMenuItems: MenuItem[] = [
-  {
-    label: 'try it out',
-    icon: 'pi pi-code',
-    to: 'demo'
-  }
-];
-
 export {
   authenticatedMenuItems,
-  unauthenticatedMenuItems
 };
 

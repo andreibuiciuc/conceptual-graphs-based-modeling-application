@@ -1,24 +1,39 @@
 <template>
   <div class="dashboard">
 
-    <div class="dashboard-column-container" v-if="forceGraph">
-      <CgaLookupCard v-if="forceGraph && graphMetadata.keyspace" :concept-for-lookup="conceptForLookup" />
-      <CgaForceConfigCard v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected" :force-simulation="forceSimulation" />
+    <div v-if="forceGraph"
+      class="dashboard-column-container"
+    >
+      <CgaLookupCard 
+        v-if="forceGraph && graphMetadata.keyspace" 
+        :concept-for-lookup="conceptForLookup"
+
+      />
+      <CgaForceConfigCard 
+        v-if="forceGraph && cassandraServerCredentials.isCassandraServerConnected" 
+        :force-simulation="forceSimulation" 
+      />
     </div>
 
     <div class="dashboard-column-container conceptual-graph-wrapper">
-        <template v-if="!forceGraph && graphMetadata.tables.length">
-            <!-- TODO:
-              <svg class="svg-clip-container">
-              <defs>
-                <clipPath id="clip">
-                  <rect x="0" y="0" />
-                </clipPath>
-              </defs>
-            </svg> -->
-          <conceptual-graph graph-key="keyspaceGraph" ref="keyspaceGraph" :graph-metadata="graphMetadata" />
-        </template>
-      <svg class="svg-container" v-else></svg>
+      <PlaceholderGraph 
+        v-if="isKeyspaceRetrieveInProgress"
+        :placeholder-text="isKeyspaceRetrieveInProgress ? 'retrieving keyspace metadata ...' : 'please connect and select a keyspace'"
+        :is-circular-placeholder="forceGraph ? true : false"
+      />
+
+      <ConceptualGraph 
+        v-if="!isKeyspaceRetrieveInProgress && !forceGraph"
+        graph-key="keyspaceGraph" 
+        :graph-metadata="graphMetadata"
+        ref="keyspaceGraph"
+      />
+        
+      <svg 
+        v-if="!isKeyspaceRetrieveInProgress && forceGraph"
+        class="svg-container"
+      >
+      </svg>
     </div>
       
     </div>
@@ -27,6 +42,7 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import ConceptualGraph from '../graphic/graph/ConceptualGraph.vue';
+import PlaceholderGraph from '@/components/graphic/graph/PlaceholderGraph.vue';
 import CgaLookupCard from '../graphic/cards/CgaLookupCard.vue';
 import CgaForceConfigCard from '../graphic/cards/CgaForceConfigCard.vue';
 import * as d3 from 'd3';
@@ -36,13 +52,13 @@ import { ConfigurableConcept, GraphMetadata, D3Link, D3Node, Concept } from '../
 import { storeToRefs } from 'pinia';
 import { Ref, ref, watch, nextTick } from 'vue';
 import { useAstra } from '@/composables/requests/astra';
+import { useAstraMetadata } from '@/composables/metadata/astra';
 import { useConnectionStore } from "../../stores/connection";
 import { useForceGraph } from '../../composables/forcegraph';
 import { useMetadata } from '@/composables/metadata/metadata';
 import { useUtilsStore } from "../../stores/utils";
 import { useUtils } from '../../composables/utils';
 
-// Constants
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],
@@ -50,53 +66,58 @@ const defaultGraphMetadata: GraphMetadata = {
   dataTypes: new Map<string, ConfigurableConcept>()
 };
 
-// Reactive data
-const keyspaceGraph = ref();
+const emit = defineEmits(['hover']);
+
 const graphMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
 const keyspaceMetadata: Ref<any> = ref(null);
-const isKeyspaceRetrieveInProgress: Ref<boolean> = ref(false);
 
-// Store mappings
+// Pinia store mappings
 const connectionStore = useConnectionStore();
-const { currentKeyspace, cassandraServerCredentials } = storeToRefs(connectionStore);
+const { currentKeyspace, cassandraServerCredentials, isKeyspaceRetrieveInProgress, keyspaceGraph, isRerenderTriggered } = storeToRefs(connectionStore);
 
 const utilsStore = useUtilsStore();
 const { forceGraph } = storeToRefs(utilsStore);
 
-// Composables
+// Composables mappings
 const { createForceGraphRepresentation } = useForceGraph();
 const { openNotificationToast } = useUtils();
 const { getRelationTypeForColumnConcept } = useMetadata();
+const { getColumnClusteringOption, getColumnKindFromColumnDefinition } = useAstraMetadata();
 const { retrieveAllTables } = useAstra();
+const { delayExecution } = useUtils();
 
 // Functionalities related to the Force Graph representation of the keyspace metadata
 const conceptForLookup: Ref<Concept | any | null> = ref(null);
 const forceSimulation: Ref<any> = ref(null);
+const forceSimulationNodes: Ref<D3Node[]> = ref([]);
+const forceSimulationLinks: Ref<D3Link[]> = ref([]);
 
 // Functionalities related to the parsing of the keyspace metadata
 const parseKeyspaceMetadata = (keyspaceMetadata: AstraTableMetadata[] ): void => {
   resetKeyspaceMetadata();
 
-  const keyspaceConcept = {
+  graphMetadata.value.keyspace = {
     conceptType: constants.conceptTypes.keyspace,
     conceptName: currentKeyspace.value
-  };
-  graphMetadata.value.keyspace = Object.assign({}, keyspaceConcept);
+  }
   
   keyspaceMetadata.forEach((table: AstraTableMetadata) => {
     const tableConcept: ConfigurableConcept = {
       conceptType: constants.conceptTypes.table,
       conceptName: table.name,
-      isTableExpanded: true
     };
     graphMetadata.value.tables.push(tableConcept);
     graphMetadata.value.columns.set(tableConcept.conceptName, []);
 
     table.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
       const columnConcept = { conceptType: constants.conceptTypes.column, conceptName: columnDefinition.name };
-      // const relationType = getRelationTypeForColumnConcept(column.column_kind, column.clustering_order)
 
-      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: 'todo' });
+      const columnKind = getColumnKindFromColumnDefinition(columnConcept, table);
+      const columnClusteringOption = getColumnClusteringOption(columnConcept, table);
+
+      const relationType = getRelationTypeForColumnConcept(columnKind, columnClusteringOption);
+
+      graphMetadata.value.columns.get(tableConcept.conceptName)?.push({ ... columnConcept, relation: relationType });
 
       const typeConcept = { conceptType: constants.conceptTypes.dataType, conceptName: columnDefinition.typeDefinition };
       graphMetadata.value.dataTypes.set(columnConcept.conceptName, { ... typeConcept, relation: constants.relationTypes.hasType });
@@ -141,7 +162,8 @@ const parseKeyspaceMetadataAsForceGraph = (keyspaceMetadata: AstraTableMetadata[
 const parseKeyspaceMetadataWrapper = (keyspaceMetadata: any): void => {
   if (forceGraph.value) {
     const { nodes, links} = parseKeyspaceMetadataAsForceGraph(keyspaceMetadata);
-    forceSimulation.value = createForceGraphRepresentation(nodes, links, conceptForLookup);
+    forceSimulationNodes.value = JSON.parse(JSON.stringify(nodes));
+    forceSimulationLinks.value = JSON.parse(JSON.stringify(links));
   } else {
     parseKeyspaceMetadata(keyspaceMetadata);
   }
@@ -153,6 +175,7 @@ const resetKeyspaceMetadata = (): void => {
   graphMetadata.value.tables = [];
   graphMetadata.value.columns = new Map<string, ConfigurableConcept[]>();
   graphMetadata.value.dataTypes = new Map<string, ConfigurableConcept>();
+  forceSimulation.value = null;
 };
 
 // Functionalities related to the retrieval of the keyspace metadata
@@ -160,25 +183,35 @@ const retrieveKeyspaceMetadata = async (): Promise<void> => {
   if (currentKeyspace.value) {
     isKeyspaceRetrieveInProgress.value = true;
 
+    await delayExecution(3000);
+
     const response = await retrieveAllTables(currentKeyspace.value);
+
     if (response && response.data) {
     
       const responseData = response.data as AstraApiResponse;
+
       if (responseData.data) {
         keyspaceMetadata.value = { ...responseData.data };
         parseKeyspaceMetadataWrapper(responseData.data);
       } else {
         openNotificationToast(responseData.description, 'error');
+        isKeyspaceRetrieveInProgress.value = false;
+        return;
       }
 
     } else {
       openNotificationToast('Unexpected error occured', 'error');
+      isKeyspaceRetrieveInProgress.value = false;
+      return;
     }
 
-    await nextTick();
     isKeyspaceRetrieveInProgress.value = false;
+    await nextTick();
 
-    if (!forceGraph.value) {
+    if (forceGraph.value) {
+      forceSimulation.value = createForceGraphRepresentation(forceSimulationNodes.value, forceSimulationLinks.value, conceptForLookup);
+    } else {
       keyspaceGraph.value.removeArrows();
       keyspaceGraph.value.drawInitialArrows();
     }
@@ -203,6 +236,13 @@ watch(currentKeyspace, async () => {
 
 watch(forceGraph, () => {
   retrieveKeyspaceMetadata();
+});
+
+watch(isRerenderTriggered, async () => {
+  if (isRerenderTriggered.value) {
+    await retrieveKeyspaceMetadata();
+    isRerenderTriggered.value = false;
+  }
 });
 
 </script>

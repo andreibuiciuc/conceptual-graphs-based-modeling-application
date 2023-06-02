@@ -2,7 +2,11 @@
   <div class="design-section">
     <div class="header-container">
       <div class="header-container-title">
-        <InputSwitch v-model="isScreenInViewMode" :disabled="!currentKeyspace" @update:modelValue="changeScreenMode" />
+        <InputSwitch 
+          v-model="isScreenInViewMode" 
+          :disabled="!currentKeyspace" 
+          @update:modelValue="changeScreenMode" 
+        />
         <span>cassandra data structure {{ isScreenInViewMode ? 'view' : 'design' }}</span>
       </div>
       <div class="header-actions">
@@ -21,7 +25,7 @@
             icon="pi pi-save"
             label="save"
             :disabled="!isGraphRendered"
-            @click="saveAndSyncronizeTable"
+            @click="addTableToKeyspace"
           />
         </template>
         <template v-else>
@@ -29,8 +33,19 @@
             v-model="tableInViewMode"
             placeholder="table"
             :options="availableTables"
-            @change="retrieveSavedTable"
+            :disabled="isDropInProgress"
+            @change="retrieveKeyspaceTable"
           />
+          <Button
+            outlined
+            severity="danger"
+            icon="pi pi-times"
+            label="drop table"
+            :disabled="!tableInViewMode || isDropInProgress"
+            :loading="isDropInProgress"
+            @click="openConfirmationPopup($event)" 
+          >
+          </Button>
         </template>
       </div>
     </div>
@@ -40,6 +55,8 @@
           :is-table-in-view-mode="isScreenInViewMode"
           :is-table-in-view-mode-ready="isTableInViewModeReady"
           :table-in-view-mode="tableMetadata"
+          :hovered-column="hoveredColumn"
+          :data-type-for-hovered-column="dataTypeForHoveredColumn"
           @openTerminal="openTerminal"
           @render="renderConceptualGraph">
         </DesignToolbox>
@@ -52,8 +69,11 @@
           graph-key="tableGraph"
           :are-column-concepts-deletable="!isScreenInViewMode"
           :are-tables-collapsable="false"
+          :are-columns-selectable="true"
           :apply-border="false"
-          @remove="removeColumnConcept">
+          @remove="removeColumnConcept"
+          @hover="hoverColumnConcept"
+          @hoveroff="hoverOffColumnConcept">
         </ConceptualGraph>
     </Transition>
   </div>
@@ -66,6 +86,14 @@
       @close="closeTerminal" 
     />
   </Dialog>
+  <ConfirmPopup group="dropTable">
+    <template #message="slotProps">
+      <div class="flex align-content-center p-4">
+        <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
+        <p class="pl-2">{{ slotProps.message.message }}</p>
+      </div>
+    </template>
+  </ConfirmPopup>
 </template>
 
 <script setup lang="ts">
@@ -74,7 +102,6 @@ import CassandraTerminal from "../components/graphic/terminal/CassandraTerminal.
 import ConceptualGraph from "../components/graphic/graph/ConceptualGraph.vue";
 import designToolboxConstants from '../components/design/designToolboxConstants';
 import DesignToolbox from "../components/design/DesignToolbox.vue";
-import { auth, tableGraphsCollection } from '@/includes/firebase';
 import { AstraApiResponse } from '@/types/astra/types';
 import { AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
 import { ClusteringOption, Command, Concept, GraphMetadata } from '../types/types';
@@ -86,16 +113,19 @@ import { useConnectionStore } from "../stores/connection";
 import { useMetadata } from '@/composables/metadata/metadata';
 import { useQuery } from '@/composables/metadata/query';
 import { useUtils } from '@/composables/utils';
+import { useAstraMetadata } from '@/composables/metadata/astra';
+import { useConfirm } from "primevue/useconfirm";
+
 
 // Functions mapped from composables
 const { generateQueryAsString, generateQueryAsCommands } = useQuery();
 const { copyToClipboard, openNotificationToast } = useUtils();
-const { getPartitionAndClusteringColumnsCount } = useMetadata();
+const { getPartitionAndClusteringColumnsCount, getRelationTypeForColumnConcept } = useMetadata();
+const { getColumnClusteringOption, getColumnKindFromColumnDefinition } = useAstraMetadata();
 const { createConfetti } = useConfetti();
-const { saveTable } = useAstra();
+const { retrieveAllTables, retrieveTable, saveTable, deleteTable } = useAstra();
 
 // Local constants
-// TODO: Move this to the constants file
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],
@@ -170,7 +200,6 @@ const removeColumnConcept = async (tableAndColumnConcepts: any): Promise<void> =
 const isSaveInProgress: Ref<boolean> = ref(false);
 
 const prepareTableForSaving = (): AstraTableMetadata => {
-  // TODO
   let table: any = {};
   table.name = tableMetadata.value.tables.at(0).conceptName;
   table.keyspace = tableMetadata.value.keyspace.conceptName;
@@ -178,6 +207,7 @@ const prepareTableForSaving = (): AstraTableMetadata => {
   let columns: AstraColumnDefinition[] = [];
   let partitionKeys: string[] = [];
   let clusteringKeys: string[] = [];
+  
   tableMetadata.value.columns.get(table.name).forEach((column: Concept) => {
     columns.push({
       name: column.conceptName,
@@ -205,51 +235,24 @@ const prepareTableForSaving = (): AstraTableMetadata => {
 };
 
 const addTableToKeyspace = async (): Promise<void> => {
+  isSaveInProgress.value = true;
+
   const table = prepareTableForSaving();
   const response = await saveTable(currentKeyspace.value, table);
+  
   if (response && response.data) {
     const responseData = response.data as AstraApiResponse;
-    if (responseData.data) {
+    if (responseData) {
       openNotificationToast('table successfully added to the keyspace', 'success');
+      createConfetti();
     } else {
       openNotificationToast(responseData.description, 'error');
     }
   } else {
     openNotificationToast('unexpeced error occured', 'error');
   }
-  return;
-};
 
-const saveTableMetadataToCollection = async (): Promise<void> => {
-  isSaveInProgress.value = true;
-  
-  const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
-  if (!isConceptualGraphValid) {
-    openNotificationToast(errorMessage, 'error');
-    isSaveInProgress.value = false;
-    return;
-  }
-
-  try {
-    const currentTableConcept: Concept = tableMetadata.value.tables.at(0)!;
-    await tableGraphsCollection.doc(auth.currentUser?.uid).set({
-      tableName: currentTableConcept.conceptName,
-      tableConcepts: tableMetadata.value.tables,
-      columnConcepts: Object.fromEntries(tableMetadata.value.columns),
-      dataTypeConcepts: Object.fromEntries(tableMetadata.value.dataTypes),
-      inSyncWithKeyspace: false
-    });
-    isSaveInProgress.value = false;
-    openNotificationToast(designToolboxConstants.SUCCESSFUL_TABLE_GRAPH_SAVE, 'success');
-    createConfetti();
-  } catch (error) {
-    isSaveInProgress.value = false;
-    openNotificationToast(error.message, 'error');
-  }
-};
-
-const saveAndSyncronizeTable = (): void => {
-  saveTableMetadataToCollection();
+  isSaveInProgress.value = false;
 };
 
 const validateConceptualGraph = (): [boolean, string] => {
@@ -274,15 +277,18 @@ onMounted(() => {
   }
 });
 
-// Functions related to the view mode
+// Functionalities related to the Data Structure View mode
 const availableTables: Ref<string[]> = ref([]);
 const isScreenInViewMode: Ref<boolean> = ref(false);
 const isTableInViewModeReady: Ref<boolean> = ref(false);
 const tableInViewMode: Ref<string> = ref(constants.inputValues.empty);
+const hoveredColumn: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const dataTypeForHoveredColumn: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const astraMetadata: Ref<AstraTableMetadata> = ref(null);
 
 const changeScreenMode = (isViewMode: boolean): void => {
   if (isViewMode) {
-    retrieveAllSavedTables();
+    retrieveKeyspaceTables();
   } else {
     availableTables.value = [];
     tableInViewMode.value = constants.inputValues.empty;
@@ -292,34 +298,132 @@ const changeScreenMode = (isViewMode: boolean): void => {
   }
 };
 
-const parseTableForViewMode = async (metadata: any): Promise<void> => {
-  tableMetadata.value = JSON.parse(JSON.stringify(defaultGraphMetadata));
-  tableMetadata.value.keyspace = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
-  tableMetadata.value.tables = JSON.parse(JSON.stringify(metadata.tableConcepts));
-  tableMetadata.value.columns = new Map<string, Concept[]>(Object.entries(metadata.columnConcepts));
-  tableMetadata.value.dataTypes = new Map<string, Concept>(Object.entries(metadata.dataTypeConcepts));
+const hoverColumnConcept = (concepts: { [key: string]: Concept}): void => {
+  if (isScreenInViewMode.value) {
+    const { columnConcept, dataTypeConcept } = concepts;
+
+    const columnKind = getColumnKindFromColumnDefinition(columnConcept, astraMetadata.value);
+    hoveredColumn.value = { ... columnConcept, columnKind };
+    dataTypeForHoveredColumn.value = { ... dataTypeConcept };
+  }
+}
+
+const hoverOffColumnConcept = (): void => {
+  if (isScreenInViewMode.value) {
+    hoveredColumn.value = { ... constants.defaultConcept };
+    dataTypeForHoveredColumn.value = { ... constants.dataTypeForHoveredColumn };
+  }
+}
+
+const parseTableForViewMode = async (tableAstraMetadata: AstraTableMetadata): Promise<void> => {
+  astraMetadata.value = { ... tableAstraMetadata };
+
+  tableMetadata.value.keyspace = {
+    conceptType: constants.conceptTypes.keyspace,
+    conceptName: currentKeyspace.value,
+  };
+
+  tableMetadata.value.tables.push({
+    conceptType: constants.conceptTypes.table,
+    conceptName: tableAstraMetadata.name
+  });
+
+  tableMetadata.value.columns.set(tableAstraMetadata.name, []);
+
+  tableAstraMetadata.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
+    const columnConcept = { conceptType: constants.conceptTypes.column, conceptName: columnDefinition.name };
+
+    const columnKind = getColumnKindFromColumnDefinition(columnConcept, tableAstraMetadata);
+    const columnClusteringOption = getColumnClusteringOption(columnConcept, tableAstraMetadata);
+
+    const relationType = getRelationTypeForColumnConcept(columnKind, columnClusteringOption);
+
+    tableMetadata.value.columns.get(tableAstraMetadata.name).push({ ... columnConcept, relation: relationType });
+
+    const typeConcept = { conceptType: constants.conceptTypes.dataType, conceptName: columnDefinition.typeDefinition };
+    tableMetadata.value.dataTypes.set(columnConcept.conceptName, { ... typeConcept, relation: constants.relationTypes.hasType });
+  });
+
   isGraphRendered.value = true;
   await nextTick();
   tableGraph.value.rerenderArrows();
+  isTableInViewModeReady.value = true;
 };
 
-const retrieveAllSavedTables = async (): Promise<void> => {
-  try {
-    const snapshot = await tableGraphsCollection.get();
-    availableTables.value = JSON.parse(JSON.stringify(snapshot.docs.map(doc => doc.data().tableName)));
-  } catch (error: any) {
-    openNotificationToast(error.message, 'error');
+const retrieveKeyspaceTables = async (): Promise<void> => {
+  const response = await retrieveAllTables(currentKeyspace.value);
+  if (response && response.data) {
+    const responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      availableTables.value = JSON.parse(JSON.stringify(responseData.data.map(metadata => metadata.name)));
+    } else {
+      openNotificationToast(responseData.description, 'error');
+    }
+  } else {
+    openNotificationToast('error when saving the table', 'error');
+  }
+}
+
+const retrieveKeyspaceTable = async (): Promise<void> => {
+  const response = await retrieveTable(currentKeyspace.value, tableInViewMode.value);
+  if (response && response.data) {
+    const responseData = response.data as AstraApiResponse;
+    if (responseData.data) {
+      resetTableMetadata();
+      parseTableForViewMode(responseData.data);
+    } else {
+      openNotificationToast(responseData.description, 'error');
+    }
+  } else {
+    openNotificationToast('error when retrieving the table', 'error');
   }
 };
 
-const retrieveSavedTable = async (): Promise<void> => {
-  try {
-    const querySnapshot = await tableGraphsCollection.where('tableName', '==', tableInViewMode.value).get();
-    parseTableForViewMode(querySnapshot.docs.at(0).data());
-    isTableInViewModeReady.value = true;
-  } catch (error: any) {
-    openNotificationToast(error.message, 'error');
+const resetTableMetadata = (): void => {
+  const defaultConcept = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
+  tableMetadata.value.keyspace = { ... defaultConcept };
+  tableMetadata.value.tables = [];
+  tableMetadata.value.columns = new Map<string, Concept[]>();
+  tableMetadata.value.dataTypes = new Map<string, Concept>();
+};
+
+// Functionalities related to the dropping of tables
+const confirm = useConfirm();
+const isDropInProgress: Ref<boolean> = ref(false);
+
+const dropTable = async (): Promise<void> => {
+  isDropInProgress.value = true;
+
+  const response = await deleteTable(currentKeyspace.value, tableInViewMode.value);
+
+  if (response && response.status === 204) {
+    openNotificationToast('table dropped successfully', 'success');
+    createConfetti();
+
+    isGraphRendered.value = false;
+    isTableInViewModeReady.value = false;
+
+    resetTableMetadata();
+    retrieveKeyspaceTables();
+  } else { 
+    openNotificationToast('error occured when dropping the table', 'error');
   }
+
+  isDropInProgress.value = false;
+};
+
+const openConfirmationPopup = (event: any): void => {
+  confirm.require({
+    target: event.currentTarget,
+    group: 'dropTable',
+    message: 'are you sure you want to drop the current table?',
+    icon: 'pi pi-question-circle',
+    acceptIcon: 'pi pi-check',
+    rejectIcon: 'pi pi-times',
+    accept: () => {
+      dropTable();
+    }
+  });
 };
 
 </script>

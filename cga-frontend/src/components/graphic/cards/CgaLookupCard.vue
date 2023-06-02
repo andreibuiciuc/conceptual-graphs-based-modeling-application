@@ -67,36 +67,42 @@ const conceptTypeInfoText: ComputedRef<string> = computed(() => {
 
 .concept-node-lookup-container
     box-shadow: none !important
-    border: 1px solid #e9ecef
-    border-left: 2px solid variables.$cassandra-app-blue
+    border: 1px solid #e9ecef !important
     z-index: 1
     padding: 1.5rem
     width: 21rem
 
-    .info 
-      @include containers.flex-container($flex-direction: column, $align-items: center)
-      
-      .relation-dummy
-        width: 1px
-        height: 2rem
-        background-color: variables.$cassandra-black
+    .p-card-body
+      width: 100%
+      padding: 0
 
-      .concept-dummy
-        @include containers.flex-container($justify-content: center, $align-items: center)
-        width: 4rem
-        height: 2rem
-        border: 1px solid variables.$cassandra-black
+      .p-card-title
+        text-align: center
 
-        span
-          margin-right: 0 !important
+      .info 
+        @include containers.flex-container($flex-direction: column, $align-items: center)
+        
+        .relation-dummy
+          width: 1px
+          height: 2rem
+          background-color: variables.$cassandra-black
 
-      span:last-of-type
-        color: variables.$cassandra-app-blue
+        .concept-dummy
+          @include containers.flex-container($justify-content: center, $align-items: center)
+          width: 4rem
+          height: 2rem
+          border: 1px solid variables.$cassandra-black
 
-      span:first-of-type
-        margin-right: 0.5rem
+          span
+            margin-right: 0 !important
 
-      &:first-of-type
-        margin-bottom: 1.25rem
+        span:last-of-type
+          color: variables.$cassandra-app-blue
+
+        span:first-of-type
+          margin-right: 0.5rem
+
+        &:first-of-type
+          margin-bottom: 1.25rem
 
 </style>

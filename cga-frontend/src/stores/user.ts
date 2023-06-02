@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { auth, usersCollection } from '../includes/firebase';
+import { auth, usersCollection } from '../configurations/firebase';
 import { Ref, ref } from "vue";
 import { LoginCredentials, RegisterCredentials } from '@/types/auth/types';
 import { useUtils } from '../composables/utils';

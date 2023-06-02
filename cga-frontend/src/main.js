@@ -1,9 +1,9 @@
-import { auth } from "@/includes/firebase";
+import { auth } from "@/configurations/firebase";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import App from "./App.vue";
-import PrimeVuePlugin from './includes/primevue';
-import VeeValidatePlugin from "./includes/validation";
+import PrimeVuePlugin from './configurations/primevue';
+import VeeValidatePlugin from "./configurations/validation";
 import router from "./router";
 
 // TODO: Remove after full PrimeVue migration
@@ -16,10 +16,6 @@ import * as directives from "vuetify/lib/directives/index.mjs";
 // Styles imports
 import "./assets/main.css";
 import "@mdi/font/css/materialdesignicons.css";
-
-import "primevue/resources/themes/lara-light-blue/theme.css";     
-import "primevue/resources/primevue.min.css";
-import "primeicons/primeicons.css";
 
 const vuetify = createVuetify({
   components,

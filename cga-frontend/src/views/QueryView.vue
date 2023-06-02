@@ -1,56 +1,99 @@
 <template>
   <div class="query-page">
     <div class="query-section">
-    <div class="header-container">
-      <div>
-        <span>cassandra query design</span>
+      <div class="header-container">
+        <div class="header-container-title">
+          <InputSwitch
+            v-model="isScreenInViewMode"
+            :disabled="!currentKeyspace"
+            @update:modelValue="changeScreenMode"
+          />
+        <span>cassandra query {{ isScreenInViewMode ? 'view' : 'design' }}</span>
       </div>
       <div class="header-actions">
-        <Dropdown 
-          v-model="selectedTable"
-          placeholder="table"
-          :disabled="!currentKeyspace"
-          :options="availableTables"
-          @change="changeTable">
-        </Dropdown>
-        <Button 
-          severity="primary" 
-          label="save" 
-          icon="pi pi-save" 
-          outlined 
-          :disabled="true"
-        />
+        <template v-if="!isScreenInViewMode">
+          <Dropdown 
+            v-model="selectedTable"
+            placeholder="table"
+            :disabled="!currentKeyspace || isQuerySaveInProgress"
+            :options="availableTables"
+            @change="changeTable">
+          </Dropdown>
+          <Button 
+            severity="primary" 
+            label="save" 
+            icon="pi pi-save" 
+            outlined 
+            :disabled="queryMetadata.columns.size === 0 || isQuerySaveInProgress"
+            :loading="isQuerySaveInProgress"
+            @click="openSaveConfirmationDialog(false)"
+          />
+        </template>
+        <template v-else>
+          <Dropdown
+            v-model="queryInViewMode"
+            placeholder="query"
+            :options="availableQueries"
+            @change="retrieveSavedQuery"
+          >
+          </Dropdown>
+          <Button
+            outlined
+            severity="danger"
+            icon="pi pi-times"
+            label="delete query"
+            :disabled="isQuerySaveInProgress || !queryInViewMode"
+            :loading="isQuerySaveInProgress"
+            @click="openSaveConfirmationDialog(true)"
+          >
+          </Button>
+        </template>
       </div>
+    </div>
+    <div 
+      v-if="isScreenInViewMode && isQueryInViewModeReady"
+      class="message-container"
+    >
+      <Message 
+        severity="info" 
+        :closable="false"
+      >
+        {{ currentCQLQuery }}
+      </Message>
     </div>
     <Splitter class="query-canvas-wrapper">
       <SplitterPanel>
         <ConceptualGraph
-          v-if="selectedTable && !isTableRetrieveInProgress" 
+          v-if="isScreenInViewMode ? isQueryInViewModeReady : (selectedTable && !isTableRetrieveInProgress)" 
           ref="tableGraph"
           graph-key="tableGraph"
           :graph-metadata="tableMetadata"
-          :are-columns-selectable="true"
-          :are-tables-collapsable="false"
+          :are-columns-selectable="!isScreenInViewMode"
           @select="addColumnToQuery" 
         />
-        <ProgressSpinner v-else-if="isTableRetrieveInProgress" />
+        <PlaceholderGraph 
+          v-else-if="isTableRetrieveInProgress"
+          placeholder-text="retrieving table metadata ..." 
+        />
       </SplitterPanel>
       <SplitterPanel>
         <ConceptualGraph 
-          v-if="queryMetadata && queryMetadata.columns && queryMetadata.columns.size" 
+          v-if="isScreenInViewMode ? isQueryInViewModeReady : (queryMetadata && queryMetadata.columns && queryMetadata.columns.size)" 
           ref="queryGraph"
           graph-key="queryGraph"
           :graph-metadata="queryMetadata"
-          :are-tables-collapsable="false"
           :are-columns-selectable="false"
-          :are-column-concepts-deletable="true"
+          :are-column-concepts-deletable="!isScreenInViewMode"
           :is-query-graph="true"
           @remove="removeColumnFromQuery"
         />
       </SplitterPanel>
     </Splitter>
     </div>
-    <div class="query-toolbox">
+    <div 
+      v-if="!isScreenInViewMode"
+      class="query-toolbox"
+    >
       <div class="query-panel-header">
         <div class="query-panel-header-info">
           <div class="info-block">
@@ -73,23 +116,15 @@
         <div class="query-panel-header-actions">
           <Dropdown v-model="selectedClauseType"
             placeholder="add to query" 
-            :disabled="!areQueryActionsEnabled"
+            :disabled="!areQueryActionsEnabled || isQuerySaveInProgress"
             :options="[QueryClause.WHERE, QueryClause.GROUP_BY, QueryClause.ORDER_BY, QueryClause.GET]"
             @change="addClauseToQuery(selectedClauseType)"
           />
-          <ConfirmPopup group="clear">
-            <template #message="slotProps">
-              <div class="flex align-content-center p-4">
-                <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
-                <p class="pl-2">{{ slotProps.message.message }}</p>
-              </div>
-            </template>
-          </ConfirmPopup>
           <Button 
             label="clear" 
             text 
             severity="secondary" 
-            :disabled="!areQueryActionsEnabled" 
+            :disabled="!areQueryActionsEnabled || isQuerySaveInProgress" 
             @click="openConfirmationPopup($event)" 
           />
           <Divider layout="vertical" />
@@ -98,19 +133,19 @@
             severity="primary" 
             icon="pi pi-credit-card"
             outlined 
-            :disabled="!areQueryActionsEnabled" 
+            :disabled="!areQueryActionsEnabled || isQuerySaveInProgress" 
             @click="openQueryTerminal" />
           <Button 
             label="run" 
             severity="primary" 
             icon="pi pi-server"
             outlined 
-            :disabled="!areQueryActionsEnabled" 
+            :disabled="!areQueryActionsEnabled || isQuerySaveInProgress" 
             @click="runQuery" 
           />
         </div>
       </div>
-      <v-divider></v-divider>
+      <Divider />
       <div class="query-panel-container">
         <div class="query-panel-item">
           <Transition name="pop-in" mode="out-in">
@@ -161,6 +196,7 @@
       </div>
     </div>
   </div>
+
   <Dialog v-model:visible="isQueryTerminalOpened" :show-header="false" modal>
     <CassandraTerminal
       :is-terminal-opened="isQueryTerminalOpened"
@@ -169,17 +205,52 @@
       @close="closeCassandraTerminal" 
     />
   </Dialog>
+
   <Dialog v-model:visible="isQueryResultsModalOpened" header="query results" :style="{ width: '50vw'}" modal maximizable>
     <CgaTable :columns="queryResultsTableHeaders" :items="queryResults" />
   </Dialog>
+
+  <ConfirmPopup group="clear">
+    <template #message="slotProps">
+      <div class="flex align-content-center p-4">
+        <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
+        <p class="pl-2">{{ slotProps.message.message }}</p>
+      </div>
+    </template>
+  </ConfirmPopup>
+
+  <!-- Confirmation Dialog -->
+  <ConfirmDialog 
+    class="confirmation-dialog"
+    :draggable="false"
+  >
+    <template #message="slotProps">
+      <div class="confirmation-dialog-message">
+        <i :class="slotProps.message.icon" style="font-size: 1.25rem;"></i>
+        <p class="pl-2">{{ slotProps.message.message }}</p>
+      </div>
+      <div 
+        v-if="currentConfirmationType === 'save'"
+        class="confirmation-dialog-content"
+      >
+        <InputText
+          v-model="currentQueryName"
+          :class="{ 'p-invalid': !isCurrentQueryNameValid }"
+          placeholder="query name / description"
+          @change="changeCurrentQueryName"
+        />
+      </div>
+    </template>
+  </ConfirmDialog>
+
 </template>
 
 <script setup lang="ts">
-// Constants, types and utility imports
 import constants from '@/constants/constants';
 import CassandraTerminal from '@/components/graphic/terminal/CassandraTerminal.vue';
 import CgaTable from '@/components/utilities/CgaTable.vue';
 import ConceptualGraph from '@/components/graphic/graph/ConceptualGraph.vue';
+import PlaceholderGraph from '@/components/graphic/graph/PlaceholderGraph.vue';
 import QueryItems from '@/components/design/QueryItems.vue';
 import { 
   Concept, QueryClause, GraphMetadata, ConfigurableConcept, 
@@ -196,7 +267,7 @@ import { useQueryStore } from '../stores/query';
 import { useUtils } from '../composables/utils';
 import { useAstra } from '@/composables/requests/astra';
 import { AstraApiQueryResponse, AstraApiResponse, AstraColumnDefinition, AstraTableMetadata } from '@/types/astra/types';
-
+import { auth, queriesCollection } from '@/configurations/firebase';
 
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
@@ -207,11 +278,10 @@ const defaultGraphMetadata: GraphMetadata = {
 
 const tableGraph = ref();
 const queryGraph = ref();
-const tableMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
-const queryMetadata: Ref<GraphMetadata> = ref(Object.assign({}, defaultGraphMetadata));
+const tableMetadata: Ref<GraphMetadata> = ref(structuredClone(defaultGraphMetadata));
+const queryMetadata: Ref<GraphMetadata> = ref(structuredClone(defaultGraphMetadata));
 const isTableGraphReady: Ref<boolean> = ref(false);
 const selectedClauseType: Ref<QueryClause | null> = ref(null);
-
 
 const { getRelationTypeForColumnConcept, 
         computeConceptReferentValue,
@@ -220,11 +290,10 @@ const { getRelationTypeForColumnConcept,
         computeConceptReferentValueForOrderByItems,
         getColumnInputType, 
         getCQLWhereOperatorsByColumnKind,
-        getQuerySelectionConceptNames,
         getHeadersForQueryResults,
         validateQuery 
       } = useMetadata();
-const { openNotificationToast, copyToClipboard } = useUtils();
+const { openNotificationToast, copyToClipboard, delayExecution } = useUtils();
 const { generateSelectQueryAsCommands, generateQueryAsString } = useQuery();
 const { retrieveAllTables, retrieveTable, retrieveQueryResults } = useAstra();
 
@@ -254,8 +323,6 @@ const getColumnsMetadataForTableGraph = (metadata: AstraTableMetadata) => {
   
   const tableColumnConcepts = columns.get(selectedTable.value);
   metadata.columnDefinitions.forEach((columnDefinition: AstraColumnDefinition) => {
-    console.log(columnDefinition);
-    
     let columnKind = constants.columnKinds.regular;
     if (metadata.primaryKey.partitionKey.includes(columnDefinition.name)) {
       columnKind = "partition_key";
@@ -301,11 +368,13 @@ const retrieveAvailableTables = async (): Promise<void> => {
 
 const retrieveTableMetadata = async (): Promise<void> => {
   isTableRetrieveInProgress.value = true;
+
+  await delayExecution(3000);
+
   const response = await retrieveTable(currentKeyspace.value, selectedTable.value);
   if (response && response.data) {
     const responseData = response.data as AstraApiResponse;
     if (responseData.data) {
-      console.log(responseData.data);
       parseTableMetadata(responseData.data);
       isTableRetrieveInProgress.value = false;
     
@@ -397,6 +466,10 @@ const tableColumnConcepts: ComputedRef<Concept[]> = computed(() => {
 });
 
 const addColumnToQuery = async (columnConcept: Concept): Promise<void> => {
+  if (isScreenInViewMode.value) {
+    return;
+  }
+
   const isColumnAlreadyAdded = checkIfColumnIsAlreadyAdded(columnConcept);
   if (!isColumnAlreadyAdded) {
     const conceptToAdd = { ... columnConcept, relation: constants.relationTypes.has };
@@ -495,12 +568,15 @@ const checkIfClusteringColumnsAreSelected = (): boolean => {
   return queryMetadata.value.columns.get(queryMetadata.value.tables.at(0).conceptName).some((columnConcept: Concept) => columnConcept.columnKind === constants.columnKinds.clustering);
 };
 
-
 // Functions related to the removal of query columns, clauses and data
 const clearQueryMetadata = () => {
   // Reset the state of the clause items and query concepts
   queryStore.resetQueryClauseItems();
   queryStore.resetQueryConcepts();
+  whereClauseItemsState.value = constants.inputValues.empty;
+  groupByClauseItems.value = constants.inputValues.empty;
+  orderByClauseItems.value = constants.inputValues.empty;
+  aggregateFunctionsItems.value = constants.inputValues.empty;
   
   // Reset the commands for Cassandra Terminal
   cqlQueryCommands.value = [];
@@ -565,6 +641,9 @@ const cqlQueryCommands: Ref<Command[]> = ref([]);
 const queryResults: Ref<any[]> = ref([]);
 const queryResultsTableHeaders: Ref<DataTableColumn[]> = ref([]);
 const isQueryResultsModalOpened: Ref<boolean> = ref(false);
+const currentCQLQuery: Ref<string> = ref(constants.inputValues.empty);
+const currentQueryName: Ref<string> = ref(constants.inputValues.empty);
+const isCurrentQueryNameValid: Ref<boolean> = ref(true);
 
 const adjustInvalidOrderByClause = (): void => {
   // Adjustment for an invalid order by clause
@@ -580,7 +659,7 @@ const adjustInvalidOrderByClause = (): void => {
   }
 
   whereClauseItems.value = [];
-  currentColumns.forEach((columnConcept: Concept) => {
+  currentColumns.forEach(async (columnConcept: Concept) => {
     if (columnConcept.columnKind === 'partition_key') {
       whereClauseItems.value.push({
         column: columnConcept.conceptName,
@@ -593,14 +672,21 @@ const adjustInvalidOrderByClause = (): void => {
         type: getColumnInputType(columnConcept, tableMetadata.value)
       });
       whereClauseItemsState.value = 'warn';
+      
+      const index = queryMetadata.value.columns.get(currentTable.conceptName).findIndex((concept: Concept) => concept.conceptName === columnConcept.conceptName);
+      if (index < 0) {
+        queryMetadata.value.columns.get(currentTable.conceptName).push({ ... columnConcept, relation: constants.relationTypes.has });
+        await nextTick();
+        queryGraph.value.rerenderArrows();
+      }
     }
   });
 
 };
 
 const closeCassandraTerminal = (): void => {
-  const cqlQuery = generateQueryAsString(cqlQueryCommands.value);
-  copyToClipboard(cqlQuery);
+  const query = generateQueryAsString(cqlQueryCommands.value);
+  copyToClipboard(query);
   openNotificationToast('cql query was copied to clipboard', 'info');
   isQueryTerminalOpened.value = false;
 }
@@ -638,8 +724,17 @@ const fetchQueryResuls = async (): Promise<void> => {
 };
 
 const openQueryTerminal = (): void => {
-  cqlQueryCommands.value = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value, queryConcepts.value);
-  isQueryTerminalOpened.value = true;
+  const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value);
+  if (error) {
+    openNotificationToast(error, 'error');
+    if (errorCode == 1) {
+      adjustInvalidOrderByClause();
+      openNotificationToast('query items have been adjusted', 'warn', 'partition columns have been restricted with a where clause');
+    }
+  } else {
+    cqlQueryCommands.value = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value, queryConcepts.value);
+    isQueryTerminalOpened.value = true;
+  }
 };
 
 const parseQueryResults = (results: any[]) => {
@@ -665,7 +760,6 @@ const runQuery = (): void => {
   }
 };
 
-
 // Functions related to some utilities
 const confirm = useConfirm();
 
@@ -673,7 +767,7 @@ const openConfirmationPopup = (event: any): void => {
   confirm.require({
     target: event.currentTarget,
     group: 'clear',
-    message: 'are you sure you want to delete the current query?',
+    message: 'are you sure you want to clear the current query?',
     icon: 'pi pi-question-circle',
     acceptIcon: 'pi pi-check',
     rejectIcon: 'pi pi-times',
@@ -683,6 +777,198 @@ const openConfirmationPopup = (event: any): void => {
   });
 };
 
+// Functionalities related to the Query View mode
+const availableQueries: Ref<string[]> = ref([]);
+const isScreenInViewMode: Ref<boolean> = ref(false);
+const isQueryInViewModeReady: Ref<boolean> = ref(false);
+const queryInViewMode: Ref<string> = ref(constants.inputValues.empty);
+const isQuerySaveInProgress: Ref<boolean> = ref(false);
+const isQueryRetrieveInProgress: Ref<boolean> = ref(false);
+
+
+const changeCurrentQueryName = (): void => {
+  isCurrentQueryNameValid.value = !!currentQueryName.value;
+}
+
+const changeScreenMode = (isViewMode: boolean): void => {
+  if (isViewMode) {
+    tableMetadata.value = structuredClone(defaultGraphMetadata);
+    queryMetadata.value = structuredClone(defaultGraphMetadata);
+    retrieveSavedQueries();
+  } else {
+    availableQueries.value = [];
+    queryInViewMode.value = constants.inputValues.empty;
+    isQueryInViewModeReady.value = false;
+    tableMetadata.value = structuredClone(defaultGraphMetadata);
+    queryMetadata.value = structuredClone(defaultGraphMetadata);
+    currentCQLQuery.value = constants.inputValues.empty;
+  }
+};  
+
+const deleteQuery = async (): Promise<void> => {
+    isQuerySaveInProgress.value = true;
+
+    try {
+      const queriesSnapshot = await queriesCollection.where('userUid', '==', auth.currentUser.uid).where('queryName', '==', queryInViewMode.value).get();
+
+      if (queriesSnapshot.docs.length === 0) {
+        openNotificationToast('error while deleting query', 'error');
+      } else {
+
+        const queryDocumentId = queriesSnapshot.docs.at(0).id;
+        await queriesCollection.doc(queryDocumentId).delete();
+
+        tableMetadata.value = structuredClone(defaultGraphMetadata);
+        queryMetadata.value = structuredClone(defaultGraphMetadata);
+
+        isQueryInViewModeReady.value = false;
+
+        openNotificationToast('query deleted successfully', 'success');
+      }
+
+    } catch (error: any) {
+      openNotificationToast('error while deleting query', 'error');
+    }
+
+    isQuerySaveInProgress.value = false;
+};
+
+
+const currentConfirmationType: Ref<string> = ref(constants.inputValues.empty);
+
+const openSaveConfirmationDialog = (isDeleteConfirmation: boolean = false): void => {
+  currentConfirmationType.value = isDeleteConfirmation ? 'delete' : 'save';
+  confirm.require({
+    header: isDeleteConfirmation ? 'delete confirmation' : 'save confirmation',
+    message: isDeleteConfirmation ? 'are you sure you want to delete this query' : 'please provide a name for the query',
+    icon: 'pi pi-exclamation-circle',
+    accept: async () => {
+
+      if (isDeleteConfirmation) {
+        await deleteQuery();
+        
+        tableMetadata.value = structuredClone(defaultGraphMetadata);
+        queryMetadata.value = structuredClone(defaultGraphMetadata);
+        
+        await retrieveSavedQueries();
+      } else {
+
+        if (currentQueryName.value) {
+          await saveQuery();
+        }
+
+        currentQueryName.value = constants.inputValues.empty;
+      }
+    },
+    reject: () => {
+      currentConfirmationType.value = constants.inputValues.empty;
+    }
+  });
+};
+
+const parseMetadataForViewMode = async (metadata: any, isQueryMetadata: boolean = false): Promise<void> => {
+  const graphMetadataRef = isQueryMetadata ? queryMetadata : tableMetadata;
+  const graphMetadataName = isQueryMetadata ? 'queryMetadata' : 'tableMetadata';
+
+  graphMetadataRef.value.keyspace = {
+    conceptType: constants.conceptTypes.keyspace,
+    conceptName: metadata.keyspace
+  };
+
+  graphMetadataRef.value.tables.push({
+    conceptType: constants.conceptTypes.table,
+    conceptName: metadata[graphMetadataName].table
+  });
+
+  graphMetadataRef.value.columns = new Map(Object.entries(metadata[graphMetadataName].columns));
+  graphMetadataRef.value.dataTypes = new Map(Object.entries(metadata[graphMetadataName].dataTypes));
+  isQueryInViewModeReady.value = true;
+
+  await nextTick();
+  tableGraph.value.rerenderArrows();
+  queryGraph.value.rerenderArrows();
+};
+
+
+const retrieveSavedQuery = async (): Promise<void> => {
+  isQueryRetrieveInProgress.value = true;
+
+  try {
+    const queriesSnapshot = await queriesCollection.where('userUid', '==', auth.currentUser.uid).where('queryName', '==', queryInViewMode.value).get();
+
+    if (queriesSnapshot.docs.length === 0) {
+      openNotificationToast('error retrieving saved query', 'error');
+    } else {
+      tableMetadata.value = structuredClone(defaultGraphMetadata);
+      queryMetadata.value = structuredClone(defaultGraphMetadata);
+
+      const jsonQueryMetadata = queriesSnapshot.docs.at(0).data();
+      currentCQLQuery.value = jsonQueryMetadata.cqlQueryCommand;
+      parseMetadataForViewMode(jsonQueryMetadata);
+      parseMetadataForViewMode(jsonQueryMetadata, true);
+    }
+
+  } catch (error: any) {
+    openNotificationToast('error retrieving saved query', 'error');
+  }
+
+  isQueryRetrieveInProgress.value = false;
+};
+
+const retrieveSavedQueries = async (): Promise<void> => {
+  try {
+
+    const queriesSnapshot = await queriesCollection.where('userUid', '==', auth.currentUser.uid).get();
+    
+    availableQueries.value = [];
+    queriesSnapshot.forEach((document) => {
+      availableQueries.value.push(document.data().queryName);
+    });
+
+    if (availableQueries.value.length === 0) {
+      openNotificationToast('currently there are no saved queries in your collection', 'info');
+    }
+    
+  } catch (error: any) {
+    openNotificationToast('error retrieving saved queries', 'error');
+  }
+};
+
+const saveQuery = async (): Promise<void> => {
+  isQuerySaveInProgress.value = true;
+
+  try {
+    const queryCommands = generateSelectQueryAsCommands(tableMetadata.value, queryMetadata.value, queryConcepts.value);
+    const queryString = generateQueryAsString(queryCommands);
+
+    const jsonQueryMetadata = {
+      queryName: currentQueryName.value,
+      cqlQueryCommand: queryString,
+      userUid: auth.currentUser.uid,
+      keyspace: currentKeyspace.value,
+      tableMetadata: {
+        keyspace: tableMetadata.value.keyspace.conceptName,
+        table: tableMetadata.value.tables.at(0).conceptName,
+        columns: Object.fromEntries(tableMetadata.value.columns),
+        dataTypes: Object.fromEntries(tableMetadata.value.dataTypes)
+      },
+      queryMetadata: {
+        keyspace: queryMetadata.value.keyspace.conceptName,
+        table: queryMetadata.value.tables.at(0).conceptName,
+        columns: Object.fromEntries(queryMetadata.value.columns),
+        dataTypes: Object.fromEntries(queryMetadata.value.dataTypes)
+      }
+    };
+
+    await queriesCollection.add(jsonQueryMetadata);
+    openNotificationToast('query saved successfully', 'success');
+
+  } catch (error: any) {
+    openNotificationToast(error.message, 'error');
+  }
+
+  isQuerySaveInProgress.value = false;
+};
 
 // Watchers
 watch(currentKeyspace, (newKeyspace, _) => {
@@ -691,7 +977,11 @@ watch(currentKeyspace, (newKeyspace, _) => {
 });
 
 if (currentKeyspace.value) {
-  retrieveAvailableTables();
+  if (isScreenInViewMode.value) {
+    retrieveSavedQueries();
+  } else {
+    retrieveAvailableTables();
+  }
 } else {
   openNotificationToast('no selected keyspace', 'warn');
 }
@@ -711,18 +1001,24 @@ if (currentKeyspace.value) {
     @include containers.flex-container($flex-direction: column)
     height: calc(100vh - variables.$cga-topbar-height)
 
-    .query-header-container
-      @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
-      height: variables.$cga-header-height
-      min-height: variables.$cga-header-height
+    .header-container .header-container-title
+      @include containers.flex-container($align-items: center)
+
+      .p-inputswitch
+        margin-right: 1rem
+
+    .message-container
       width: 100%
-      padding: 10px 26px
+      padding: 0  1rem
 
-      .query-header-actions
-        @include containers.flex-container($flex-direction: row, $justify-content: flex-end, $align-items: center)
+      .p-message.p-message-info
+        background: transparent
+        border: 1px solid variables.$cassandra-app-blue !important
+        border-left-width: 0.4rem !important
+        color: variables.$cassandra-app-blue !important
 
-        & > *:not(:last-child)
-          margin-right: 10px
+        .p-message-wrapper .p-message-icon
+          color: variables.$cassandra-app-blue !important
 
     .query-canvas-wrapper
       padding: 10px

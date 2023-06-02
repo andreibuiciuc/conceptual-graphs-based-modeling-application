@@ -99,9 +99,34 @@ section
 .query-panel-item .v-overlay__scrim
     display: none
 
-.p-dialog .p-dialog-content
+.p-dialog:not(.confirmation-dialog) .p-dialog-content
     background: none !important
     padding: 0 !important
+
+.p-dialog.confirmation-dialog
+    .p-confirm-dialog-accept
+        color: variables.$cassandra-app-blue
+        background-color: transparent
+
+        &:hover
+            background: rgba(59, 130, 246, 0.04)
+
+    .p-dialog-content
+        @include flex-container($flex-direction: column)
+        width: 40rem
+        
+
+        .confirmation-dialog-message
+            @include flex-container($align-items: center)
+
+        .confirmation-dialog-content
+            @include flex-container($flex-direction: column, $align-items: flex-start)
+            width: 100%
+            margin-top: 2rem 
+
+            .p-inputtext
+                width: 100%
+        
 
 // PrimeVue classes are overwritten here
 

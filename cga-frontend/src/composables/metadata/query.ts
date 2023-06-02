@@ -368,9 +368,18 @@ export function useQuery() {
         let commands: Command[] = [];
 
         computeSelectStartingLine(tableMetadata, queryMetadata, commands, queryConcepts);
-        computeWhereClauseLine(commands);
-        computeGroupByClauseLine(commands);
-        computeOrderByClauseLine(commands);
+
+        if (queryStore.whereClauseItems.length) {
+            computeWhereClauseLine(commands);
+        }
+
+        if (queryStore.groupByClauseItems.length) {
+            computeGroupByClauseLine(commands);
+        }
+
+        if (queryStore.orderByClauseItems.length) {
+            computeOrderByClauseLine(commands);
+        }
 
         return commands;
     };

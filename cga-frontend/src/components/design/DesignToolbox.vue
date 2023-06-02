@@ -4,7 +4,7 @@
       class="design-toolbox"
       :class="{ 'toolbox-warning': !currentKeyspace }"
     >
-      <template #title>data structure config</template>
+      <template #title>{{ isTableInViewMode ? 'data structure config' : 'data structure lookup' }}</template>
       <template #content>
         
         <!-- Table concept input -->
@@ -19,9 +19,12 @@
                 :readonly="isGraphRendered"
                 @change="changeTableConcept"
               />
-              <InputText v-else 
+              <InputText 
+                v-else 
                 v-model="tableName"
+                class="input-lookup"
                 :disabled="true"
+                placeholder="no table selected"
                 :readonly="true"
               />
           </div>
@@ -51,24 +54,52 @@
           <div class="design-toolbox-input-group">
             <div class="flex flex-column gap-2">
               <InputText
+                v-if="!isTableInViewMode"
                 v-model="currentColumnConcept.conceptName"
                 :class="{ 'p-invalid': doesColumnConceptAlreadyExists }"
                 placeholder="column name"
                 :disabled="!currentTableConcept.conceptName || !isGraphRendered"
               />
+              <InputText 
+                v-else
+                v-model="hoveredColumn.conceptName"  
+                class="input-lookup"
+                :disabled="true"
+                placeholder="no column hovered"
+                :readonly="true"
+              />
               <small class="p-error">{{ getColumnNameErrorMessage }}</small>
             </div>
             <Dropdown 
+              v-if="!isTableInViewMode"
               v-model="currentColumnConcept.columnKind"
               placeholder="column kind"
               :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
               :options="designToolboxConstants.CQL_COLUMN_OPTIONS"
             />
+            <InputText
+              v-else
+              v-model="hoveredColumn.columnKind"
+              class="input-lookup"
+              :disabled="true"
+              placeholder="no column hovered"
+              :readonly="true"
+            >
+            </InputText>
             <Dropdown 
+              v-if="!isTableInViewMode"
               v-model="currentDataTypeConcept.conceptName"
               placeholder="column type"
               :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
               :options="designToolboxConstants.CQL_DATA_TYPES"
+            />
+            <InputText 
+              v-else
+              v-model="dataTypeForHoveredColumn.conceptName"
+              class="input-lookup"
+              :disabled="true"
+              placeholder="no column hovered"
+              :readonly="true"
             />
           </div>
           <Button v-if="!isTableInViewMode"
@@ -79,11 +110,11 @@
           />
         </div>
 
-        <Divider />
+        <Divider v-if="!isTableInViewMode" />
 
         <!-- Clustering column concepts options input -->
 
-        <div class="design-toolbox-input-container">
+        <div class="design-toolbox-input-container" v-if="!isTableInViewMode">
           <div class="design-toolbox-input-group">
             <Dropdown
               v-model="currentClusteringOrderOption.clusteringColumn"
@@ -108,11 +139,8 @@
 <script setup lang="ts">
 import constants from '../../constants/constants';
 import designToolboxConstants from "../design/designToolboxConstants";
-import { AstraApiResponse } from '@/types/astra/types';
-import { AxiosResponse } from 'axios';
-import { ComputedRef, Ref, ref } from 'vue';
+import { ComputedRef, Ref, ref, watch } from 'vue';
 import { computed } from '@vue/reactivity';
-import { conceptualGraphsCollection } from "../../includes/firebase";
 import { Concept, GraphMetadata, ClusteringOption } from '../../types/types';
 import { useAstra } from '@/composables/requests/astra';
 import { useConnectionStore } from '../../stores/connection';
@@ -125,6 +153,8 @@ interface Props {
   isTableInViewMode: boolean,
   isTableInViewModeReady: boolean,
   tableInViewMode?: GraphMetadata
+  hoveredColumn: Concept
+  dataTypeForHoveredColumn: Concept
 };
 
 const props = defineProps<Props>();
@@ -154,15 +184,15 @@ const connectionStore = useConnectionStore();
 const { currentKeyspace } = storeToRefs(connectionStore);
 
 // Reactive data related to the data structure configurations
-const currentTableConcept: Ref<Concept> = ref({ ... constants.defaultConcept });
-const currentColumnConcept: Ref<Concept> = ref({ ... constants.defaultConcept });
-const currentDataTypeConcept: Ref<Concept> = ref({ ... constants.defaultConcept });  
-const currentClusteringOrderOption: Ref<ClusteringOption> = ref({ ... defaultClusteringOption });
+const currentTableConcept: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const currentColumnConcept: Ref<Concept> = ref(structuredClone(constants.defaultConcept));
+const currentDataTypeConcept: Ref<Concept> = ref(structuredClone(constants.defaultConcept));  
+const currentClusteringOrderOption: Ref<ClusteringOption> = ref(structuredClone(defaultClusteringOption));
 const isClusteringSectionEnabled: Ref<boolean> = ref(false);
 const clusteringColumnOptions: Ref<string[]> = ref([]);
 
 // Reactive data related to the rendering of the conceptual graph
-const tableMetadata: Ref<GraphMetadata> = ref({ ... defaultGraphMetadata });
+const tableMetadata: Ref<GraphMetadata> = ref(structuredClone(defaultGraphMetadata));
 const isGraphRendered: Ref<boolean> = ref(false);
 
 
@@ -199,57 +229,29 @@ const getColumnNameErrorMessage: ComputedRef<string> = computed(() => {
 });
 
 const isAddTableConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
-  // return !!currentTableConcept.value.conceptName && !isGraphRendered.value;
-  return true;
+  return !!currentTableConcept.value.conceptName && !isGraphRendered.value;
 });
 
-const checkIfTableExistsInCollection = async (): Promise<boolean> => {
-  try {
-    const snapshot = await conceptualGraphsCollection.where('tableName', '==', currentTableConcept.value.conceptName).get();
-    if (!snapshot.empty) {
-      isTableConceptValid.value = false;
-      openNotificationToast(`table ${currentTableConcept.value.conceptName} is already saved in your collection`, 'error');
-      return true;
-    } else {
-      return false;
-    }
-  } catch (error) {
-    openNotificationToast(error.message, 'error');
-    return true;
-  }
-};
-
 const checkIfTableExistsInKeyspace = async (): Promise<boolean> => {
-  let response: AxiosResponse<any, any>, responseData: AstraApiResponse;
+  let isTableAlreadyInKeyspace = false;
   
   try {
-    response = await retrieveTable(currentKeyspace.value, currentTableConcept.value.conceptName);
+    await retrieveTable(currentKeyspace.value, currentTableConcept.value.conceptName);
+    isTableAlreadyInKeyspace = true;
   } catch (error: any) {
-    openNotificationToast(error.message, 'error');
-    return false;
+    isTableAlreadyInKeyspace = false;
   }
 
-  if (response && response.data) {
-    responseData = response.data as AstraApiResponse;
-    if (responseData.data) {
-      isTableConceptValid.value = true;
-      openNotificationToast(`table ${currentTableConcept.value.conceptName} already exists in the current keyspace`, 'error');
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    openNotificationToast(responseData.description, 'error');
+  if (isTableAlreadyInKeyspace) {
+    isTableConceptValid.value = false;
+    openNotificationToast(`table ${currentTableConcept.value.conceptName} already exists in the current keyspace`, 'error');
   }
+
+  return isTableAlreadyInKeyspace;
 };
 
 const validateTableName = async (): Promise<void> => {
 
-  const isTableAlreadySavedInCollecton = await checkIfTableExistsInCollection();
-  if (isTableAlreadySavedInCollecton) {
-    return;
-  }
-  
   const doesTableAlreadyExistInKeyspace = await checkIfTableExistsInKeyspace();
   if (doesTableAlreadyExistInKeyspace) {
     return;
@@ -313,6 +315,10 @@ const renderConceptualGraph = (onInitialLoad?: boolean): void => {
 
 resetToolbox();
 
+watch(() => props.isTableInViewMode, () => {
+  resetToolbox();
+});
+
 </script>
 
 <style scoped lang="sass">
@@ -330,6 +336,7 @@ resetToolbox();
 
       .design-toolbox-input-group
         @include containers.flex-container($flex-direction: column)
+        width: auto !important
 
         .flex.flex-column
           margin-bottom: 1rem
@@ -339,6 +346,16 @@ resetToolbox();
 
         .p-dropdown:not(:last-of-type)
           margin-bottom: 1rem
+
+        .p-inputtext.input-lookup
+          width: auto !important
+
+          &:not(:last-of-type)
+            margin-bottom: 1rem
+
+          &[disabled]
+            color: variables.$cassandra-app-blue
+            opacity: 1
 
       .design-toolbox-action-group
         @include containers.flex-container
