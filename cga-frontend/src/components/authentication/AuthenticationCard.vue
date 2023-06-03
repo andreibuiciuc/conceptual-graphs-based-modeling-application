@@ -24,7 +24,7 @@
             <i 
               class="pi pi-arrow-right" 
               style="font-size: 1.5rem; margin-left: 1.5rem;" 
-              @click="changeAuthenticationForm">
+              @click="changeAuthenticationForm(false)">
             </i>
           </div>
 
@@ -53,6 +53,7 @@
           <PasswordResetForm 
             v-else-if="currentAuthenticationFormType === 'password'"
             key="password-form"
+            @email-sent="changeAuthenticationForm(true)"
           />
 
         </div>
@@ -96,7 +97,10 @@ const authenticationModalTitle: ComputedRef<string> = computed(() => {
   return currentAuthenticationFormType.value;
 });
 
-const changeAuthenticationForm = () => {
+const changeAuthenticationForm = (isAuthenticationModalReset: boolean = false) => {
+  if (isAuthenticationModalReset) {
+    currentAuthenticationFormType.value = 'login';
+  }
   currentAuthenticationFormType.value = currentAuthenticationFormType.value === 'login' ? 'register' : 'login';
 };
 

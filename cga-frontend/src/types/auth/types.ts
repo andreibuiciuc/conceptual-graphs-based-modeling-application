@@ -8,7 +8,12 @@ interface RegisterCredentials extends LoginCredentials {
     lastname: string
 };
 
+interface PasswordResetCredentials {
+    email: string
+}
+
 export {
     LoginCredentials,
-    RegisterCredentials
+    RegisterCredentials,
+    PasswordResetCredentials,
 };
