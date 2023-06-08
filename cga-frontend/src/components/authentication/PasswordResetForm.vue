@@ -21,7 +21,7 @@
             outlined 
             label="send password reset email" 
             :disabled="isPasswordResetEmailSent"
-            @click="resetPassword" 
+            @click="resetPassword"
         />
     </vee-form>
   </template>

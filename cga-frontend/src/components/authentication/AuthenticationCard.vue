@@ -50,6 +50,7 @@
               <span @click="currentAuthenticationFormType = 'password'">forgot your password?</span>
             </template>
           </LoginForm>
+
           <PasswordResetForm 
             v-else-if="currentAuthenticationFormType === 'password'"
             key="password-form"
@@ -125,11 +126,13 @@ const cardTilt = computed(() => {
   @include containers.flex-container($justify-content: center, $align-items: center)
   overflow: hidden
   height: 100%
+  padding: 2rem 0
 
   .authentication-card
     @include containers.flex-container($flex-direction: row)
     width: 80%
-    height: 40rem
+    height: 100%
+    max-height: 40rem
 
     .authentication-card-first-half, .authentication-card-second-half
       @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
