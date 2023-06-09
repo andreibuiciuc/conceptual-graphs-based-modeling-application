@@ -449,6 +449,7 @@ $transition-all-time: 0.5s
     @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
     width: 100%
     height: 100%
+    overflow: auto
 
     & > *:first-child
       margin-right: 32px
@@ -457,7 +458,7 @@ $transition-all-time: 0.5s
       @include containers.flex-container($flex-direction: column)
       border-right: 1px solid variables.$cassandra-light-gray
       height: 100%
-      padding: 32px
+      padding: 1rem
 
 .conceptual-graph-container
   height: 100%

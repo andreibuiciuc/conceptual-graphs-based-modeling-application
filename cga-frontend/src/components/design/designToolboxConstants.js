@@ -15,10 +15,11 @@ export default {
     "double", 
     "float", 
     "int", 
-    // "list", TODO
-    // "map", TODO
-    // "set", TODO
+    "list",
+    "map",
+    "set",
     "smallint",
+    "text",
     "time", 
     "timestamp",
     "tinyint", 

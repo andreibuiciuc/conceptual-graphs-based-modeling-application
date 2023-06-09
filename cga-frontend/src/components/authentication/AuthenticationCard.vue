@@ -47,7 +47,7 @@
             key="login-form"
           >
             <template #login-message v-if="isPasswordResetVisible">
-              <span @click="currentAuthenticationFormType = 'password'">forgot your password?</span>
+              <span class="password-link" @click="currentAuthenticationFormType = 'password'">forgot your password?</span>
             </template>
           </LoginForm>
 

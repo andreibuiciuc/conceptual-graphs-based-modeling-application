@@ -4,130 +4,188 @@
       class="design-toolbox"
       :class="{ 'toolbox-warning': !currentKeyspace }"
     >
-      <template #title>{{ isTableInViewMode ? 'data structure config' : 'data structure lookup' }}</template>
+      <template #title>{{ isTableInViewMode ? 'data structure lookup' : 'data structure config' }}</template>
+      <template #subtitle>{{ isTableInViewMode ? 'hover over concepts' : 'build tables by filling the concepts below'  }}</template>
+      
       <template #content>
         
         <!-- Table concept input -->
-        <div class="design-toolbox-input-container">
-          <div class="design-toolbox-input-group">
-              <InputText
-                v-if="!isTableInViewMode"
-                v-model="currentTableConcept.conceptName"
-                placeholder="table name"
-                :class="{ 'p-invalid': !isTableConceptValid }"
-                :disabled="!currentKeyspace"
-                :readonly="isGraphRendered"
-                @change="changeTableConcept"
-              />
-              <InputText 
-                v-else 
-                v-model="tableName"
-                class="input-lookup"
-                :disabled="true"
-                placeholder="no table selected"
-                :readonly="true"
-              />
+        <div 
+          class="design-toolbox-section"
+          :style="{ borderLeftColor: !currentKeyspace ? '#ececf1' : '#3B82F6' }"
+        >
+          <span class="design-toolbox-section-title">
+            table concept
+          </span>
+          <div class="design-toolbox-input-container">
+            <div class="design-toolbox-input-group">
+                <InputText
+                  v-if="!isTableInViewMode"
+                  v-model="currentTableConcept.conceptName"
+                  placeholder="table name"
+                  :class="{ 'p-invalid': !isTableConceptValid }"
+                  :disabled="!currentKeyspace"
+                  :readonly="isGraphRendered"
+                  @change="changeTableConcept"
+                />
+                <InputText 
+                  v-else 
+                  v-model="tableName"
+                  class="input-lookup"
+                  :disabled="true"
+                  placeholder="no table selected"
+                  :readonly="true"
+                />
+            </div>
           </div>
-          <div class="design-toolbox-action-group">
-            <Button v-if="!isTableInViewMode"
-              severity="secondary"
-              text
-              icon="pi pi-times"
-              :disabled="!isGraphRendered"
-              @click="resetToolbox"
-            />
-            <Button v-if="!isTableInViewMode"
-              severity="primary"
-              text
-              :icon="isGraphRendered ? 'pi pi-check' : 'pi pi-plus'"
-              :disabled="!isAddTableConceptButtonEnabled"
-              @click="validateTableName"
-            />
-          </div>
+        </div>
+
+        <div class="design-toolbox-action-group">
+          <Button 
+            v-if="!isTableInViewMode"
+            severity="danger"
+            outlined
+            icon="pi pi-times"
+            label="clear"
+            :disabled="!isGraphRendered"
+            @click="resetToolbox"
+          />
+          <Button 
+            v-if="!isTableInViewMode"
+            severity="primary"
+            outlined
+            label="add table concept"
+            :icon="isGraphRendered ? 'pi pi-check' : 'pi pi-plus'"
+            :disabled="!isAddTableConceptButtonEnabled"
+            @click="validateTableName"
+          />
         </div>
 
         <Divider />
 
         <!-- Column and type concepts input -->
 
-        <div class="design-toolbox-input-container">
-          <div class="design-toolbox-input-group">
-            <div class="flex flex-column gap-2">
-              <InputText
+        <div 
+          class="design-toolbox-section" 
+          :style="{ borderLeftColor: !currentTableConcept.conceptName || !isGraphRendered ? '#ececf1' : '#3B82F6' }"
+          >
+          <span class="design-toolbox-section-title">
+            column and data concepts
+          </span>
+          <div class="design-toolbox-input-container">
+            <div class="design-toolbox-input-group">
+              <div class="flex flex-column gap-2">
+                <InputText
+                  v-if="!isTableInViewMode"
+                  v-model="currentColumnConcept.conceptName"
+                  :class="{ 'p-invalid': doesColumnConceptAlreadyExists }"
+                  placeholder="column name"
+                  :disabled="!currentTableConcept.conceptName || !isGraphRendered"
+                />
+                <InputText 
+                  v-else
+                  v-model="hoveredColumn.conceptName"  
+                  class="input-lookup"
+                  :disabled="true"
+                  placeholder="no column hovered"
+                  :readonly="true"
+                />
+                <small class="p-error">{{ getColumnNameErrorMessage }}</small>
+              </div>
+              <Dropdown 
                 v-if="!isTableInViewMode"
-                v-model="currentColumnConcept.conceptName"
-                :class="{ 'p-invalid': doesColumnConceptAlreadyExists }"
-                placeholder="column name"
-                :disabled="!currentTableConcept.conceptName || !isGraphRendered"
+                v-model="currentColumnConcept.columnKind"
+                placeholder="column kind"
+                :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
+                :options="designToolboxConstants.CQL_COLUMN_OPTIONS"
+              />
+              <InputText
+                v-else
+                v-model="hoveredColumn.columnKind"
+                class="input-lookup"
+                :disabled="true"
+                placeholder="no column hovered"
+                :readonly="true"
+              >
+              </InputText>
+              <Dropdown 
+                v-if="!isTableInViewMode"
+                v-model="currentDataTypeConcept.conceptName"
+                placeholder="column type"
+                :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
+                :options="designToolboxConstants.CQL_DATA_TYPES"
               />
               <InputText 
                 v-else
-                v-model="hoveredColumn.conceptName"  
+                v-model="dataTypeForHoveredColumn.conceptName"
                 class="input-lookup"
                 :disabled="true"
                 placeholder="no column hovered"
                 :readonly="true"
               />
-              <small class="p-error">{{ getColumnNameErrorMessage }}</small>
             </div>
-            <Dropdown 
-              v-if="!isTableInViewMode"
-              v-model="currentColumnConcept.columnKind"
-              placeholder="column kind"
-              :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
-              :options="designToolboxConstants.CQL_COLUMN_OPTIONS"
-            />
-            <InputText
-              v-else
-              v-model="hoveredColumn.columnKind"
-              class="input-lookup"
-              :disabled="true"
-              placeholder="no column hovered"
-              :readonly="true"
-            >
-            </InputText>
-            <Dropdown 
-              v-if="!isTableInViewMode"
-              v-model="currentDataTypeConcept.conceptName"
-              placeholder="column type"
-              :disabled="!currentColumnConcept.conceptName || doesColumnConceptAlreadyExists"
-              :options="designToolboxConstants.CQL_DATA_TYPES"
-            />
-            <InputText 
-              v-else
-              v-model="dataTypeForHoveredColumn.conceptName"
-              class="input-lookup"
-              :disabled="true"
-              placeholder="no column hovered"
-              :readonly="true"
-            />
           </div>
-          <Button v-if="!isTableInViewMode"
-            icon="pi pi-plus"
-            text
-            :disabled="!isAddColumnConceptButtonEnabled"
-            @click.prevent="addColumnConceptToGraph"
-          />
         </div>
 
-        <Divider v-if="!isTableInViewMode" />
+        <div 
+          class="design-toolbox-section design-toolbox-section-map"
+          :style="{ borderLeftColor: currentDataTypeConcept.conceptName !== 'map' ? '#ececf1' : '#3B82F6' }"  
+        >
+          <span class="design-toolbox-section-title">
+            map concept
+          </span>
+          <div class="design-toolbox-input-container">
+            <div class="design-toolbox-input-group design-toolbox-input-group-row">
+              <Dropdown 
+                placeholder="map key type"
+                :disabled="currentDataTypeConcept.conceptName !== 'map'"
+                :options="designToolboxConstants.CQL_DATA_TYPES"
+              />
+              <Dropdown 
+                placeholder="map value type"
+                :disabled="currentDataTypeConcept.conceptName !== 'map'"
+                :options="designToolboxConstants.CQL_DATA_TYPES"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="design-toolbox-action-group design-toolbox-action">
+          <Button v-if="!isTableInViewMode"
+              icon="pi pi-plus"
+              outlined
+              label="add column and type concepts"
+              :disabled="!isAddColumnConceptButtonEnabled"
+              @click.prevent="addColumnConceptToGraph"
+            />
+        </div>
+        
+        <Divider />
 
         <!-- Clustering column concepts options input -->
 
-        <div class="design-toolbox-input-container" v-if="!isTableInViewMode">
-          <div class="design-toolbox-input-group">
-            <Dropdown
-              v-model="currentClusteringOrderOption.clusteringColumn"
-              placeholder="clustering column"
-              :disabled="!isClusteringSectionEnabled"
-              :options="clusteringColumnOptions"
-            />
-            <Dropdown 
-              v-model="currentClusteringOrderOption.clusteringOrder"
-              placeholder="clustering order"
-              :disabled="!isClusteringSectionEnabled"
-              :options="designToolboxConstants.CQL_CLUSTERING_ORDER_ITEMS"
-            />
+        <div 
+          class="design-toolbox-section"
+          :style="{ borderLeftColor: !isClusteringSectionEnabled ? '#ececf1' : '#3B82F6' }"  
+        >
+          <span class="design-toolbox-section-title">
+            clustering index
+          </span>
+          <div class="design-toolbox-input-container" v-if="!isTableInViewMode">
+            <div class="design-toolbox-input-group design-toolbox-input-group-row">
+              <Dropdown
+                v-model="currentClusteringOrderOption.clusteringColumn"
+                placeholder="clustering column"
+                :disabled="!isClusteringSectionEnabled"
+                :options="clusteringColumnOptions"
+              />
+              <Dropdown 
+                v-model="currentClusteringOrderOption.clusteringOrder"
+                placeholder="clustering order"
+                :disabled="!isClusteringSectionEnabled"
+                :options="designToolboxConstants.CQL_CLUSTERING_ORDER_ITEMS"
+              />
+            </div>
           </div>
         </div>
 
@@ -147,6 +205,7 @@ import { useConnectionStore } from '../../stores/connection';
 import { useMetadata } from '@/composables/metadata/metadata';
 import { useUtils } from "../../composables/utils";
 import { storeToRefs } from 'pinia';
+import { table } from 'console';
 
 // Props and emits definitions
 interface Props {
@@ -266,8 +325,7 @@ const areColumnConceptFieldsCompleted: ComputedRef<boolean> = computed(() => {
 });
 
 const doesColumnConceptAlreadyExists: ComputedRef<boolean> = computed(() => {
-  return !!tableMetadata.value.columns && !!tableMetadata.value.columns[currentTableConcept.value.conceptName] &&
-    !!tableMetadata.value.columns.get(currentTableConcept.value.conceptName)?.some(x => x.conceptName === currentColumnConcept.value.conceptName);
+  return tableMetadata.value.tables.length && tableMetadata.value.columns.get(tableMetadata.value.tables.at(0).conceptName).some(x => x.conceptName === currentColumnConcept.value.conceptName);
 });
 
 const isAddColumnConceptButtonEnabled: ComputedRef<boolean> = computed(() => {
@@ -325,39 +383,77 @@ watch(() => props.isTableInViewMode, () => {
 @use '@/assets/styles/_containers.sass'
 @use '@/assets/styles/_variables.sass'
 
+.p-divider.p-divider-horizontal
+  margin: 2rem 0 !important
+
 .design-toolbox-container
   min-width: 30rem
+  overflow: auto
 
   .design-toolbox
     box-shadow: none
 
-    .design-toolbox-input-container
-      @include containers.flex-container($justify-content: space-between, $align-items: flex-end)
+    .design-toolbox-section-map
+      margin-top: 1rem
 
-      .design-toolbox-input-group
-        @include containers.flex-container($flex-direction: column)
-        width: auto !important
+    .design-toolbox-section
+      @include containers.flex-container($flex-direction: column)
+      border: 1px solid variables.$cassandra-light-gray
+      border-left-width: 0.25rem
+      padding: 1rem
+      width: 100%
 
-        .flex.flex-column
-          margin-bottom: 1rem
-          
-        .p-dropdown
-          width: 100%
+      .design-toolbox-section-title
+        font-weight: 700
+        margin-bottom: 1rem
 
-        .p-dropdown:not(:last-of-type)
-          margin-bottom: 1rem
+      .design-toolbox-input-container
+        @include containers.flex-container($justify-content: space-between, $align-items: flex-end)
+        width: 100%
 
-        .p-inputtext.input-lookup
+        .design-toolbox-input-group
+          @include containers.flex-container($flex-direction: column)
           width: auto !important
 
-          &:not(:last-of-type)
+          .flex.flex-column
+            margin-bottom: 1rem
+            
+          .p-dropdown
+            width: 100%
+
+          .p-dropdown:not(:last-of-type)
             margin-bottom: 1rem
 
-          &[disabled]
-            color: variables.$cassandra-app-blue
-            opacity: 1
+          .p-inputtext.input-lookup
+            width: auto !important
 
-      .design-toolbox-action-group
-        @include containers.flex-container
+            &:not(:last-of-type)
+              margin-bottom: 1rem
+
+            &[disabled]
+              color: variables.$cassandra-app-blue
+              opacity: 1
+
+        .design-toolbox-input-group-row
+          width: 100% !important
+          flex-direction: row
+          justify-content: space-between
+
+          .p-component
+            width: 12rem !important
+
+    .design-toolbox-action-group
+      @include containers.flex-container()
+      margin-top: 1rem
+
+      .p-button
+        margin-top: 1rem
+        width: 50%
+
+      &.design-toolbox-action .p-button
+        width: 100%
+      
+      .p-button:first-of-type
+        margin-right: 0.5rem
 
 </style>
