@@ -6,6 +6,7 @@
                     <template #content="slotProps">
                         <Card>
                             <template #title>
+                                <i :class="slotProps.item.iconClass"></i>
                                 <span :style="{ color: slotProps.item.color }">
                                     {{ slotProps.item.title }}
                                 </span>
@@ -25,22 +26,31 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue';
 import HomepageSection from './HomepageSection.vue';
 
-const steps: Ref<any> = ref([
-    { title: 'connection', subtitle: 'cga', content: 'register a cga account and sign into the app', color: '#3b82f6' },
-    { title: 'credentials', subtitle: 'datastax astra', content: 'make sure you have an active astra account and configure your credentials', color: '#ffcc00'  },
-    { title: 'explore', subtitle: 'cga', content: 'establish connection and start explore your database', color: '#3b82f6' },
-]);
-
-const hoverOverTimelineCard = (event: MouseEvent) => {
-    const target = <HTMLElement> event.target
-    debugger
-    if (target.classList.contains('p-card')) {
-        target.classList.add('p-card-active');
-    }
-};
+const steps = [
+    {
+        title: 'sign up', 
+        subtitle: 'cga', 
+        iconClass: 'pi pi-user',
+        content: 'register a cga account and sign into the app', 
+        color: '#3b82f6' 
+    },
+    { 
+        title: 'get credentials', 
+        subtitle: 'datastax astra',
+        iconClass: 'pi pi-cloud-download',
+        content: 'make sure you have an active astra account and configure your credentials', 
+        color: '#ffcc00'
+    },
+    { 
+        title: 'start exploring', 
+        subtitle: 'cga', 
+        iconClass: 'pi pi-database',
+        content: 'establish connection and start explore your database', 
+        color: '#3b82f6' 
+    },
+];
 
 </script>
 
@@ -51,28 +61,26 @@ const hoverOverTimelineCard = (event: MouseEvent) => {
 .timeline-wrapper
     width: 60rem
 
-    .p-timeline .p-timeline-event .p-timeline-event-separator
-        margin: 0 2.5rem
-
     .p-timeline .p-timeline-event
 
-        .p-timeline-event-content > .p-card:hover
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2)
-            transform: scale(1.1)
-            transition: transform 0.5s ease-out
-            border-left: 0.25rem solid variables.$cassandra-app-blue !important
-
-    .p-timeline .p-timeline-event:nth-of-type(even)
-
-        .p-timeline-event-content > .p-card:hover
-            border-left: none !important
-            border-right: 0.25rem solid variables.$cassandra-yellow !important
-
-    .p-timeline .p-timeline-event
+        .p-timeline-event-separator
+            margin: 0.25rem
 
         .p-timeline-event-content > .p-card
             box-shadow: none
             border: 1px solid variables.$cassandra-light-gray
+
+            &:hover
+                border-left-width: 0.5rem
+                border-color: variables.$cassandra-app-blue
+                transition: all 0.2s ease-out
+
+            .p-card-title
+                @include containers.flex-container($align-items: baseline)
+
+                .pi
+                    margin-right: 1rem
+                    color: variables.$cassandra-app-blue
 
             .p-card-body > .p-card-title > span
                 font-size: 2rem
@@ -80,4 +88,18 @@ const hoverOverTimelineCard = (event: MouseEvent) => {
             .p-card-body > .p-card-subtitle b, .p-card-body > .p-card-subtitle span
                 font-size: 1.5rem
         
+        &:nth-of-type(even) .p-timeline-event-content > .p-card
+
+            &:hover
+                border-color: variables.$cassandra-yellow
+                border-left-width: 1px
+                border-right-width: 0.5rem
+                transition: border-width 0.25s ease-out
+
+            .p-card-title 
+                justify-content: flex-end
+
+                .pi
+                    color: variables.$cassandra-yellow
+
 </style>
