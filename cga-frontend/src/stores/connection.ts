@@ -3,7 +3,7 @@ import constants from '../constants/constants';
 import { Ref, nextTick, ref } from "vue";
 import { defineStore } from "pinia";
 import { AstraApiResponse } from "@/types/astra/types";
-import { useUtils } from "../composables/utils";
+// import { useUtils } from "../composables/utils";
 import { useAstra } from "@/composables/requests/astra";
 
 export const useConnectionStore = defineStore('connection', () => {
@@ -24,7 +24,7 @@ export const useConnectionStore = defineStore('connection', () => {
 
   const isRerenderTriggered: Ref<boolean> = ref(false);
 
-  const { openNotificationToast } = useUtils();
+  // const { openNotificationToast } = useUtils();
   const { retrieveAllKeyspaces } = useAstra();
 
   async function connect (): Promise<void> {
@@ -40,7 +40,7 @@ export const useConnectionStore = defineStore('connection', () => {
 
     await nextTick();
     keyspaceGraph.value.removeArrows();
-    openNotificationToast(`connection to astra db cassandra server discarded.`, 'success');
+    // openNotificationToast(`connection to astra db cassandra server discarded.`, 'success');
   }
 
   function getUserKeyspaces (keyspacesData: any): string[] {
@@ -54,11 +54,11 @@ export const useConnectionStore = defineStore('connection', () => {
       const responseData = response.data as AstraApiResponse;
       if (responseData.data) {
         availableKeyspaces.value = getUserKeyspaces(responseData.data);
-        openNotificationToast('keyspaces were successfully retrieved', 'success');
+        // openNotificationToast('keyspaces were successfully retrieved', 'success');
         cassandraServerCredentials.value.isCassandraServerConnected = true;
         isConnectionButtonTriggered.value = false;
       } else {
-        openNotificationToast(responseData.description, 'error');
+        // openNotificationToast(responseData.description, 'error');
         isConnectionButtonTriggered.value = false;
       }
     }
