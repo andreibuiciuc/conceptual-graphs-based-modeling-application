@@ -27,9 +27,9 @@ export function useQuery() {
      * @param commands result array of commands
      * @param lineContent the content of the current command
      */
-    const addCQLCommandLine = (commands: Command[], lineContent: string): void => {
+    const addCQLCommandLine = (commands: Command[], lineContent: string, isColumnConfig: boolean = false): void => {
         const lineNumber = commands.length;
-        commands.push({ lineNumber, lineContent });
+        commands.push({ lineNumber, lineContent, isColumnConfig });
     };
 
 
@@ -72,6 +72,9 @@ export function useQuery() {
             return ;
         }
 
+        // Apply space after each column declaration, except for the first column.
+        let applySpaceAfterColumnDefinition = false;
+
         currentColumns.forEach((columnConcept: Concept) => {
             const dataTypeConcept: Concept | undefined = tableMetadata.dataTypes.get(columnConcept.conceptName);
             let columnDefinitionLine: string;
@@ -84,7 +87,9 @@ export function useQuery() {
                     .concat(` ${dataTypeConcept.conceptName.toUpperCase()},`)
             }
 
-            addCQLCommandLine(commands, columnDefinitionLine);
+            addCQLCommandLine(commands, columnDefinitionLine, applySpaceAfterColumnDefinition);
+
+            applySpaceAfterColumnDefinition = true;
         });
         
     };
@@ -136,7 +141,7 @@ export function useQuery() {
         }   
         
 
-        addCQLCommandLine(commands, tableKeysDefinitionLine);
+        addCQLCommandLine(commands, tableKeysDefinitionLine, true);
     };
 
 
@@ -175,7 +180,7 @@ export function useQuery() {
         if (clusteringOption.clusteringColumn && clusteringOption.clusteringOrder) {
             addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(')'));
             const clusteringOptionLine = `WITH CLUSTERING ORDER BY (${clusteringOption.clusteringColumn} ${clusteringOption.clusteringOrder})`;
-            addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(clusteringOptionLine));
+            addCQLCommandLine(commands, designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(clusteringOptionLine), true);
         }
     };
 
@@ -391,10 +396,16 @@ export function useQuery() {
      * @returns the CREATE TABLE CQL statement as a string
      */
     const generateQueryAsString = (commands: Command[]): string => {
-        const queryFromCommands = commands.reduce((accumulator, currentValue) => accumulator.concat(currentValue.lineContent), constants.inputValues.empty);
+        const queryFromCommands = commands.reduce((accumulator, currentCommand) => {
+
+            if (currentCommand.isColumnConfig) {
+                return accumulator.concat(' ' + currentCommand.lineContent);
+            }
+            return accumulator.concat(currentCommand.lineContent);
+
+        }, constants.inputValues.empty);
         return queryFromCommands.replace(designToolboxConstants.CQL_COMMAND_REGEX, constants.inputValues.empty);
     }
-    
 
     return {
         generateQueryAsCommands,

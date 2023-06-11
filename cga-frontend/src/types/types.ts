@@ -87,6 +87,7 @@ type ClusteringOption = {
 interface Command {
     lineContent: string
     lineNumber: number
+    isColumnConfig?: boolean
 };
 
 type ToastSeverity = 'success' | 'warn' | 'error' | 'info';

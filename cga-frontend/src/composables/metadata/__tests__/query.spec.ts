@@ -97,7 +97,7 @@ describe('query composable utils tests', () => {
 
         const queryString: string = generateQueryStringFunction(queryCommands);
 
-        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT,country TEXT,city TEXT,PRIMARY KEY (code, country));')
+        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT, country TEXT, city TEXT, PRIMARY KEY (code, country));')
     });
 
     test('create table query - simple primary key, with clustering order', () => {
@@ -131,7 +131,7 @@ describe('query composable utils tests', () => {
 
         const queryString: string = generateQueryStringFunction(queryCommands);
 
-        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT,country TEXT,city TEXT,PRIMARY KEY (code, country))WITH CLUSTERING ORDER BY (country DESC));')
+        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT, country TEXT, city TEXT, PRIMARY KEY (code, country)) WITH CLUSTERING ORDER BY (country DESC));')
     });
     
     test('create table query - composite primary key, with more partition keys', () => {
@@ -140,6 +140,7 @@ describe('query composable utils tests', () => {
         tableMetadata.columns.get('weather_stations').push({
             conceptName: 'name',
             conceptType: constants.conceptTypes.column,
+            columnKind: 'partition_key',
             relation: constants.relationTypes.hasPartitionKey
         });
         tableMetadata.dataTypes.set('name', {
@@ -166,14 +167,14 @@ describe('query composable utils tests', () => {
         expect(queryCommands.at(4).lineContent).toBe('      >> name TEXT,');
 
         expect(queryCommands.at(5).lineNumber).toBe(5);
-        expect(queryCommands.at(5).lineContent).toBe('      >> PRIMARY KEY (code, country)');
+        expect(queryCommands.at(5).lineContent).toBe('      >> PRIMARY KEY ((code, name), country)');
 
         expect(queryCommands.at(6).lineNumber).toBe(6);
         expect(queryCommands.at(6).lineContent).toBe('      >> );');
         
         const queryString: string = generateQueryStringFunction(queryCommands);
 
-        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT,country TEXT,city TEXT,name TEXT,PRIMARY KEY ((code, name), country));')
+        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT, country TEXT, city TEXT, name TEXT, PRIMARY KEY ((code, name), country));')
     });
 
     test('create table query - composite primary key, with more clustering keys', () => {
@@ -182,6 +183,7 @@ describe('query composable utils tests', () => {
         tableMetadata.columns.get('weather_stations').push({
             conceptName: 'name',
             conceptType: constants.conceptTypes.column,
+            columnKind: 'partition_key',
             relation: constants.relationTypes.hasPartitionKey
         });
         tableMetadata.dataTypes.set('name', {
@@ -194,8 +196,6 @@ describe('query composable utils tests', () => {
         tableMetadata.columns.get('weather_stations')[index].columnKind = constants.columnKinds.clustering;
 
         const queryCommands: Command[] = generateQueryCommandsFunction(tableMetadata, defaultClusteringOption);
-        console.log(queryCommands);
-        
         
         expect(queryCommands.at(0).lineNumber).toBe(0);
         expect(queryCommands.at(0).lineContent).toBe('cqlsh >> CREATE TABLE IF NOT EXISTS weather.weather_stations (');
@@ -220,7 +220,7 @@ describe('query composable utils tests', () => {
         
         const queryString: string = generateQueryStringFunction(queryCommands);
 
-        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT,country TEXT,city TEXT,name TEXT, PRIMARY KEY ((code, name), country));')
+        expect(queryString).toBe('CREATE TABLE IF NOT EXISTS weather.weather_stations (code TEXT, country TEXT, city TEXT, name TEXT, PRIMARY KEY ((code, name), (country, city)));')
     });
 
 });
