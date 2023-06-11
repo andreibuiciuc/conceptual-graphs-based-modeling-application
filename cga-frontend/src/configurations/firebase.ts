@@ -17,8 +17,6 @@ const firebaseCollections = {
   CONFIGURATION: 'configurations',
 };
 
-const FORCE_CONFIGURATIONS_DOC_ID = 'forceConfig';
-
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
@@ -33,5 +31,4 @@ export {
   usersCollection, 
   configurationsCollection,
   queriesCollection,
-  FORCE_CONFIGURATIONS_DOC_ID
 };

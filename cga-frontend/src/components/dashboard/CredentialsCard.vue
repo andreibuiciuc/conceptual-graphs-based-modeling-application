@@ -39,7 +39,6 @@ const { userAstraDatabaseId, userAstraDatabaseRegion, userAstraToken } = storeTo
 // Functionalities related to the upload of credentials file
 const isFileUploaded: Ref<boolean> = ref(false);
 const isFileDraggedOver: Ref<boolean> = ref(false);
-const uploadButtonContent: Ref<string> = ref('press to upload file');
 
 const isFileExtensionValid = (filename: string): boolean => {
     return ['csv', 'xlsx', 'numbers'].includes(filename.split('.').pop().toLowerCase());
@@ -59,7 +58,6 @@ const parseXLSXData = (excelData: any[]): void => {
         userAstraToken.value = xlsxData.at(tokenIndex);
 
         isFileUploaded.value = true;
-        uploadButtonContent.value = 'credentials file uploaded';
     }
 };
 
@@ -91,8 +89,6 @@ const uploadAstraCredentials = (uploadEvent: any): void => {
     }
 
 };
-
-
 
 </script>
 
@@ -134,18 +130,22 @@ const uploadAstraCredentials = (uploadEvent: any): void => {
 
     .upload-file-button[disabled]
         width: 6rem !important
-        color: variables.$cassandra-black
+        color: variables.$cassandra-app-blue
+        cursor: default !important
         
         &::before
             content: 'file uploaded'
 
     .upload-file-button::before
         -webkit-user-select: none
-        content: 'select credentials file' 
+        content: 'select credentials file'
         cursor: pointer
         white-space: nowrap
         outline: none
         margin-right: 1rem
+
+    .upload-file-button:hover
+        color: variables.$cassandra-app-blue
 
     .upload-file-button::after
         visibility: hidden

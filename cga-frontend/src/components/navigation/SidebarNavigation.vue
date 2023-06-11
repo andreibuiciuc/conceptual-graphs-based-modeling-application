@@ -5,16 +5,20 @@
       <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
     </template>
     <div class="panel-container">
-        <CredentialsCard />
-        <Button 
-          outlined
-          severity="primary"
-          :icon="cassandraServerCredentials.isCassandraServerConnected ? 'pi pi-circle-fill' : 'pi pi-circle'"
-          :label="cassandraServerCredentials.isCassandraServerConnected ? 'disconnect' : 'connect'"
-          :disabled="!isConnectionButtonEnabled || isConnectionButtonTriggered"
-          :loading="isConnectionButtonTriggered"
-          @click="manageServerConnection"
-        />
+      <div class="panel-container-info">
+        <span>upload your credentials file here</span>
+        <span>a template file can be downloaded from <b>here</b></span>
+      </div>
+      <CredentialsCard />
+      <Button 
+        outlined
+        severity="primary"
+        :icon="cassandraServerCredentials.isCassandraServerConnected ? 'pi pi-circle-fill' : 'pi pi-circle'"
+        :label="cassandraServerCredentials.isCassandraServerConnected ? 'disconnect' : 'connect'"
+        :disabled="!isConnectionButtonEnabled || isConnectionButtonTriggered || isKeyspaceRetrieveInProgress"
+        :loading="isConnectionButtonTriggered"
+        @click="manageServerConnection"
+      />
     </div>
     <Divider />
     <div class="panel-container">
@@ -81,7 +85,7 @@ const renderGraph = async (): Promise<void> => {
 <style lang="sass">
 @use "@/assets/styles/_containers.sass"
 @use '@/assets/styles/_transitions.sass'
-
+@use '@/assets/styles/_variables.sass'
 
 .p-sidebar
   width: 25rem !important
@@ -101,6 +105,17 @@ const renderGraph = async (): Promise<void> => {
   .panel-container
     @include containers.flex-container($flex-direction: column, $align-items: flex-start)
     margin-top: 2rem
+
+    .panel-container-info
+      @include containers.flex-container($flex-direction: column, $align-items: flex-start)
+      margin-bottom: 2rem
+
+      b
+        cursor: pointer
+        color: variables.$cassandra-app-blue
+      
+      b:hover
+        color: variables.$cassandra-yellow
 
     input, .p-button, .p-dropdown
       width: 100%
