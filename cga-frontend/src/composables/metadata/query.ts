@@ -27,9 +27,9 @@ export function useQuery() {
      * @param commands result array of commands
      * @param lineContent the content of the current command
      */
-    const addCQLCommandLine = (commands: Command[], lineContent: string, isColumnConfig: boolean = false): void => {
+    const addCQLCommandLine = (commands: Command[], lineContent: string, isColumnDefinition: boolean = false, isSelectClauseLine: boolean = false): void => {
         const lineNumber = commands.length;
-        commands.push({ lineNumber, lineContent, isColumnConfig });
+        commands.push({ lineNumber, lineContent, isColumnDefinition, isSelectClauseLine });
     };
 
 
@@ -227,7 +227,7 @@ export function useQuery() {
             lineContent = lineContent.slice(0, lineContent.length - 2);
         }
 
-        const aggregationFunctionsSnippet = computeAggregationFunctionSnippet(queryConcepts);
+        const aggregationFunctionsSnippet = computeAggregationFunctionSnippet();
         if (aggregationFunctionsSnippet) {
             lineContent = lineContent.concat(', ').concat(aggregationFunctionsSnippet);
         }
@@ -241,24 +241,19 @@ export function useQuery() {
      * @param queryConcepts concepts related to the query
      * @returns string snippet of the aggregation functions
      */
-    const computeAggregationFunctionSnippet = (queryConcepts: QueryConcepts): string => {
+    const computeAggregationFunctionSnippet = (): string => {
         let aggregationFunctionsSnippet = '';
         
-        ['count', 'min', 'max', 'avg', 'sum'].forEach((aggregateFunctionName: string) => {
-            if (queryConcepts.get[aggregateFunctionName] && queryConcepts.get[aggregateFunctionName].aggregatedColumns.length) {
+        queryStore.aggregateFunctionsItems.forEach((item: QueryItem) => {
+            if (item.toQuery) {
+                console.log('here');
                 
-                let currentAggregationFunctionSnippet = '';
-                queryConcepts.get[aggregateFunctionName].aggregatedColumns.forEach((columnConcept: Concept) => {
-                    const aggregationColumn = columnConcept.conceptName === 'all' ? '*' : columnConcept.conceptName;
-                    currentAggregationFunctionSnippet = currentAggregationFunctionSnippet.concat(`${aggregateFunctionName.toUpperCase()}(${aggregationColumn}), `);
-                });
-                currentAggregationFunctionSnippet = currentAggregationFunctionSnippet.slice(0, currentAggregationFunctionSnippet.length - 2);
-                
-                aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(currentAggregationFunctionSnippet).concat(', ');
+                const aggregationColumn = item.column === 'all' ? '*' : item.column;
+                aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(`${item.valueSelect.toUpperCase()}(${aggregationColumn}), `);
             }
         });
-
         aggregationFunctionsSnippet = aggregationFunctionsSnippet.slice(0, aggregationFunctionsSnippet.length - 2);
+
         return aggregationFunctionsSnippet;  
     };
 
@@ -281,8 +276,8 @@ export function useQuery() {
 
         if (lineContent) {
             lineContent = lineContent.slice(0, lineContent.length - 5);
-            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(' WHERE ').concat(lineContent);
-            addCQLCommandLine(commands, lineContent);
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat('WHERE ').concat(lineContent);
+            addCQLCommandLine(commands, lineContent, false, true);
         }
     };
 
@@ -302,8 +297,8 @@ export function useQuery() {
 
         if (lineContent) {
             lineContent = lineContent.slice(0, lineContent.length - 5);
-            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(' ORDER BY ').concat(lineContent);
-            addCQLCommandLine(commands, lineContent);
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat('ORDER BY ').concat(lineContent);
+            addCQLCommandLine(commands, lineContent, false, true);
         }
     };
 
@@ -311,14 +306,16 @@ export function useQuery() {
     const computeGroupByClauseLine = (commands: Command[]): void => {
         let lineContent: string = constants.inputValues.empty;
 
-        queryStore.queryConcepts.groupBy.columns.forEach((concept: Concept) => {
-            lineContent = lineContent.concat(`${concept.conceptName}, `);
+        queryStore.groupByClauseItems.forEach((item: QueryItem) => {
+            if (item.toQuery) {
+                lineContent = lineContent.concat(`${item.column}, `);
+            }
         });
 
         if (lineContent) {
             lineContent = lineContent.slice(0, lineContent.length - 2);
-            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat(' GROUP BY ').concat(lineContent);
-            addCQLCommandLine(commands, lineContent);
+            lineContent = designToolboxConstants.CQL_BASH_BLANK_COMMAND.concat('GROUP BY ').concat(lineContent);
+            addCQLCommandLine(commands, lineContent, false, true);
         }
     };
 
@@ -398,7 +395,7 @@ export function useQuery() {
     const generateQueryAsString = (commands: Command[]): string => {
         const queryFromCommands = commands.reduce((accumulator, currentCommand) => {
 
-            if (currentCommand.isColumnConfig) {
+            if (currentCommand.isColumnDefinition || currentCommand.isSelectClauseLine) {
                 return accumulator.concat(' ' + currentCommand.lineContent);
             }
             return accumulator.concat(currentCommand.lineContent);
