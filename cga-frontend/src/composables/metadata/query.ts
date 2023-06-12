@@ -246,8 +246,6 @@ export function useQuery() {
         
         queryStore.aggregateFunctionsItems.forEach((item: QueryItem) => {
             if (item.toQuery) {
-                console.log('here');
-                
                 const aggregationColumn = item.column === 'all' ? '*' : item.column;
                 aggregationFunctionsSnippet = aggregationFunctionsSnippet.concat(`${item.valueSelect.toUpperCase()}(${aggregationColumn}), `);
             }
