@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { configurationsCollection, FORCE_CONFIGURATIONS_DOC_ID } from '@/configurations/firebase';
+import { configurationsCollection, auth } from '@/configurations/firebase';
 import { onBeforeMount, Ref, ref } from 'vue';
 import { useForceGraph } from '@/composables/forcegraph';
 import { useUtils } from '@/composables/utils';
@@ -82,15 +82,34 @@ const { updateConceptNodeSize, updateConceptNodeColor, resetForceConfigurationsT
 // Functionalities related to the saving of the force graph configuration
 const isSaveInProgress: Ref<boolean> = ref(false);
 
+const checkIfUserHasForceConfigurations = async (): Promise<boolean> => {
+
+    try {
+
+        const forceConfigDocumentRef = await configurationsCollection.doc(auth.currentUser.uid).get();
+        return forceConfigDocumentRef.exists;
+
+    }
+    catch (error: any) {
+        openNotificationToast(error.message, 'error');
+    }
+
+};
+
 const saveForceConfiguration = async (isResetToDefault: boolean = false): Promise<void> => {
     isSaveInProgress.value = true;
 
     try {
-       
-        await configurationsCollection.doc(FORCE_CONFIGURATIONS_DOC_ID).update({
+        const newForceConfigDocument = {
             conceptNodeSize: isResetToDefault ? DEFAULT_CONCEPT_NODE_SIZE : conceptNodeSize.value,
-            conceptNodeColor: isResetToDefault ? DEFAULT_CONCEPT_NODE_COLOR :  conceptNodeColor.value
-        });
+            conceptNodeColor: isResetToDefault ? DEFAULT_CONCEPT_NODE_COLOR :  conceptNodeColor.value,
+        };
+
+        if (await checkIfUserHasForceConfigurations()) {
+            await configurationsCollection.doc(auth.currentUser.uid).update(newForceConfigDocument);
+        } else {
+            await configurationsCollection.doc(auth.currentUser.uid).set(newForceConfigDocument);
+        }
 
         openNotificationToast('force configuration successfully saved', 'success');
 
@@ -109,16 +128,14 @@ const saveForceConfiguration = async (isResetToDefault: boolean = false): Promis
 const retrieveForceConfiguration = async (): Promise<void> => {
     try {
        
-        const forceConfigurationDocumentRef = await configurationsCollection.doc(FORCE_CONFIGURATIONS_DOC_ID).get();
+        const forceConfigurationDocumentRef = await configurationsCollection.doc(auth.currentUser.uid).get();
         const forceConfiguration = forceConfigurationDocumentRef.data();
 
         conceptNodeSize.value = forceConfiguration.conceptNodeSize;
         conceptNodeColor.value = forceConfiguration.conceptNodeColor;
 
     } catch (error: any) {
-        openNotificationToast(error.message, 'error');
-        openNotificationToast('force configuration set to default due to error', 'warn');
-
+        openNotificationToast('force configuration set to default due to missing configuration', 'warn');
         resetForceConfigurationsToDefault();
     }
 }

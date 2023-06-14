@@ -229,7 +229,12 @@ const prepareTableForSaving = (): AstraTableMetadata => {
 
   table.tableOptions = {};
   table.tableOptions.defaultTimeToLive = 0;
-  table.tableOptions.clusteringExpression = [ { columns: [clusteringColumnOption.value.clusteringColumn], order: clusteringColumnOption.value.clusteringOrder }];
+
+  if (clusteringColumnOption.value.clusteringColumn) {
+    table.tableOptions.clusteringExpression = [ { columns: [clusteringColumnOption.value.clusteringColumn], order: clusteringColumnOption.value.clusteringOrder }];
+  } else {
+    table.tableOptions.clusteringExpression = [];
+  }
 
   return table;
 };
@@ -255,14 +260,49 @@ const addTableToKeyspace = async (): Promise<void> => {
   isSaveInProgress.value = false;
 };
 
-const validateConceptualGraph = (): [boolean, string] => {
-  const { partitionColumnsCount, _ } = getPartitionAndClusteringColumnsCount(tableMetadata.value);
-  const errorMessage = partitionColumnsCount > 0 ? constants.inputValues.empty : "Cannot create primary key without any partition keys";
-  return [partitionColumnsCount > 0, errorMessage];
+const adjustCassandraTable = (): void => {
+  const columnConcepts = tableMetadata.value.columns.get(tableMetadata.value.tables.at(0).conceptName);
+  const lastPartitionKeyIndex = columnConcepts.findLastIndex(x => x.columnKind === 'partition_key');
+
+  if (lastPartitionKeyIndex) {
+    const lastPartitionKeyColumnConcept = columnConcepts.at(lastPartitionKeyIndex);
+
+    const newClusteringKeyColumnConcept: Concept = {
+      ... lastPartitionKeyColumnConcept,
+      columnKind: constants.columnKinds.clustering,
+      relation: constants.relationTypes.hasClusteringKeyDESC,
+    };
+
+    columnConcepts.splice(lastPartitionKeyIndex, 1);
+    columnConcepts.push(newClusteringKeyColumnConcept);
+  }
 };
 
-const generateCQLQuery = (): void => {
-  const [isConceptualGraphValid, errorMessage] = validateConceptualGraph();
+const validateConceptualGraph = async (): Promise<[boolean, string]> => {
+  const { partitionColumnsCount, clusteringColumnCount } = getPartitionAndClusteringColumnsCount(tableMetadata.value);
+  
+  if (partitionColumnsCount === 0) {
+    return [false, 'cannot create primary key without any partition keys'];
+  }
+
+  if (partitionColumnsCount > 1 && clusteringColumnCount === 0) {
+    
+    // Cassandra tables cannot ne constructed with more partition keys and no clustering keys.
+    // In this situation, the CGA converts the last partition key provided to a clustering key.
+
+    adjustCassandraTable();
+    openNotificationToast('cassandra table adjusted', 'warn');
+
+    await nextTick();
+    tableGraph.value.rerenderArrows();
+
+  }
+
+  return [true, constants.inputValues.empty];
+};
+
+const generateCQLQuery = async (): Promise<void> => {
+  const [isConceptualGraphValid, errorMessage] = await validateConceptualGraph();
     if (isConceptualGraphValid) {
       const commads = generateQueryAsCommands(tableMetadata.value, clusteringColumnOption.value);
       openTerminal(commads);
@@ -379,14 +419,6 @@ const retrieveKeyspaceTable = async (): Promise<void> => {
   }
 };
 
-const resetTableMetadata = (): void => {
-  const defaultConcept = { conceptName: currentKeyspace.value, conceptType: constants.conceptTypes.keyspace };
-  tableMetadata.value.keyspace = { ... defaultConcept };
-  tableMetadata.value.tables = [];
-  tableMetadata.value.columns = new Map<string, Concept[]>();
-  tableMetadata.value.dataTypes = new Map<string, Concept>();
-};
-
 // Functionalities related to the dropping of tables
 const confirm = useConfirm();
 const isDropInProgress: Ref<boolean> = ref(false);
@@ -426,6 +458,10 @@ const openConfirmationPopup = (event: any): void => {
   });
 };
 
+const resetTableMetadata = (): void => {
+  tableMetadata.value = structuredClone(defaultGraphMetadata);
+};
+
 </script>
 
 <style scoped lang="sass">
@@ -449,6 +485,7 @@ $transition-all-time: 0.5s
     @include containers.flex-container($flex-direction: row, $justify-content: space-between, $align-items: center)
     width: 100%
     height: 100%
+    overflow: auto
 
     & > *:first-child
       margin-right: 32px
@@ -457,7 +494,7 @@ $transition-all-time: 0.5s
       @include containers.flex-container($flex-direction: column)
       border-right: 1px solid variables.$cassandra-light-gray
       height: 100%
-      padding: 32px
+      padding: 1rem
 
 .conceptual-graph-container
   height: 100%

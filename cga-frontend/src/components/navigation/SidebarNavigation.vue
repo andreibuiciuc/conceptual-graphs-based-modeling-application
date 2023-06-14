@@ -5,16 +5,22 @@
       <span class="sidebar-header-label"> force graph {{ forceGraph ? 'on' : 'off' }}</span>
     </template>
     <div class="panel-container">
-        <CredentialsCard />
-        <Button 
-          outlined
-          severity="primary"
-          :icon="cassandraServerCredentials.isCassandraServerConnected ? 'pi pi-circle-fill' : 'pi pi-circle'"
-          :label="cassandraServerCredentials.isCassandraServerConnected ? 'disconnect' : 'connect'"
-          :disabled="!isConnectionButtonEnabled || isConnectionButtonTriggered"
-          :loading="isConnectionButtonTriggered"
-          @click="manageServerConnection"
-        />
+      <div class="panel-container-info">
+        <span>upload your credentials file here</span>
+        <span>a template file can be downloaded from 
+          <b @click="prepareFileForDownload">here</b>
+        </span>
+      </div>
+      <CredentialsCard />
+      <Button 
+        outlined
+        severity="primary"
+        :icon="cassandraServerCredentials.isCassandraServerConnected ? 'pi pi-circle-fill' : 'pi pi-circle'"
+        :label="cassandraServerCredentials.isCassandraServerConnected ? 'disconnect' : 'connect'"
+        :disabled="!isConnectionButtonEnabled || isConnectionButtonTriggered || isKeyspaceRetrieveInProgress"
+        :loading="isConnectionButtonTriggered"
+        @click="manageServerConnection"
+      />
     </div>
     <Divider />
     <div class="panel-container">
@@ -38,12 +44,14 @@
 </template>
 
 <script setup lang="ts">
+import * as XLSX from 'xlsx';
 import constants from '@/constants/constants';
 import { storeToRefs } from 'pinia';
 import { useUtilsStore } from '@/stores/utils';
 import { useConnectionStore } from '@/stores/connection';
 import { computed, ComputedRef } from 'vue';
 import CredentialsCard from '../dashboard/CredentialsCard.vue';
+
 
 
 const connectionStore = useConnectionStore();
@@ -65,6 +73,31 @@ const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
     return !!userAstraDatabaseId.value && !!userAstraToken.value;
 })
 
+const prepareFileForDownload = (): void => {
+  const headers = ['Database Id', 'Database Region', 'Client Secret', 'Token'];
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'DataStax Credentials Template');
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+  downloadCredentialsFile(excelBuffer, 'cga_datastax_credentials.xlsx');
+};
+
+const downloadCredentialsFile = (buffer: any, filename: string): void => {
+  const data = new Blob([buffer], { type: 'application/octet-stream' });
+
+  const link = document.createElement('a');
+  link.setAttribute('href', window.URL.createObjectURL(data));
+  link.setAttribute('download', filename);
+  link.style.display = 'none';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 const manageServerConnection = (): void => {
   if (cassandraServerCredentials.value.isCassandraServerConnected) {
       connectionStore.disconnect();
@@ -81,7 +114,7 @@ const renderGraph = async (): Promise<void> => {
 <style lang="sass">
 @use "@/assets/styles/_containers.sass"
 @use '@/assets/styles/_transitions.sass'
-
+@use '@/assets/styles/_variables.sass'
 
 .p-sidebar
   width: 25rem !important
@@ -101,6 +134,17 @@ const renderGraph = async (): Promise<void> => {
   .panel-container
     @include containers.flex-container($flex-direction: column, $align-items: flex-start)
     margin-top: 2rem
+
+    .panel-container-info
+      @include containers.flex-container($flex-direction: column, $align-items: flex-start)
+      margin-bottom: 2rem
+
+      b
+        cursor: pointer
+        color: variables.$cassandra-app-blue
+      
+      b:hover
+        color: variables.$cassandra-yellow
 
     input, .p-button, .p-dropdown
       width: 100%

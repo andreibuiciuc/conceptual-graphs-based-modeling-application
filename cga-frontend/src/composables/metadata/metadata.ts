@@ -140,7 +140,6 @@ export function useMetadata() {
       }
 
       switch (columnKind) {
-        // TODO: Check the constants and refactor
         case 'partition_key':
           operators = [constants.cqlOperators.EQUAL, constants.cqlOperators.IN];
           break;

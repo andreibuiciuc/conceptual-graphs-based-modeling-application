@@ -87,6 +87,8 @@ type ClusteringOption = {
 interface Command {
     lineContent: string
     lineNumber: number
+    isColumnDefinition?: boolean,
+    isSelectClauseLine?: boolean,
 };
 
 type ToastSeverity = 'success' | 'warn' | 'error' | 'info';
@@ -121,6 +123,7 @@ export {
     QueryItemColumnType,
     ClusteringOption,
     AggregateFunction,
+    SelectClause,
     //
     Command,
     DataTableColumn,

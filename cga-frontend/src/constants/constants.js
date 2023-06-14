@@ -12,6 +12,9 @@ export default {
     email: "",
     password: "",
   },
+  defaultPasswordResetCredentials: {
+    email: "",
+  },
   emptyCassandraNetwork: {
     ipAddress: "",
     port: "",

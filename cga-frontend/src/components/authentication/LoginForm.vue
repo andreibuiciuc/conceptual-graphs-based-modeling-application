@@ -100,13 +100,6 @@ const handleUnsuccessfulLogin = (error: Error): void => {
   @include containers.flex-container($flex-direction: column, $justify-content: center, $align-items: center)
   width: 100%
 
-  span
-    margin-bottom: 1rem
-
-    &:hover
-      cursor: pointer
-      color: variables.$cassandra-app-blue
-
   .v-input, .p-button
     width: 100%
 
