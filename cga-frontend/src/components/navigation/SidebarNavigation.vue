@@ -7,7 +7,9 @@
     <div class="panel-container">
       <div class="panel-container-info">
         <span>upload your credentials file here</span>
-        <span>a template file can be downloaded from <b>here</b></span>
+        <span>a template file can be downloaded from 
+          <b @click="prepareFileForDownload">here</b>
+        </span>
       </div>
       <CredentialsCard />
       <Button 
@@ -42,12 +44,14 @@
 </template>
 
 <script setup lang="ts">
+import * as XLSX from 'xlsx';
 import constants from '@/constants/constants';
 import { storeToRefs } from 'pinia';
 import { useUtilsStore } from '@/stores/utils';
 import { useConnectionStore } from '@/stores/connection';
 import { computed, ComputedRef } from 'vue';
 import CredentialsCard from '../dashboard/CredentialsCard.vue';
+
 
 
 const connectionStore = useConnectionStore();
@@ -68,6 +72,31 @@ const { isSidebarOpened, forceGraph } = storeToRefs(utilsStore);
 const isConnectionButtonEnabled: ComputedRef<boolean> = computed(() => {
     return !!userAstraDatabaseId.value && !!userAstraToken.value;
 })
+
+const prepareFileForDownload = (): void => {
+  const headers = ['Database Id', 'Database Region', 'Client Secret', 'Token'];
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'DataStax Credentials Template');
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+  downloadCredentialsFile(excelBuffer, 'cga_datastax_credentials.xlsx');
+};
+
+const downloadCredentialsFile = (buffer: any, filename: string): void => {
+  const data = new Blob([buffer], { type: 'application/octet-stream' });
+
+  const link = document.createElement('a');
+  link.setAttribute('href', window.URL.createObjectURL(data));
+  link.setAttribute('download', filename);
+  link.style.display = 'none';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 const manageServerConnection = (): void => {
   if (cassandraServerCredentials.value.isCassandraServerConnected) {

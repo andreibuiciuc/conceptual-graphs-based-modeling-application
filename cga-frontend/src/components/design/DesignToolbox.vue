@@ -225,7 +225,6 @@ const { getRelationTypeForColumnConcept, getPartitionAndClusteringColumnsCount }
 const { retrieveTable } = useAstra();
 
 // Local constants
-// TODO: Move this to the constants file
 const defaultGraphMetadata: GraphMetadata = {
   keyspace: constants.defaultConcept,
   tables: [],

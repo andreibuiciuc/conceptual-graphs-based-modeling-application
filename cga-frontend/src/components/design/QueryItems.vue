@@ -24,14 +24,6 @@
                 class="query-panel-item-clause"
             >
                 
-                <!--TODO: <Button 
-                    aria-label="Remove" 
-                    icon="pi pi-times" 
-                    class="remove-icon-button"
-                    text 
-                    @click="removeItem(clause, item)" 
-                /> -->
-
                 <span v-if="clause === QueryClause.WHERE" class="item-clause-label">
                     {{ index === 0 ? 'where' : 'and' }}
                 </span>
@@ -55,11 +47,6 @@
                     @change="changeColumn(clause, item)">
                 </Dropdown>
 
-                <!--TODO <i  v-if="clause === QueryClause.GROUP_BY"
-                    class="pi pi-info" 
-                    v-tooltip="item.tooltip">
-                </i> -->
-
                 <template v-if="clause === QueryClause.WHERE">
                     <Dropdown 
                         v-model="item.relation"
@@ -68,10 +55,6 @@
                         :disabled="item.toQuery"
                         @change="changeOperator(item)">
                     </Dropdown>
-                    <!--TODO <i 
-                        class="pi pi-info" 
-                        v-tooltip="item.tooltip">
-                    </i> -->
                     <template v-if="[constants.cqlOperators.IN, constants.cqlOperators.NOT_IN].includes(item.relation!)">
                         <div class="card p-fluid">
                             <Chips v-model="item.chipValues" separator=" " :disabled="item.toQuery" :max="5" />
@@ -166,11 +149,10 @@ const informationMessages = {
 };
 
 const tooltips = {
-    // TODO:
     [QueryClause.WHERE]: {
         partition_key: "the partition key columns support only two operators: = and IN",
         clustering: "the clustering columns support only the following operators: =, IN, >, >=, <, <=",
-        regular: "TODO: regular column tooltip"
+        regular: "regular column"
     },
     [QueryClause.GROUP_BY]: {
         partition_key: "group by is only supported on primary key columns"

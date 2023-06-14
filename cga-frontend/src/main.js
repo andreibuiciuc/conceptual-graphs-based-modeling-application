@@ -6,7 +6,6 @@ import PrimeVuePlugin from './configurations/primevue';
 import VeeValidatePlugin from "./configurations/validation";
 import router from "./router";
 
-// TODO: Remove after full PrimeVue migration
 // Vuetify related imports
 import "vuetify/styles";
 import { createVuetify } from "vuetify/lib/framework.mjs";
@@ -30,7 +29,6 @@ auth.onAuthStateChanged(() => {
   if (!app) {
     app = createApp(App);
     
-    // TODO: Delete this after the PrimeVue migration is completed
     app.use(vuetify);
 
     app.use(createPinia());
