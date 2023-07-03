@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import * as XLSX from 'xlsx';
 import { storeToRefs } from 'pinia';
-import { Ref, ref } from 'vue';
+import { Ref, ref, watch } from 'vue';
 import { useConnectionStore } from '@/stores/connection';
 import { useUtils } from '@/composables/utils';
 
@@ -34,7 +34,7 @@ const { openNotificationToast } = useUtils();
 
 // Store mappings
 const connectioStore = useConnectionStore();
-const { userAstraDatabaseId, userAstraDatabaseRegion, userAstraToken } = storeToRefs(connectioStore);
+const { userAstraDatabaseId, userAstraDatabaseRegion, userAstraToken, cassandraServerCredentials } = storeToRefs(connectioStore);
 
 // Functionalities related to the upload of credentials file
 const isFileUploaded: Ref<boolean> = ref(false);
@@ -89,6 +89,14 @@ const uploadAstraCredentials = (uploadEvent: any): void => {
     }
 
 };
+
+watch(cassandraServerCredentials, () => {
+    if (!cassandraServerCredentials.value.isCassandraServerConnected) {
+        isFileUploaded.value = false;
+    }
+}, {
+    deep: true
+});
 
 </script>
 
