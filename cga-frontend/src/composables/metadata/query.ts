@@ -117,8 +117,6 @@ export function useQuery() {
 
         const { partitionColumnsCount, clusteringColumnCount } = getPartitionAndClusteringColumnsCount(tableMetadata);
 
-        debugger
-
         if (partitionColumnsCount) {
             partitionColumnsSnippet = computeKeysSnippet(currentColumns, false);
 

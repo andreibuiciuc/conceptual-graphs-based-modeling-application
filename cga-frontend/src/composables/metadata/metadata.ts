@@ -516,7 +516,6 @@ export function useMetadata() {
         return [orderByClauseErrorMessage, 1];
       }
 
-      debugger
       const groupByClauseErrorMessage = groupByItems.length ? validateGroupByClause(tableMetadata, queryMetadata, groupByItems) : '';
       if (groupByClauseErrorMessage) {
         return [groupByClauseErrorMessage, 2];
