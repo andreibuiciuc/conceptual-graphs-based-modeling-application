@@ -136,7 +136,6 @@ export function useQuery() {
             tableKeysDefinitionLine = tableKeysDefinitionLine.concat(partitionColumnsSnippet).concat(', ').concat(clusteringColumnsSnippet).concat(')');
 
         } else {
-            partitionColumnsSnippet = partitionColumnsSnippet.slice(1, partitionColumnsSnippet.length - 1);
             tableKeysDefinitionLine = tableKeysDefinitionLine.concat(partitionColumnsSnippet).concat(')');
         }   
         

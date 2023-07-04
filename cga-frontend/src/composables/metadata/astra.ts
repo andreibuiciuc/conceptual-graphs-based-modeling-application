@@ -76,15 +76,18 @@ export function useAstraMetadata() {
        * @param queryConcepts current query concepts
        * @returns payload object for running filtered queries on Astra DB
        */
-      const createAstraQueryPayload = (queryMetadata: GraphMetadata, whereClauseItems: QueryItem[], queryConcepts: QueryConcepts): AstraQueryPayload => {
+      const createAstraQueryPayload = (queryMetadata: GraphMetadata, whereClauseItems: QueryItem[], orderByItems: QueryItem[]): AstraQueryPayload => {
         let queryPayload: AstraQueryPayload = {
           columnNames: queryMetadata.columns.get(queryMetadata.tables.at(0).conceptName).map((concept: Concept) => concept.conceptName),
           filters: getAstraQueryFilters(whereClauseItems),
-        };
-  
-        if (queryConcepts.orderBy.columns.length) {
+        };  
+
+        if (orderByItems.length) {
+          const order = orderByItems.at(0).valueSelect === "ascending" ? 'asc' : 'desc';
+
           queryPayload.orderBy = {
-            column: queryConcepts.orderBy.columns.at(0).conceptName
+            column:  orderByItems.at(0).column,
+            order
           };
         }
   

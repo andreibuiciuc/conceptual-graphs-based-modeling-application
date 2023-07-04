@@ -205,7 +205,6 @@ import { useConnectionStore } from '../../stores/connection';
 import { useMetadata } from '@/composables/metadata/metadata';
 import { useUtils } from "../../composables/utils";
 import { storeToRefs } from 'pinia';
-import { table } from 'console';
 
 // Props and emits definitions
 interface Props {

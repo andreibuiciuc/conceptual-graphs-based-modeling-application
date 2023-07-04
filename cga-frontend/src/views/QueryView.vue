@@ -140,7 +140,7 @@
             severity="primary" 
             icon="pi pi-server"
             outlined 
-            :disabled="!areQueryActionsEnabled || isQuerySaveInProgress" 
+            :disabled="!areQueryActionsEnabled || isQuerySaveInProgress || notSupportedClauses" 
             @click="runQuery" 
           />
         </div>
@@ -645,6 +645,10 @@ const currentCQLQuery: Ref<string> = ref(constants.inputValues.empty);
 const currentQueryName: Ref<string> = ref(constants.inputValues.empty);
 const isCurrentQueryNameValid: Ref<boolean> = ref(true);
 
+const notSupportedClauses: ComputedRef<boolean> = computed(() => {
+  return groupByClauseItems.value.length > 0 || aggregateFunctionsItems.value.length > 0; 
+});
+
 const adjustInvalidOrderByClause = (): void => {
   // Adjustment for an invalid order by clause
   // Case: order by used without restricting all the partition keys
@@ -724,7 +728,7 @@ const fetchQueryResuls = async (): Promise<void> => {
 };
 
 const openQueryTerminal = (): void => {
-  const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value);
+  const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value, groupByClauseItems.value);
   if (error) {
     openNotificationToast(error, 'error');
     if (errorCode == 1) {
@@ -748,7 +752,7 @@ const parseQueryResults = (results: any[]) => {
 };
 
 const runQuery = (): void => {
-  const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value);
+  const [error, errorCode] = validateQuery(tableMetadata.value, queryMetadata.value, whereClauseItems.value, orderByClauseItems.value, groupByClauseItems.value);
   if (error) {
     openNotificationToast(error, 'error');
     if (errorCode == 1) {
@@ -882,11 +886,12 @@ const parseMetadataForViewMode = async (metadata: any, isQueryMetadata: boolean 
 
   graphMetadataRef.value.columns = new Map(Object.entries(metadata[graphMetadataName].columns));
   graphMetadataRef.value.dataTypes = new Map(Object.entries(metadata[graphMetadataName].dataTypes));
-  isQueryInViewModeReady.value = true;
+  
+  if (isQueryMetadata) {
+    queryConcepts.value = Object.assign({}, metadata.queryConcepts);
+  }
 
-  await nextTick();
-  tableGraph.value.rerenderArrows();
-  queryGraph.value.rerenderArrows();
+  isQueryInViewModeReady.value = true;
 };
 
 
@@ -901,11 +906,16 @@ const retrieveSavedQuery = async (): Promise<void> => {
     } else {
       tableMetadata.value = structuredClone(defaultGraphMetadata);
       queryMetadata.value = structuredClone(defaultGraphMetadata);
+      queryConcepts.value = structuredClone(constants.defaultQueryConcepts);
 
       const jsonQueryMetadata = queriesSnapshot.docs.at(0).data();
       currentCQLQuery.value = jsonQueryMetadata.cqlQueryCommand;
       parseMetadataForViewMode(jsonQueryMetadata);
       parseMetadataForViewMode(jsonQueryMetadata, true);
+
+      await nextTick();
+      tableGraph.value.rerenderArrows();
+      queryGraph.value.rerenderArrows();
     }
 
   } catch (error: any) {
@@ -957,7 +967,8 @@ const saveQuery = async (): Promise<void> => {
         table: queryMetadata.value.tables.at(0).conceptName,
         columns: Object.fromEntries(queryMetadata.value.columns),
         dataTypes: Object.fromEntries(queryMetadata.value.dataTypes)
-      }
+      },
+      queryConcepts: { ... queryConcepts.value }
     };
 
     await queriesCollection.add(jsonQueryMetadata);

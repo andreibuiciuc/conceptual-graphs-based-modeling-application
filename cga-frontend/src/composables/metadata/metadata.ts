@@ -36,7 +36,18 @@ export function useMetadata() {
       const initialValue = constants.inputValues.empty;
       
       let result = queryItems.reduce((accumulator: string, currentValue: QueryItem): string => {
-        return accumulator.concat(currentValue.column).concat(` ${currentValue.relation} `).concat(` ${currentValue.value} AND `);
+        if (currentValue.chipValues) {
+          let chipValueSnippet = '(';
+
+          currentValue.chipValues.forEach((chipValue: string) => { 
+            chipValueSnippet = chipValueSnippet.concat(`'${chipValue}', `)
+          });
+
+          chipValueSnippet = chipValueSnippet.slice(0, chipValueSnippet.length - 2).concat(')');
+          return accumulator.concat(currentValue.column).concat(` ${currentValue.relation} `).concat(` ${chipValueSnippet} AND `);
+        } else {
+          return accumulator.concat(currentValue.column).concat(` ${currentValue.relation} `).concat(` ${currentValue.value} AND `);
+        }
       }, initialValue);
       
       result = result.slice(0, result.length - 4);
@@ -385,7 +396,37 @@ export function useMetadata() {
 
     };
 
-    
+
+    /**
+     *  Checks if every partition column of the table is restricted in the GROUP BY clause
+     */
+    const checkIfAllPartitionColumnsAreInGroupBy = (tableMetadata: GraphMetadata, partitionColumns: QueryItem[]) => {
+
+      const currentTable: Concept | undefined = tableMetadata.tables.at(0);
+      if (!currentTable) {
+        return [false, 'no table selected for query'];
+      }
+
+      const currentColumns: Concept[] | undefined = tableMetadata.columns.get(currentTable.conceptName);
+      if (!currentColumns) {
+        return [false, 'no columns selected for query'];
+      }
+
+      const flag = currentColumns.every((columnConcept: Concept) => {
+        if (columnConcept.columnKind === 'partition_key') {
+          return partitionColumns.findIndex(columnItem => columnItem.column === columnConcept.conceptName) > -1;
+        }
+        return true;
+      })
+
+      if (!flag) {
+        return [false, 'not all partition columns are restricted in GROUP BY clause'];
+      } else {
+        return [true, constants.inputValues.empty];
+      }
+
+    };
+
     /**
      * Validates the WHERE clause
      * @param tableMetadata metadata of the table conceptual graph
@@ -438,6 +479,18 @@ export function useMetadata() {
     };
 
 
+    const validateGroupByClause = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, groupByItems: QueryItem[]): string => {
+      const partitionColumnsInGroupBy = getQueryItemsByColumnKind(tableMetadata, groupByItems, 'partition_key');
+      const [status, errorMessage] = checkIfAllPartitionColumnsAreInGroupBy(tableMetadata, partitionColumnsInGroupBy);
+
+      if (!status) {
+        return errorMessage;
+      } 
+
+      return constants.inputValues.empty;
+    }
+
+
     /**
      * Validates the CQL query
      * @param tableMetadata metadata of the table conceptual graph
@@ -446,12 +499,12 @@ export function useMetadata() {
      * @param orderByQueryItems items of the ORDER BY clause
      * @returns tuple consisting of the error message and error code
      */
-    const validateQuery = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[]): [string, number] => {
+    const validateQuery = (tableMetadata: GraphMetadata, queryMetadata: GraphMetadata, whereQueryItems: QueryItem[], orderByQueryItems: QueryItem[], groupByItems: QueryItem[]): [string, number] => {
 
-      const areAllColumnsSelectedAndNotRestricted = checkIfColumnsAreSelectedAndNotRestricted(queryMetadata, whereQueryItems, orderByQueryItems);
-      if (areAllColumnsSelectedAndNotRestricted) {
-        return [constants.inputValues.empty, 0];
-      }
+      // const areAllColumnsSelectedAndNotRestricted = checkIfColumnsAreSelectedAndNotRestricted(queryMetadata, whereQueryItems, orderByQueryItems);
+      // if (areAllColumnsSelectedAndNotRestricted) {
+      //   return [constants.inputValues.empty, 0];
+      // }
 
       const whereClauseErrorMessage = whereQueryItems.length ? validateWhereClause(tableMetadata, queryMetadata, whereQueryItems) : '';
       if (whereClauseErrorMessage) {
@@ -461,6 +514,11 @@ export function useMetadata() {
       const orderByClauseErrorMessage = orderByQueryItems.length ? validateOrderByClause(tableMetadata, queryMetadata, whereQueryItems, orderByQueryItems) : '';
       if (orderByClauseErrorMessage) {
         return [orderByClauseErrorMessage, 1];
+      }
+
+      const groupByClauseErrorMessage = groupByItems.length ? validateGroupByClause(tableMetadata, queryMetadata, groupByItems) : '';
+      if (groupByClauseErrorMessage) {
+        return [groupByClauseErrorMessage, 2];
       }
 
       return [constants.inputValues.empty, 0];

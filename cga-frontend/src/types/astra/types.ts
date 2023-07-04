@@ -48,7 +48,8 @@ interface AstraQueryFilter {
 }
 
 interface AstraQueryOrderByOption {
-    column: string
+    column: string,
+    order: string,
 }
 
 interface AstraQueryPayload {

@@ -74,11 +74,11 @@ export function useAstra() {
 
     const retrieveQueryResults = async (keyspace: string, table: string, queryMetadata: GraphMetadata) => {
         const queryStore = useQueryStore();
-        const { whereClauseItems, queryConcepts } = storeToRefs(queryStore);
+        const { whereClauseItems, orderByClauseItems } = storeToRefs(queryStore);
 
         const requestUrl = createAstraApiUrlForQuery(keyspace, table);
         const headers = configureHeaders();
-        const payload = createAstraQueryPayload(queryMetadata, whereClauseItems.value, queryConcepts.value);
+        const payload = createAstraQueryPayload(queryMetadata, whereClauseItems.value, orderByClauseItems.value);
         
         return manageRequest('post', requestUrl, payload, requestUrl, headers);
     };
